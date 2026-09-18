@@ -216,3 +216,46 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                 os.remove(tmp_path)
             except Exception:
                 pass
+
+@app.post('/api/parse-schedule-file')
+async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
+    filename = file.filename.lower()
+    if filename.endswith('.pdf'):
+        return await parse_student_schedule_endpoint(file)
+    elif filename.endswith(('.png', '.jpg', '.jpeg')):
+        import json
+        from PIL import Image
+
+        contents = await file.read()
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
+            tmp.write(contents)
+            tmp_path = tmp.name
+
+        try:
+            img = Image.open(tmp_path)
+            # 1. PNG metadata (tEXt chunk / info) kontol et
+            raw_meta = img.info.get('schedule_data') or img.info.get('ptu_schedule')
+            if raw_meta:
+                try:
+                    data = json.loads(raw_meta)
+                    return data
+                except Exception:
+                    pass
+            
+            # 2. Eğer metadata yoksa dosya adı / varsayılan yapı dönderilebilir veya istemci tarafında çözümlenebilir
+            raise HTTPException(
+                status_code=400, 
+                detail='Yüklenen görselde gömülü ders programı verisi bulunamadı. Lütfen siteden indirdiğiniz orijinal PNG belgesini veya OBS üzerinden aldığınız Report.pdf belgesini yükleyiniz.'
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f'Görsel dosyası işlenirken hata oluştu: {str(e)}')
+        finally:
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
+    else:
+        raise HTTPException(status_code=400, detail='Lütfen geçerli bir PDF (.pdf) veya Ders Programı Görseli (.png) yükleyin.')

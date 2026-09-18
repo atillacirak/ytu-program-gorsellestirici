@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { getFullInstructorName } from '../utils/instructors';
+import CompareView from '../components/CompareView';
+import { injectMetadataToPngDataUrl } from '../utils/pngMetadata';
+import { Users } from 'lucide-react';
 
 // Bir ders slotunun süresini saat cinsinden hesaplar (örn: 09:00 - 10:50 -> 2 saat, 09:00 - 11:50 -> 3 saat, 09:00 - 09:50 -> 1 saat)
 const getSlotDurationHours = (startTime?: string, endTime?: string): number => {
@@ -36,6 +39,7 @@ const getTotalWeeklyHours = (coursesSummary?: any[]): number => {
 };
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<'single' | 'compare'>('single');
   const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
   const [visualizerData, setVisualizerData] = useState<{
     student_id: string;
@@ -92,7 +96,7 @@ export default function Home() {
       const fullWidth = Math.max(node.scrollWidth, 1080);
       const fullHeight = node.scrollHeight;
 
-      const dataUrl = await toPng(node, {
+      let dataUrl = await toPng(node, {
         cacheBust: true,
         backgroundColor: '#ffffff',
         pixelRatio: 2, // 2x Ultra-sharp A4 resolution
@@ -113,6 +117,12 @@ export default function Home() {
           transform: 'none',
         }
       });
+
+      // İndirilen PNG'ye ders programı JSON metadata'sını göm
+      if (visualizerData) {
+        dataUrl = injectMetadataToPngDataUrl(dataUrl, visualizerData);
+      }
+
       const link = document.createElement('a');
       link.download = `YTU_A4_Ders_Programi_${new Date().toISOString().slice(0, 10)}.png`;
       link.href = dataUrl;
@@ -148,12 +158,33 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-              <Sparkles className="w-4 h-4 text-amber-500" />
-              <span>Gönüllü Proje</span>
+            {/* Sekme Değiştirici */}
+            <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
+              <button
+                onClick={() => setActiveTab('single')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'single'
+                    ? 'bg-[#002855] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Tekli Program</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('compare')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'compare'
+                    ? 'bg-[#002855] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 text-amber-400" />
+                <span>Ortak Boş Saatler (Karşılaştır)</span>
+              </button>
             </div>
 
-            {visualizerData && (
+            {visualizerData && activeTab === 'single' && (
               <label className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer">
                 <Upload className="w-3.5 h-3.5" />
                 <span>Yeni Belge Yükle</span>
@@ -171,7 +202,9 @@ export default function Home() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
-            {!visualizerData ? (
+            {activeTab === 'compare' ? (
+              <CompareView />
+            ) : !visualizerData ? (
               /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
                 <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs relative overflow-hidden space-y-4">
