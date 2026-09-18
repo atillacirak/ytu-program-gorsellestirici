@@ -22,7 +22,7 @@ app.add_middleware(
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ytu_courses.db')
 
-@app.get('/')
+@app.api_route('/', methods=['GET', 'HEAD'])
 def root():
     return {'status': 'active', 'service': 'YTÜ Program Görselleştirici API'}
 
