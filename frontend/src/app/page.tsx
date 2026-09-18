@@ -794,13 +794,21 @@ export default function Home() {
           </div>
       </main>
 
+      {/* Footer */}
       <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 bg-white no-print">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="font-semibold text-slate-700">
             YTÜ Program Görselleştirici — Gönüllü Öğrenci Projesi
           </p>
           <p className="text-[11px] text-slate-400">
-            OBS sistemi üzerinden temin edilen resmi Report.pdf formatıyla tam uyumludur.
+            <a
+              href="https://github.com/atillacirak"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-600 hover:underline transition-colors"
+            >
+              github.com/atillacirak
+            </a>
           </p>
         </div>
       </footer>
