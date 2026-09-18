@@ -9,6 +9,32 @@ import {
 import { toPng } from 'html-to-image';
 import { getFullInstructorName } from '../utils/instructors';
 
+// Bir ders slotunun süresini saat cinsinden hesaplar (örn: 09:00 - 10:50 -> 2 saat, 09:00 - 11:50 -> 3 saat, 09:00 - 09:50 -> 1 saat)
+const getSlotDurationHours = (startTime?: string, endTime?: string): number => {
+  if (!startTime || !endTime) return 0;
+  const parseM = (t: string) => {
+    const parts = t.replace('.', ':').split(':');
+    const h = parseInt(parts[0], 10) || 0;
+    const m = parseInt(parts[1], 10) || 0;
+    return h * 60 + m;
+  };
+  const diffMinutes = parseM(endTime) - parseM(startTime);
+  if (diffMinutes <= 0) return 0;
+  // YTÜ ders blokları: 50 dk ders periyotları (50 dk -> 1 saat, 110 dk -> 2 saat, 170 dk -> 3 saat, 230 dk -> 4 saat vb.)
+  return Math.max(1, Math.round(diffMinutes / 60));
+};
+
+// Tüm derslerin haftalık toplam ders saatini dinamik olarak hesaplar
+const getTotalWeeklyHours = (coursesSummary?: any[]): number => {
+  if (!coursesSummary || !Array.isArray(coursesSummary)) return 0;
+  return coursesSummary.reduce((totalAcc: number, course: any) => {
+    const courseHours = (course.time_slots || []).reduce((slotAcc: number, slot: any) => {
+      return slotAcc + getSlotDurationHours(slot.start_time, slot.end_time);
+    }, 0);
+    return totalAcc + courseHours;
+  }, 0);
+};
+
 export default function Home() {
   const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
   const [visualizerData, setVisualizerData] = useState<{
@@ -399,7 +425,7 @@ export default function Home() {
                     <span className="px-2.5 py-1 bg-slate-50 rounded-lg border border-slate-200 flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-slate-500" />
                       Haftalık Toplam: <strong className="text-slate-900 font-mono">
-                        {visualizerData.courses_summary?.reduce((acc: number, c: any) => acc + (c.time_slots?.length || 0), 0)}
+                        {getTotalWeeklyHours(visualizerData.courses_summary)}
                       </strong> Saat
                     </span>
 
