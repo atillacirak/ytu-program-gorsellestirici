@@ -218,9 +218,9 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                 pass
 
 DAY_NAMES_LIST = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
-CODE_RE_PATTERN = re.compile(r"^[A-Za-zÇĞİÖŞÜçğıöşü]{2,6}\d{3,6}$")
+CODE_RE_PATTERN = re.compile(r"([A-Za-zÇĞİÖŞÜçğıöşü]{2,6}\s*\d{3,6})")
 SECTION_RE_PATTERN = re.compile(r"[Ss][Bb]\.?\s*\)?\s*(\d+)")
-TIME_RE_PATTERN = re.compile(r"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})")
+TIME_RE_PATTERN = re.compile(r"(\d{1,2}[\.:]\d{2})\s*[-–]?\s*(\d{1,2}[\.:]\d{2})?")
 
 def _strip_tr_str(s: str) -> str:
     repl = str.maketrans("İıŞşÇçĞğÖöÜü", "IiSsCcGgOoUu")
@@ -260,7 +260,7 @@ def _find_header_columns_in_words(words: List[dict]) -> Optional[Dict[str, float
         "PAZAR": "Pazar",
     }
     found: Dict[str, float] = {}
-    candidates = [w for w in words if w["top"] < 260]
+    candidates = [w for w in words if w["top"] < 400]
     for w in candidates:
         norm = _strip_tr_str(w["text"])
         if norm in targets:
@@ -268,7 +268,7 @@ def _find_header_columns_in_words(words: List[dict]) -> Optional[Dict[str, float
             cx = w["left"] + w["width"] / 2
             if day not in found:
                 found[day] = cx
-    return found if "SAAT" in found and len(found) >= 3 else None
+    return found if ("SAAT" in found or len(found) >= 2) else None
 
 def _refine_column_boundaries_in_words(header_centers: Dict[str, float], body_words: List[dict], image_width: int) -> List[tuple]:
     ordered = sorted(header_centers.items(), key=lambda kv: kv[1])
@@ -290,7 +290,7 @@ def _refine_column_boundaries_in_words(header_centers: Dict[str, float], body_wo
         buckets[bucket_of(cx)].append(w)
 
     def content_words(ws):
-        return [w for w in ws if len(w["text"]) >= 3]
+        return [w for w in ws if len(w["text"]) >= 2]
 
     min_left = []
     max_right = []
@@ -313,8 +313,9 @@ def _refine_column_boundaries_in_words(header_centers: Dict[str, float], body_wo
             refined_bounds.append(rough_bounds[i - 1])
 
     result = []
-    for i in range(1, len(names)):
-        x_min = refined_bounds[i - 1]
+    start_idx = 1 if (len(names) > 1 and names[0] == "SAAT") else 0
+    for i in range(start_idx, len(names)):
+        x_min = refined_bounds[i - 1] if i > 0 else 0
         x_max = refined_bounds[i] if i < len(refined_bounds) else image_width
         result.append((names[i], x_min, x_max))
     return result
@@ -343,10 +344,10 @@ def _parse_single_card_from_block(block: List[List[dict]]) -> Optional[dict]:
     if not block:
         return None
     header_text = _line_text_from_words(block[0])
-    code_match = CODE_RE_PATTERN.match(block[0][0]["text"])
+    code_match = CODE_RE_PATTERN.search(header_text)
     if not code_match:
         return None
-    course_code = block[0][0]["text"]
+    course_code = code_match.group(1).replace(" ", "").upper()
 
     section = None
     sec_m = SECTION_RE_PATTERN.search(header_text)
@@ -358,7 +359,8 @@ def _parse_single_card_from_block(block: List[List[dict]]) -> Optional[dict]:
     for i, line in enumerate(block[1:], start=1):
         t = TIME_RE_PATTERN.search(_line_text_from_words(line))
         if t:
-            start_time, end_time = t.group(1), t.group(2)
+            start_time = t.group(1).replace(".", ":")
+            end_time = t.group(2).replace(".", ":") if t.group(2) else None
             time_line_idx = i
             break
 
@@ -373,14 +375,19 @@ def _parse_single_card_from_block(block: List[List[dict]]) -> Optional[dict]:
     return {
         "course_code": course_code,
         "section": section,
-        "name": name or None,
+        "name": name or course_code,
         "start": start_time,
         "end": end_time,
         "room": room,
     }
 
 def _parse_cards_from_lines(lines: List[List[dict]]) -> List[dict]:
-    start_idxs = [i for i, line in enumerate(lines) if CODE_RE_PATTERN.match(line[0]["text"])]
+    start_idxs = []
+    for i, line in enumerate(lines):
+        line_str = _line_text_from_words(line)
+        if CODE_RE_PATTERN.search(line_str):
+            start_idxs.append(i)
+
     cards = []
     for n, start in enumerate(start_idxs):
         end = start_idxs[n + 1] if n + 1 < len(start_idxs) else len(lines)

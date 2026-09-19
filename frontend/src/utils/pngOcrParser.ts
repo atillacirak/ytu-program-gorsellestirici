@@ -53,8 +53,8 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       'Pazar': []
     };
 
-    // Ders Kodu Regex'i (Örn: BLM1011, MAT1071, FIZ1001, KIM1001, MDB1031 vb.)
-    const courseCodeRegex = /([A-ZÇĞİÖŞÜ0-9_]{2,8}\d{3,4})/gi;
+    // Ders Kodu Regex'i (Örn: BLM1011, MAT1071, FIZ1001, KIM1001, MDB1031, BLM 1011 vb.)
+    const courseCodeRegex = /([A-Za-zÇĞİÖŞÜ0-9_]{2,8}\s*\d{3,4})/gi;
 
     // Satır bazlı arama ve parsing
     const foundCourses: { code: string; lineText: string; bbox?: any }[] = [];
@@ -65,7 +65,7 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       if (matches) {
         matches.forEach((code: string) => {
           foundCourses.push({
-            code: code.toUpperCase(),
+            code: code.replace(/\s+/g, '').toUpperCase(),
             lineText: lineStr.trim(),
             bbox: line.bbox
           });
@@ -79,7 +79,7 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       if (allMatches) {
         allMatches.forEach((code: string) => {
           foundCourses.push({
-            code: code.toUpperCase(),
+            code: code.replace(/\s+/g, '').toUpperCase(),
             lineText: code
           });
         });
@@ -114,7 +114,7 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       const mCode = lineStr.match(courseCodeRegex);
       if (!mCode) return;
 
-      const code = mCode[0].toUpperCase();
+      const code = mCode[0].replace(/\s+/g, '').toUpperCase();
       const lineX = line.bbox ? (line.bbox.x0 + line.bbox.x1) / 2 : 0;
 
       // En yakın günü bul
