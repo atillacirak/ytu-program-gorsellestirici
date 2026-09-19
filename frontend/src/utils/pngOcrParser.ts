@@ -43,7 +43,16 @@ function matchDayName(rawStr: string): string | null {
   return null;
 }
 
-const COURSE_CODE_REGEX = /([A-ZÇĞİÖŞÜ0-9_]{2,8}\s*\d{3,4})/i;
+function isCourseHeader(txt: string): boolean {
+  if (/^(EEF|SEF|FEF|MED|İİBF|CEV|MİM|KMB|LAB|Online)-/i.test(txt)) return false;
+  // Şube veya grup etiketi: (Şb. 1), (sb. 2), (5b. 1), (Gb. 3), ($b. 1)
+  if (/\(\s*.*?[ŞSşs5gbG$§].*?\d+/i.test(txt)) return true;
+  // Ders kodu: BLM1011, ING4301, EGT2170, SB02130, BLM2642 vb.
+  if (/\b[A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4}\b/.test(txt)) return true;
+  return false;
+}
+
+const COURSE_CODE_RE = /([A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4})/i;
 
 interface WordBox {
   text: string;
@@ -56,7 +65,7 @@ interface WordBox {
 }
 
 /**
- * Görseldeki dolu ders saatlerini sol eksen regresyonu ve ızgara eşleme ile
+ * Görseldeki dolu ders saatlerini sol eksen regresyonu ve kart durum makinesi ile
  * sıfır kayma ve tam saat doğruluğuyla çıkarır.
  */
 export async function parseScheduleImageWithOcr(imageFile: File): Promise<ParsedScheduleData> {
@@ -154,7 +163,7 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       ? Math.max(...detectedEntries.map(d => d.bottom))
       : 100;
 
-    // 2. Sol Saat Etiketlerinden Y Doğrusal Regresyonu (Milisaniyelik hassasiyet)
+    // 2. Sol Saat Etiketlerinden Y Doğrusal Regresyonu
     const firstColXmin = dayColBounds['Pazartesi']?.xmin || imgW * 0.15;
     const leftHourWords = rawWords.filter(w => w.cx < firstColXmin + 15 && w.top > headerBottomY);
 
@@ -169,8 +178,8 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       }
     });
 
-    let rowHeight = 49.3;
-    let row0Center = 133.5;
+    let rowHeight = 48.0;
+    let row0Center = headerBottomY + 25;
 
     if (hourDetections.length >= 2) {
       const h0 = hourDetections[0];
@@ -186,76 +195,98 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       row0Center = headerBottomY + rowHeight / 2;
     }
 
-    const rowIntervals = STANDARD_HOURS.map((hrStr, idx) => {
-      const hNum = parseInt(hrStr.split(':')[0], 10);
-      return {
-        index: idx,
-        hour: hrStr,
-        start: hrStr,
-        end: `${String(hNum).padStart(2, '0')}:50`,
-      };
-    });
-
     const bodyWords = rawWords.filter(w => w.top > headerBottomY);
     const schedule: Record<string, any[]> = {};
     ALL_DAYS.forEach(d => { schedule[d] = []; });
 
-    // 3. Her Gün Sütunundaki Dolu Saatleri Eşle
+    // 3. Her Gün Sütunundaki Saatleri Eşle
     WEEKDAYS.forEach(day => {
       const col = dayColBounds[day];
       if (!col) return;
 
-      const colWords = bodyWords
-        .filter(w => w.cx >= col.xmin + 5 && w.cx < col.xmax - 5)
-        .sort((a, b) => a.top - b.top);
-
+      const colWords = bodyWords.filter(w =>
+        w.cx >= col.xmin + 5 &&
+        w.cx < col.xmax - 5 &&
+        (w.text.length >= 3 || /\d/.test(w.text) || /şb|sb|gr|lab/i.test(w.text))
+      );
       if (colWords.length === 0) return;
 
-      const occupiedHours = new Set<number>();
-      const wordsByHour: Record<number, WordBox[]> = {};
-
+      const wordsInHour: WordBox[][] = Array.from({ length: 11 }, () => []);
       colWords.forEach(w => {
-        const hIdx = Math.round((w.cy - row0Center) / rowHeight);
-        if (hIdx >= 0 && hIdx < 11) {
-          occupiedHours.add(hIdx);
-          if (!wordsByHour[hIdx]) wordsByHour[hIdx] = [];
-          wordsByHour[hIdx].push(w);
+        const hIdx = Math.max(0, Math.min(10, Math.floor((w.cy - row0Center + rowHeight * 0.45) / rowHeight)));
+        wordsInHour[hIdx].push(w);
+      });
+
+      interface CardSlot {
+        startHour: number;
+        endHour: number;
+        words: WordBox[];
+      }
+
+      const cardList: CardSlot[] = [];
+      let currentCard: CardSlot | null = null;
+
+      for (let h = 0; h < 11; h++) {
+        const words = wordsInHour[h];
+        const hasWords = words.length > 0;
+        const text = words.map(w => w.text).join(' ');
+        const isHeader = isCourseHeader(text);
+
+        if (hasWords) {
+          if (!currentCard) {
+            currentCard = { startHour: h, endHour: h, words: [...words] };
+          } else if (isHeader && h > currentCard.startHour && (h - currentCard.startHour >= 2)) {
+            cardList.push(currentCard);
+            currentCard = { startHour: h, endHour: h, words: [...words] };
+          } else {
+            currentCard.endHour = h;
+            currentCard.words.push(...words);
+          }
+        } else {
+          if (currentCard) {
+            const nextWords = h + 1 < 11 ? wordsInHour[h + 1] : [];
+            const nextHasWords = nextWords.length > 0;
+            const nextIsHeader = isCourseHeader(nextWords.map(w => w.text).join(' '));
+
+            if (nextHasWords && !nextIsHeader && (h + 1 - currentCard.startHour <= 2)) {
+              continue;
+            } else {
+              cardList.push(currentCard);
+              currentCard = null;
+            }
+          }
+        }
+      }
+      if (currentCard) cardList.push(currentCard);
+
+      // Bitişik parçaları birleştir (sadece 1 saatlik eksik parçalar için)
+      const mergedCards: CardSlot[] = [];
+      cardList.forEach(card => {
+        if (mergedCards.length === 0) {
+          mergedCards.push(card);
+          return;
+        }
+        const prev = mergedCards[mergedCards.length - 1];
+        const prevLen = prev.endHour - prev.startHour + 1;
+        const cardLen = card.endHour - card.startHour + 1;
+
+        if (card.startHour === prev.endHour + 1 && (prevLen === 1 || cardLen === 1) && (card.endHour - prev.startHour + 1 <= 3)) {
+          prev.endHour = card.endHour;
+          prev.words.push(...card.words);
+        } else {
+          mergedCards.push(card);
         }
       });
 
-      const activeList = Array.from(occupiedHours).sort((a, b) => a - b);
-      if (activeList.length === 0) return;
+      mergedCards.forEach(card => {
+        const hStart = parseInt(STANDARD_HOURS[card.startHour].split(':')[0], 10);
+        const hEnd = parseInt(STANDARD_HOURS[card.endHour].split(':')[0], 10);
 
-      // Maksimum 3 saatlik bloklar halinde birleştir (aradaki 1 saatlik boşlukları doldurarak)
-      const rawBlocks: number[][] = [];
-      let curBlock: number[] = [activeList[0]];
+        const startTime = `${String(hStart).padStart(2, '0')}:00`;
+        const endTime = `${String(hEnd).padStart(2, '0')}:50`;
 
-      for (let i = 1; i < activeList.length; i++) {
-        const prevIdx = curBlock[curBlock.length - 1];
-        const currIdx = activeList[i];
-        const blockSpan = currIdx - curBlock[0] + 1;
-
-        if (currIdx <= prevIdx + 2 && blockSpan <= 3) {
-          for (let fill = prevIdx + 1; fill <= currIdx; fill++) {
-            if (!curBlock.includes(fill)) curBlock.push(fill);
-          }
-        } else {
-          rawBlocks.push(curBlock);
-          curBlock = [currIdx];
-        }
-      }
-      if (curBlock.length > 0) rawBlocks.push(curBlock);
-
-      rawBlocks.forEach(blk => {
-        const minIdx = Math.min(...blk);
-        const maxIdx = Math.max(...blk);
-
-        const startTime = rowIntervals[minIdx].start;
-        const endTime = rowIntervals[maxIdx].end;
-
-        const blkWords = blk.flatMap(i => wordsByHour[i] || []);
-        const blkText = blkWords.map(w => w.text).join(' ');
-        const cm = COURSE_CODE_REGEX.exec(blkText);
+        const cardText = card.words.map(w => w.text).join(' ');
+        const cm = COURSE_CODE_RE.exec(cardText);
         const code = cm ? cm[1].replace(/\s+/g, '').toUpperCase() : 'Ders';
 
         schedule[day].push({

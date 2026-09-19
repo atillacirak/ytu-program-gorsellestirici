@@ -219,7 +219,7 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
 
 
 # ---------------------------------------------------------------------------
-# Kalibre Edilmis Geometrik Izgara PNG / Gorsel Ayrıştırıcı
+# Durum Makineli & Kalibre Geometrik Izgara PNG / Gorsel Ayrıştırıcı
 # ---------------------------------------------------------------------------
 
 ALL_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
@@ -230,7 +230,7 @@ STANDARD_HOURS = [
     '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
 ]
 
-COURSE_CODE_RE = re.compile(r'([A-Za-zÇĞİÖŞÜçğıöşü0-9_]{2,8}\s*\d{3,4})')
+COURSE_CODE_RE = re.compile(r'([A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4})')
 
 def _match_day_name(raw_str: str) -> Optional[str]:
     s = raw_str.lower().translate(str.maketrans('İıŞşÇçĞğÖöÜü', 'iissccggoouu'))
@@ -249,6 +249,15 @@ def _match_day_name(raw_str: str) -> Optional[str]:
     if re.search(r'pazar', s):
         return 'Pazar'
     return None
+
+def _is_course_header(txt: str) -> bool:
+    if re.search(r'^(EEF|SEF|FEF|MED|İİBF|CEV|MİM|KMB|LAB|Online)-', txt, re.IGNORECASE):
+        return False
+    if re.search(r'\(\s*.*?[ŞSşs5gbG$§].*?\d+', txt, re.IGNORECASE):
+        return True
+    if re.search(r'\b[A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4}\b', txt):
+        return True
+    return False
 
 def _ocr_words_data(image, lang: str = 'tur+eng') -> List[dict]:
     import pytesseract
@@ -341,8 +350,8 @@ def parse_schedule_image_ytu(image) -> dict:
             if 8 <= h <= 18:
                 hour_detections.append({'hour': h, 'y': w['cy']})
 
-    row_height = 49.3
-    row0_center = 133.5
+    row_height = 48.0
+    row0_center = header_bottom + 25.0
 
     if len(hour_detections) >= 2:
         h0 = hour_detections[0]
@@ -356,77 +365,86 @@ def parse_schedule_image_ytu(image) -> dict:
         row_height = (body_bottom - header_bottom) / 11
         row0_center = header_bottom + row_height / 2
 
-    row_intervals = []
-    for idx, hr_str in enumerate(STANDARD_HOURS):
-        h_num = int(hr_str.split(':')[0])
-        row_intervals.append({
-            'index': idx,
-            'hour': hr_str,
-            'start': hr_str,
-            'end': f"{h_num:02d}:50",
-        })
-
     body_words = [w for w in words if w['top'] > header_bottom]
     schedule: Dict[str, list] = {d: [] for d in ALL_DAYS}
 
-    # 3. Her Gün Sütunundaki Dolu Saatleri Eşle
+    # 3. Her Gün Sütunundaki Saatleri Eşle
     for day in WEEKDAYS:
         col = day_cols.get(day)
         if not col:
             continue
 
-        col_wds = [w for w in body_words if (col['xmin'] + 5) <= w['cx'] < (col['xmax'] - 5)]
+        col_wds = [
+            w for w in body_words
+            if (col['xmin'] + 5) <= w['cx'] < (col['xmax'] - 5)
+            and (len(w['text']) >= 3 or re.search(r'\d', w['text']) or re.search(r'şb|sb|gr|lab', w['text'], re.I))
+        ]
         if not col_wds:
             continue
 
-        col_wds.sort(key=lambda x: x['top'])
-        occupied_hours = set()
-        words_by_hour = {}
-
+        words_in_hour: List[List[dict]] = [[] for _ in range(11)]
         for w in col_wds:
-            h_idx = round((w['cy'] - row0_center) / row_height)
-            if 0 <= h_idx < 11:
-                occupied_hours.add(h_idx)
-                if h_idx not in words_by_hour:
-                    words_by_hour[h_idx] = []
-                words_by_hour[h_idx].append(w)
+            h_idx = max(0, min(10, int((w['cy'] - row0_center + row_height * 0.45) // row_height)))
+            words_in_hour[h_idx].append(w)
 
-        active_list = sorted(list(occupied_hours))
-        if not active_list:
-            continue
+        card_list = []
+        cur_card = None
 
-        raw_blocks = []
-        cur_block = [active_list[0]]
+        for h in range(11):
+            wds = words_in_hour[h]
+            has_words = len(wds) > 0
+            text = ' '.join(w['text'] for w in wds)
+            is_header = _is_course_header(text)
 
-        for i in range(1, len(active_list)):
-            prev_idx = cur_block[-1]
-            curr_idx = active_list[i]
-            block_span = curr_idx - cur_block[0] + 1
-
-            if curr_idx <= prev_idx + 2 and block_span <= 3:
-                for fill in range(prev_idx + 1, curr_idx + 1):
-                    if fill not in cur_block:
-                        cur_block.append(fill)
+            if has_words:
+                if cur_card is None:
+                    cur_card = {'start': h, 'end': h, 'words': list(wds)}
+                elif is_header and h > cur_card['start'] and (h - cur_card['start'] >= 2):
+                    card_list.append(cur_card)
+                    cur_card = {'start': h, 'end': h, 'words': list(wds)}
+                else:
+                    cur_card['end'] = h
+                    cur_card['words'].extend(wds)
             else:
-                raw_blocks.append(cur_block)
-                cur_block = [curr_idx]
+                if cur_card is not None:
+                    next_wds = words_in_hour[h + 1] if h + 1 < 11 else []
+                    next_has = len(next_wds) > 0
+                    next_is_hdr = _is_course_header(' '.join(w['text'] for w in next_wds))
 
-        if cur_block:
-            raw_blocks.append(cur_block)
+                    if next_has and not next_is_hdr and (h + 1 - cur_card['start'] <= 2):
+                        continue
+                    else:
+                        card_list.append(cur_card)
+                        cur_card = None
 
-        for blk in raw_blocks:
-            min_idx = min(blk)
-            max_idx = max(blk)
+        if cur_card is not None:
+            card_list.append(cur_card)
 
-            start_t = row_intervals[min_idx]['start']
-            end_t = row_intervals[max_idx]['end']
+        # Bitişik eksik parçaları birleştir
+        merged_cards = []
+        for card in card_list:
+            if not merged_cards:
+                merged_cards.append(card)
+                continue
+            prev = merged_cards[-1]
+            prev_len = prev['end'] - prev['start'] + 1
+            card_len = card['end'] - card['start'] + 1
 
-            blk_words = []
-            for i in blk:
-                blk_words.extend(words_by_hour.get(i, []))
+            if card['start'] == prev['end'] + 1 and (prev_len == 1 or card_len == 1) and (card['end'] - prev['start'] + 1 <= 3):
+                prev['end'] = card['end']
+                prev['words'].extend(card['words'])
+            else:
+                merged_cards.append(card)
 
-            blk_text = ' '.join(w['text'] for w in blk_words)
-            cm = COURSE_CODE_RE.search(blk_text)
+        for card in merged_cards:
+            h_start = int(STANDARD_HOURS[card['start']].split(':')[0])
+            h_end = int(STANDARD_HOURS[card['end']].split(':')[0])
+
+            start_t = f"{h_start:02d}:00"
+            end_t = f"{h_end:02d}:50"
+
+            card_text = ' '.join(w['text'] for w in card['words'])
+            cm = COURSE_CODE_RE.search(card_text)
             code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
 
             schedule[day].append({
