@@ -219,16 +219,28 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
 
 
 # ---------------------------------------------------------------------------
-# Coklu-Strateji PNG / Gorsel Ayrıştırıcı (Istemci Tesseract.js ile senkron)
+# Geometrik Izgara & Blok Tabanli PNG / Gorsel Ayrıştırıcı
 # ---------------------------------------------------------------------------
 
 ALL_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
 WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma']
 DAY_INDEX_MAP = {'Pazartesi': 0, 'Salı': 1, 'Çarşamba': 2, 'Perşembe': 3, 'Cuma': 4}
 
-TIME_RANGE_RE = re.compile(r'(\d{1,2})[\s.:](\d{2})\s*[-–~to/]\s*(\d{1,2})[\s.:](\d{2})')
-SINGLE_TIME_RE = re.compile(r'^(\d{1,2})[\s.:](\d{2})$')
-COURSE_CODE_RE = re.compile(r'([A-Za-zÇĞİÖŞÜçğıöşü]{2,6}\s*\d{3,6})')
+STANDARD_HOURS = [
+    {'start': '08:00', 'end': '08:50'},
+    {'start': '09:00', 'end': '09:50'},
+    {'start': '10:00', 'end': '10:50'},
+    {'start': '11:00', 'end': '11:50'},
+    {'start': '12:00', 'end': '12:50'},
+    {'start': '13:00', 'end': '13:50'},
+    {'start': '14:00', 'end': '14:50'},
+    {'start': '15:00', 'end': '15:50'},
+    {'start': '16:00', 'end': '16:50'},
+    {'start': '17:00', 'end': '17:50'},
+    {'start': '18:00', 'end': '18:50'},
+]
+
+COURSE_CODE_RE = re.compile(r'([A-Za-zÇĞİÖŞÜçğıöşü0-9_]{2,8}\s*\d{3,4})')
 
 def _match_day_name(raw_str: str) -> Optional[str]:
     s = raw_str.lower().translate(str.maketrans('İıŞşÇçĞğÖöÜü', 'iissccggoouu'))
@@ -334,139 +346,92 @@ def parse_schedule_image_ytu(image) -> dict:
     header_bottom = max((d['bottom'] for d in detected_entries), default=img_h * 0.12)
     body_words = [w for w in words if w['top'] > header_bottom]
 
+    # 2. Tablo Dikey Izgara Hesaplama
+    body_bottom = max((w['top'] + w['h'] for w in body_words), default=img_h * 0.9)
+    table_top_y = header_bottom + 5
+    table_bottom_y = body_bottom + 10
+    table_height = table_bottom_y - table_top_y
+    num_rows = len(STANDARD_HOURS)
+    row_height = table_height / num_rows
+
+    def y_to_hour_index(y: float) -> int:
+        raw_idx = (y - table_top_y) / row_height
+        return max(0, min(num_rows - 1, int(raw_idx)))
+
     schedule: Dict[str, list] = {d: [] for d in ALL_DAYS}
 
-    # STRATEJİ 1: Sütun İçinde Doğrudan Saat Aralığı Tespiti
+    # 3. Her Gün Sütunundaki Kelimeleri Blok Olarak Grupla
     for day in WEEKDAYS:
         col = day_cols.get(day)
         if not col:
             continue
-        col_wds = [w for w in body_words if col['xmin'] <= w['cx'] < col['xmax']]
+
+        col_wds = [w for w in body_words if (col['xmin'] + 5) <= w['cx'] < (col['xmax'] - 5)]
         if not col_wds:
             continue
 
-        # Satırlara grupla
-        col_lines: List[List[dict]] = []
-        for w in sorted(col_wds, key=lambda x: x['top']):
-            for line in col_lines:
-                if abs(line[0]['top'] - w['top']) <= 14:
-                    line.append(w)
-                    break
+        col_wds.sort(key=lambda x: x['top'])
+        card_blocks: List[List[dict]] = []
+        current_block = [col_wds[0]]
+
+        for i in range(1, len(col_wds)):
+            prev_w = current_block[-1]
+            curr_w = col_wds[i]
+            v_gap = curr_w['top'] - (prev_w['top'] + prev_w['h'])
+
+            if v_gap <= row_height * 1.15:
+                current_block.append(curr_w)
             else:
-                col_lines.append([w])
+                card_blocks.append(current_block)
+                current_block = [curr_w]
 
-        for line in col_lines:
-            line_str = ' '.join(w['text'] for w in line)
-            tm = TIME_RANGE_RE.search(line_str)
-            if tm:
-                start = f"{int(tm.group(1)):02d}:{tm.group(2)}"
-                end = f"{int(tm.group(3)):02d}:{tm.group(4)}"
-                cm = COURSE_CODE_RE.search(line_str)
-                code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
+        if current_block:
+            card_blocks.append(current_block)
 
-                if not any(s['start_time'] == start for s in schedule[day]):
-                    schedule[day].append({
-                        'section': '1',
-                        'code': code,
-                        'name': code,
-                        'classroom': '',
-                        'instructor': '',
-                        'start_time': start,
-                        'end_time': end,
-                        'is_lab': False,
-                    })
+        for block in card_blocks:
+            b_top = min(w['top'] for w in block)
+            b_bot = max(w['top'] + w['h'] for w in block)
 
-    # STRATEJİ 2: Izgara / Satır-Sütun Kesişim Tespiti (Klasik Tablo)
-    total_found = sum(len(v) for v in schedule.values())
-    if total_found == 0:
-        first_col_xmin = day_cols.get('Pazartesi', {}).get('xmin', img_w * 0.15)
-        left_words = [w for w in words if w['cx'] < first_col_xmin + 30 and w['top'] > header_bottom]
+            s_idx = y_to_hour_index(b_top + 5)
+            e_idx = y_to_hour_index(b_bot - 5)
 
-        hour_rows = []
-        for w in left_words:
-            trm = TIME_RANGE_RE.search(w['text'])
-            if trm:
-                hour_rows.append({
-                    'start': f"{int(trm.group(1)):02d}:{trm.group(2)}",
-                    'end': f"{int(trm.group(3)):02d}:{trm.group(4)}",
-                    'y': w['cy'],
-                })
-                continue
-            sm = SINGLE_TIME_RE.match(w['text'])
-            if sm:
-                h_num = int(sm.group(1))
-                hour_rows.append({
-                    'start': f"{h_num:02d}:{sm.group(2)}",
-                    'end': f"{h_num:02d}:50",
-                    'y': w['cy'],
-                })
+            start_t = STANDARD_HOURS[s_idx]['start']
+            end_t = STANDARD_HOURS[max(s_idx, e_idx)]['end']
 
-        # Tekrarlayan Y saatlerini temizle
-        hour_rows_sorted = sorted(hour_rows, key=lambda r: r['y'])
-        clean_rows = []
-        for r in hour_rows_sorted:
-            if not any(abs(cr['y'] - r['y']) < 15 or cr['start'] == r['start'] for cr in clean_rows):
-                clean_rows.append(r)
+            b_text = ' '.join(w['text'] for w in block)
+            cm = COURSE_CODE_RE.search(b_text)
+            code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
 
-        if clean_rows:
-            for r_idx, row in enumerate(clean_rows):
-                if r_idx + 1 < len(clean_rows):
-                    row_h = clean_rows[r_idx + 1]['y'] - row['y']
-                elif r_idx > 0:
-                    row_h = row['y'] - clean_rows[r_idx - 1]['y']
-                else:
-                    row_h = 50.0
+            schedule[day].append({
+                'section': '1',
+                'code': code,
+                'name': code,
+                'classroom': '',
+                'instructor': '',
+                'start_time': start_t,
+                'end_time': end_t,
+                'is_lab': False,
+            })
 
-                y_top = row['y'] - row_h * 0.45
-                y_bot = row['y'] + row_h * 0.55
-
-                for day in WEEKDAYS:
-                    col = day_cols.get(day)
-                    if not col:
-                        continue
-                    cell_wds = [
-                        w for w in body_words
-                        if (col['xmin'] + 5) <= w['cx'] < (col['xmax'] - 5)
-                        and y_top <= w['cy'] < y_bot
-                        and not TIME_RANGE_RE.search(w['text'])
-                        and not SINGLE_TIME_RE.match(w['text'])
-                        and len(w['text']) >= 2
-                    ]
-                    if cell_wds:
-                        cell_txt = ' '.join(w['text'] for w in cell_wds)
-                        cm = COURSE_CODE_RE.search(cell_txt)
-                        code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
-
-                        schedule[day].append({
-                            'section': '1',
-                            'code': code,
-                            'name': code,
-                            'classroom': '',
-                            'instructor': '',
-                            'start_time': row['start'],
-                            'end_time': row['end'],
-                            'is_lab': False,
-                        })
-
-            # Ardışık saatleri birleştir
-            for day in WEEKDAYS:
-                slots = schedule[day]
-                if len(slots) <= 1:
+        # Bitişik / aralıksız slotları birleştir
+        slots = schedule[day]
+        if len(slots) > 1:
+            slots.sort(key=lambda s: _to_minutes(s['start_time']))
+            merged = []
+            for s in slots:
+                if not merged:
+                    merged.append(dict(s))
                     continue
-                slots.sort(key=lambda s: _to_minutes(s['start_time']))
-                merged = []
-                for s in slots:
-                    if not merged:
-                        merged.append(dict(s))
-                        continue
-                    prev = merged[-1]
-                    prev_end = _to_minutes(prev['end_time'])
-                    curr_start = _to_minutes(s['start_time'])
-                    if curr_start - prev_end <= 15 and curr_start >= prev_end - 10:
-                        prev['end_time'] = s['end_time']
-                    else:
-                        merged.append(dict(s))
-                schedule[day] = merged
+                prev = merged[-1]
+                prev_end = _to_minutes(prev['end_time'])
+                curr_start = _to_minutes(s['start_time'])
+                if curr_start <= prev_end + 65:
+                    prev['end_time'] = s['end_time']
+                    if s['code'] != 'Ders' and prev['code'] == 'Ders':
+                        prev['code'] = s['code']
+                else:
+                    merged.append(dict(s))
+            schedule[day] = merged
 
     summary_map = {}
     for day, items in schedule.items():
