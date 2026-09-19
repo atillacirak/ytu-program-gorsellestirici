@@ -219,7 +219,7 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
 
 
 # ---------------------------------------------------------------------------
-# Geometrik Izgara & Blok Tabanli PNG / Gorsel Ayrıştırıcı
+# Kalibre Edilmis Geometrik Izgara PNG / Gorsel Ayrıştırıcı
 # ---------------------------------------------------------------------------
 
 ALL_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
@@ -227,17 +227,7 @@ WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma']
 DAY_INDEX_MAP = {'Pazartesi': 0, 'Salı': 1, 'Çarşamba': 2, 'Perşembe': 3, 'Cuma': 4}
 
 STANDARD_HOURS = [
-    {'start': '08:00', 'end': '08:50'},
-    {'start': '09:00', 'end': '09:50'},
-    {'start': '10:00', 'end': '10:50'},
-    {'start': '11:00', 'end': '11:50'},
-    {'start': '12:00', 'end': '12:50'},
-    {'start': '13:00', 'end': '13:50'},
-    {'start': '14:00', 'end': '14:50'},
-    {'start': '15:00', 'end': '15:50'},
-    {'start': '16:00', 'end': '16:50'},
-    {'start': '17:00', 'end': '17:50'},
-    {'start': '18:00', 'end': '18:50'},
+    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
 ]
 
 COURSE_CODE_RE = re.compile(r'([A-Za-zÇĞİÖŞÜçğıöşü0-9_]{2,8}\s*\d{3,4})')
@@ -259,12 +249,6 @@ def _match_day_name(raw_str: str) -> Optional[str]:
     if re.search(r'pazar', s):
         return 'Pazar'
     return None
-
-def _to_minutes(time_str: str) -> int:
-    parts = time_str.replace('.', ':').split(':')
-    h = int(parts[0]) if len(parts) > 0 and parts[0].isdigit() else 0
-    m = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
-    return h * 60 + m
 
 def _ocr_words_data(image, lang: str = 'tur+eng') -> List[dict]:
     import pytesseract
@@ -344,23 +328,48 @@ def parse_schedule_image_ytu(image) -> dict:
             }
 
     header_bottom = max((d['bottom'] for d in detected_entries), default=img_h * 0.12)
+
+    # 2. Sol Saat Etiketlerinden Y Doğrusal Regresyonu
+    first_col_xmin = day_cols.get('Pazartesi', {}).get('xmin', img_w * 0.15)
+    left_hour_words = [w for w in words if w['cx'] < first_col_xmin + 15 and w['top'] > header_bottom]
+
+    hour_detections = []
+    for w in left_hour_words:
+        m = re.search(r'(\d{1,2})[:.](\d{2})', w['text'])
+        if m:
+            h = int(m.group(1))
+            if 8 <= h <= 18:
+                hour_detections.append({'hour': h, 'y': w['cy']})
+
+    row_height = 49.3
+    row0_center = 133.5
+
+    if len(hour_detections) >= 2:
+        h0 = hour_detections[0]
+        hN = hour_detections[-1]
+        if hN['hour'] != h0['hour']:
+            row_height = (hN['y'] - h0['y']) / (hN['hour'] - h0['hour'])
+            row0_center = h0['y'] - (h0['hour'] - 8) * row_height
+    else:
+        body_words_tmp = [w for w in words if w['top'] > header_bottom]
+        body_bottom = max((w['top'] + w['h'] for w in body_words_tmp), default=img_h * 0.9)
+        row_height = (body_bottom - header_bottom) / 11
+        row0_center = header_bottom + row_height / 2
+
+    row_intervals = []
+    for idx, hr_str in enumerate(STANDARD_HOURS):
+        h_num = int(hr_str.split(':')[0])
+        row_intervals.append({
+            'index': idx,
+            'hour': hr_str,
+            'start': hr_str,
+            'end': f"{h_num:02d}:50",
+        })
+
     body_words = [w for w in words if w['top'] > header_bottom]
-
-    # 2. Tablo Dikey Izgara Hesaplama
-    body_bottom = max((w['top'] + w['h'] for w in body_words), default=img_h * 0.9)
-    table_top_y = header_bottom + 5
-    table_bottom_y = body_bottom + 10
-    table_height = table_bottom_y - table_top_y
-    num_rows = len(STANDARD_HOURS)
-    row_height = table_height / num_rows
-
-    def y_to_hour_index(y: float) -> int:
-        raw_idx = (y - table_top_y) / row_height
-        return max(0, min(num_rows - 1, int(raw_idx)))
-
     schedule: Dict[str, list] = {d: [] for d in ALL_DAYS}
 
-    # 3. Her Gün Sütunundaki Kelimeleri Blok Olarak Grupla
+    # 3. Her Gün Sütunundaki Dolu Saatleri Eşle
     for day in WEEKDAYS:
         col = day_cols.get(day)
         if not col:
@@ -371,35 +380,53 @@ def parse_schedule_image_ytu(image) -> dict:
             continue
 
         col_wds.sort(key=lambda x: x['top'])
-        card_blocks: List[List[dict]] = []
-        current_block = [col_wds[0]]
+        occupied_hours = set()
+        words_by_hour = {}
 
-        for i in range(1, len(col_wds)):
-            prev_w = current_block[-1]
-            curr_w = col_wds[i]
-            v_gap = curr_w['top'] - (prev_w['top'] + prev_w['h'])
+        for w in col_wds:
+            h_idx = round((w['cy'] - row0_center) / row_height)
+            if 0 <= h_idx < 11:
+                occupied_hours.add(h_idx)
+                if h_idx not in words_by_hour:
+                    words_by_hour[h_idx] = []
+                words_by_hour[h_idx].append(w)
 
-            if v_gap <= row_height * 1.15:
-                current_block.append(curr_w)
+        active_list = sorted(list(occupied_hours))
+        if not active_list:
+            continue
+
+        raw_blocks = []
+        cur_block = [active_list[0]]
+
+        for i in range(1, len(active_list)):
+            prev_idx = cur_block[-1]
+            curr_idx = active_list[i]
+            block_span = curr_idx - cur_block[0] + 1
+
+            if curr_idx <= prev_idx + 2 and block_span <= 3:
+                for fill in range(prev_idx + 1, curr_idx + 1):
+                    if fill not in cur_block:
+                        cur_block.append(fill)
             else:
-                card_blocks.append(current_block)
-                current_block = [curr_w]
+                raw_blocks.append(cur_block)
+                cur_block = [curr_idx]
 
-        if current_block:
-            card_blocks.append(current_block)
+        if cur_block:
+            raw_blocks.append(cur_block)
 
-        for block in card_blocks:
-            b_top = min(w['top'] for w in block)
-            b_bot = max(w['top'] + w['h'] for w in block)
+        for blk in raw_blocks:
+            min_idx = min(blk)
+            max_idx = max(blk)
 
-            s_idx = y_to_hour_index(b_top + 5)
-            e_idx = y_to_hour_index(b_bot - 5)
+            start_t = row_intervals[min_idx]['start']
+            end_t = row_intervals[max_idx]['end']
 
-            start_t = STANDARD_HOURS[s_idx]['start']
-            end_t = STANDARD_HOURS[max(s_idx, e_idx)]['end']
+            blk_words = []
+            for i in blk:
+                blk_words.extend(words_by_hour.get(i, []))
 
-            b_text = ' '.join(w['text'] for w in block)
-            cm = COURSE_CODE_RE.search(b_text)
+            blk_text = ' '.join(w['text'] for w in blk_words)
+            cm = COURSE_CODE_RE.search(blk_text)
             code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
 
             schedule[day].append({
@@ -412,26 +439,6 @@ def parse_schedule_image_ytu(image) -> dict:
                 'end_time': end_t,
                 'is_lab': False,
             })
-
-        # Bitişik / aralıksız slotları birleştir
-        slots = schedule[day]
-        if len(slots) > 1:
-            slots.sort(key=lambda s: _to_minutes(s['start_time']))
-            merged = []
-            for s in slots:
-                if not merged:
-                    merged.append(dict(s))
-                    continue
-                prev = merged[-1]
-                prev_end = _to_minutes(prev['end_time'])
-                curr_start = _to_minutes(s['start_time'])
-                if curr_start <= prev_end + 65:
-                    prev['end_time'] = s['end_time']
-                    if s['code'] != 'Ders' and prev['code'] == 'Ders':
-                        prev['code'] = s['code']
-                else:
-                    merged.append(dict(s))
-            schedule[day] = merged
 
     summary_map = {}
     for day, items in schedule.items():

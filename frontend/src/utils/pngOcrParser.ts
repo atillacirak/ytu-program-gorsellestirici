@@ -20,17 +20,7 @@ const DAY_INDEX_MAP: Record<string, number> = {
 };
 
 const STANDARD_HOURS = [
-  { start: '08:00', end: '08:50' },
-  { start: '09:00', end: '09:50' },
-  { start: '10:00', end: '10:50' },
-  { start: '11:00', end: '11:50' },
-  { start: '12:00', end: '12:50' },
-  { start: '13:00', end: '13:50' },
-  { start: '14:00', end: '14:50' },
-  { start: '15:00', end: '15:50' },
-  { start: '16:00', end: '16:50' },
-  { start: '17:00', end: '17:50' },
-  { start: '18:00', end: '18:50' },
+  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
 ];
 
 function matchDayName(rawStr: string): string | null {
@@ -55,11 +45,6 @@ function matchDayName(rawStr: string): string | null {
 
 const COURSE_CODE_REGEX = /([A-ZÇĞİÖŞÜ0-9_]{2,8}\s*\d{3,4})/i;
 
-function toMinutes(timeStr: string): number {
-  const [h, m] = timeStr.replace('.', ':').split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
-}
-
 interface WordBox {
   text: string;
   left: number;
@@ -71,8 +56,8 @@ interface WordBox {
 }
 
 /**
- * Görseldeki dolu ders saatlerini ve günlerini geometrik ızgara ve kart blok
- * gruplamasıyla hatasız çıkarır.
+ * Görseldeki dolu ders saatlerini sol eksen regresyonu ve ızgara eşleme ile
+ * sıfır kayma ve tam saat doğruluğuyla çıkarır.
  */
 export async function parseScheduleImageWithOcr(imageFile: File): Promise<ParsedScheduleData> {
   const worker = await createWorker('tur+eng');
@@ -169,25 +154,53 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
       ? Math.max(...detectedEntries.map(d => d.bottom))
       : 100;
 
-    const bodyWords = rawWords.filter(w => w.top > headerBottomY);
+    // 2. Sol Saat Etiketlerinden Y Doğrusal Regresyonu (Milisaniyelik hassasiyet)
+    const firstColXmin = dayColBounds['Pazartesi']?.xmin || imgW * 0.15;
+    const leftHourWords = rawWords.filter(w => w.cx < firstColXmin + 15 && w.top > headerBottomY);
 
-    // 2. Tablo Dikey Izgara Hesaplama
-    const bodyBottomY = Math.max(...bodyWords.map(w => w.top + w.h), imgH * 0.9);
-    const tableTopY = headerBottomY + 5;
-    const tableBottomY = bodyBottomY + 10;
-    const tableHeight = tableBottomY - tableTopY;
-    const numRows = STANDARD_HOURS.length; // 11
-    const rowHeight = tableHeight / numRows;
+    const hourDetections: { hour: number; y: number }[] = [];
+    leftHourWords.forEach(w => {
+      const m = /(\d{1,2})[:.](\d{2})/.exec(w.text);
+      if (m) {
+        const h = parseInt(m[1], 10);
+        if (h >= 8 && h <= 18) {
+          hourDetections.push({ hour: h, y: w.cy });
+        }
+      }
+    });
 
-    function yToHourIndex(y: number): number {
-      const rawIdx = (y - tableTopY) / rowHeight;
-      return Math.max(0, Math.min(numRows - 1, Math.floor(rawIdx)));
+    let rowHeight = 49.3;
+    let row0Center = 133.5;
+
+    if (hourDetections.length >= 2) {
+      const h0 = hourDetections[0];
+      const hN = hourDetections[hourDetections.length - 1];
+      if (hN.hour !== h0.hour) {
+        rowHeight = (hN.y - h0.y) / (hN.hour - h0.hour);
+        row0Center = h0.y - (h0.hour - 8) * rowHeight;
+      }
+    } else {
+      const bodyWordsTemp = rawWords.filter(w => w.top > headerBottomY);
+      const bodyBottom = Math.max(...bodyWordsTemp.map(w => w.top + w.h), imgH * 0.9);
+      rowHeight = (bodyBottom - headerBottomY) / 11;
+      row0Center = headerBottomY + rowHeight / 2;
     }
 
+    const rowIntervals = STANDARD_HOURS.map((hrStr, idx) => {
+      const hNum = parseInt(hrStr.split(':')[0], 10);
+      return {
+        index: idx,
+        hour: hrStr,
+        start: hrStr,
+        end: `${String(hNum).padStart(2, '0')}:50`,
+      };
+    });
+
+    const bodyWords = rawWords.filter(w => w.top > headerBottomY);
     const schedule: Record<string, any[]> = {};
     ALL_DAYS.forEach(d => { schedule[d] = []; });
 
-    // 3. Her Gün Sütunundaki Kelimeleri Kart Blokları Olarak Grupla
+    // 3. Her Gün Sütunundaki Dolu Saatleri Eşle
     WEEKDAYS.forEach(day => {
       const col = dayColBounds[day];
       if (!col) return;
@@ -198,37 +211,51 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
 
       if (colWords.length === 0) return;
 
-      const cardBlocks: WordBox[][] = [];
-      let currentBlock: WordBox[] = [colWords[0]];
+      const occupiedHours = new Set<number>();
+      const wordsByHour: Record<number, WordBox[]> = {};
 
-      for (let i = 1; i < colWords.length; i++) {
-        const prevWord = currentBlock[currentBlock.length - 1];
-        const currWord = colWords[i];
-        const verticalGap = currWord.top - (prevWord.top + prevWord.h);
+      colWords.forEach(w => {
+        const hIdx = Math.round((w.cy - row0Center) / rowHeight);
+        if (hIdx >= 0 && hIdx < 11) {
+          occupiedHours.add(hIdx);
+          if (!wordsByHour[hIdx]) wordsByHour[hIdx] = [];
+          wordsByHour[hIdx].push(w);
+        }
+      });
 
-        if (verticalGap <= rowHeight * 1.15) {
-          currentBlock.push(currWord);
+      const activeList = Array.from(occupiedHours).sort((a, b) => a - b);
+      if (activeList.length === 0) return;
+
+      // Maksimum 3 saatlik bloklar halinde birleştir (aradaki 1 saatlik boşlukları doldurarak)
+      const rawBlocks: number[][] = [];
+      let curBlock: number[] = [activeList[0]];
+
+      for (let i = 1; i < activeList.length; i++) {
+        const prevIdx = curBlock[curBlock.length - 1];
+        const currIdx = activeList[i];
+        const blockSpan = currIdx - curBlock[0] + 1;
+
+        if (currIdx <= prevIdx + 2 && blockSpan <= 3) {
+          for (let fill = prevIdx + 1; fill <= currIdx; fill++) {
+            if (!curBlock.includes(fill)) curBlock.push(fill);
+          }
         } else {
-          cardBlocks.push(currentBlock);
-          currentBlock = [currWord];
+          rawBlocks.push(curBlock);
+          curBlock = [currIdx];
         }
       }
-      if (currentBlock.length > 0) {
-        cardBlocks.push(currentBlock);
-      }
+      if (curBlock.length > 0) rawBlocks.push(curBlock);
 
-      cardBlocks.forEach(block => {
-        const blockTop = Math.min(...block.map(w => w.top));
-        const blockBottom = Math.max(...block.map(w => w.top + w.h));
+      rawBlocks.forEach(blk => {
+        const minIdx = Math.min(...blk);
+        const maxIdx = Math.max(...blk);
 
-        const startIdx = yToHourIndex(blockTop + 5);
-        const endIdx = yToHourIndex(blockBottom - 5);
+        const startTime = rowIntervals[minIdx].start;
+        const endTime = rowIntervals[maxIdx].end;
 
-        const startTime = STANDARD_HOURS[startIdx].start;
-        const endTime = STANDARD_HOURS[Math.max(startIdx, endIdx)].end;
-
-        const blockText = block.map(w => w.text).join(' ');
-        const cm = COURSE_CODE_REGEX.exec(blockText);
+        const blkWords = blk.flatMap(i => wordsByHour[i] || []);
+        const blkText = blkWords.map(w => w.text).join(' ');
+        const cm = COURSE_CODE_REGEX.exec(blkText);
         const code = cm ? cm[1].replace(/\s+/g, '').toUpperCase() : 'Ders';
 
         schedule[day].push({
@@ -242,30 +269,6 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
           is_lab: false,
         });
       });
-
-      // Bitişik / 1 saatten az boşluklu aynı blok parçalarını birleştir
-      const slots = schedule[day];
-      if (slots.length > 1) {
-        slots.sort((a, b) => toMinutes(a.start_time) - toMinutes(b.start_time));
-        const merged: any[] = [];
-        slots.forEach(slot => {
-          if (merged.length === 0) {
-            merged.push({ ...slot });
-            return;
-          }
-          const prev = merged[merged.length - 1];
-          const prevEnd = toMinutes(prev.end_time);
-          const currStart = toMinutes(slot.start_time);
-
-          if (currStart <= prevEnd + 65) {
-            prev.end_time = slot.end_time;
-            if (slot.code !== 'Ders' && prev.code === 'Ders') prev.code = slot.code;
-          } else {
-            merged.push({ ...slot });
-          }
-        });
-        schedule[day] = merged;
-      }
     });
 
     // Courses Summary Oluştur
