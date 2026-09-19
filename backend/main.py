@@ -217,6 +217,256 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
             except Exception:
                 pass
 
+DAY_NAMES_LIST = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"]
+CODE_RE_PATTERN = re.compile(r"^[A-Za-zÇĞİÖŞÜçğıöşü]{2,6}\d{3,6}$")
+SECTION_RE_PATTERN = re.compile(r"[Ss][Bb]\.?\s*\)?\s*(\d+)")
+TIME_RE_PATTERN = re.compile(r"(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})")
+
+def _strip_tr_str(s: str) -> str:
+    repl = str.maketrans("İıŞşÇçĞğÖöÜü", "IiSsCcGgOoUu")
+    return s.translate(repl).upper().strip()
+
+def _ocr_words_from_image(image, lang: str = "tur+eng") -> List[dict]:
+    import pytesseract
+    try:
+        data = pytesseract.image_to_data(image, lang=lang, output_type=pytesseract.Output.DICT)
+    except Exception:
+        data = pytesseract.image_to_data(image, lang="eng", output_type=pytesseract.Output.DICT)
+
+    words = []
+    n = len(data.get("text", []))
+    for i in range(n):
+        text = data["text"][i].strip()
+        if not text:
+            continue
+        words.append({
+            "text": text,
+            "left": data["left"][i],
+            "top": data["top"][i],
+            "width": data["width"][i],
+            "height": data["height"][i],
+        })
+    return words
+
+def _find_header_columns_in_words(words: List[dict]) -> Optional[Dict[str, float]]:
+    targets = {
+        "SAAT": "SAAT",
+        "PAZARTESI": "Pazartesi",
+        "SALI": "Salı",
+        "CARSAMBA": "Çarşamba",
+        "PERSEMBE": "Perşembe",
+        "CUMA": "Cuma",
+        "CUMARTESI": "Cumartesi",
+        "PAZAR": "Pazar",
+    }
+    found: Dict[str, float] = {}
+    candidates = [w for w in words if w["top"] < 260]
+    for w in candidates:
+        norm = _strip_tr_str(w["text"])
+        if norm in targets:
+            day = targets[norm]
+            cx = w["left"] + w["width"] / 2
+            if day not in found:
+                found[day] = cx
+    return found if "SAAT" in found and len(found) >= 3 else None
+
+def _refine_column_boundaries_in_words(header_centers: Dict[str, float], body_words: List[dict], image_width: int) -> List[tuple]:
+    ordered = sorted(header_centers.items(), key=lambda kv: kv[1])
+    names = [n for n, _ in ordered]
+    centers = [c for _, c in ordered]
+    rough_bounds = [(centers[i - 1] + centers[i]) / 2 for i in range(1, len(centers))]
+
+    def bucket_of(cx: float) -> int:
+        idx = 0
+        for b in rough_bounds:
+            if cx < b:
+                return idx
+            idx += 1
+        return idx
+
+    buckets: List[List[dict]] = [[] for _ in names]
+    for w in body_words:
+        cx = w["left"] + w["width"] / 2
+        buckets[bucket_of(cx)].append(w)
+
+    def content_words(ws):
+        return [w for w in ws if len(w["text"]) >= 3]
+
+    min_left = []
+    max_right = []
+    for ws in buckets:
+        cw = content_words(ws) or ws
+        if cw:
+            min_left.append(min(w["left"] for w in cw))
+            max_right.append(max(w["left"] + w["width"] for w in cw))
+        else:
+            min_left.append(None)
+            max_right.append(None)
+
+    refined_bounds = []
+    for i in range(1, len(names)):
+        left_edge = max_right[i - 1]
+        right_edge = min_left[i]
+        if left_edge is not None and right_edge is not None and right_edge > left_edge:
+            refined_bounds.append((left_edge + right_edge) / 2)
+        else:
+            refined_bounds.append(rough_bounds[i - 1])
+
+    result = []
+    for i in range(1, len(names)):
+        x_min = refined_bounds[i - 1]
+        x_max = refined_bounds[i] if i < len(refined_bounds) else image_width
+        result.append((names[i], x_min, x_max))
+    return result
+
+def _group_words_into_lines(words: List[dict], tol: int = 14) -> List[List[dict]]:
+    ws = sorted(words, key=lambda w: w["top"])
+    lines: List[List[dict]] = []
+    for w in ws:
+        placed = False
+        for line in lines:
+            if abs(line[0]["top"] - w["top"]) <= tol:
+                line.append(w)
+                placed = True
+                break
+        if not placed:
+            lines.append([w])
+    for line in lines:
+        line.sort(key=lambda w: w["left"])
+    lines.sort(key=lambda line: line[0]["top"])
+    return lines
+
+def _line_text_from_words(line: List[dict]) -> str:
+    return " ".join(w["text"] for w in line)
+
+def _parse_single_card_from_block(block: List[List[dict]]) -> Optional[dict]:
+    if not block:
+        return None
+    header_text = _line_text_from_words(block[0])
+    code_match = CODE_RE_PATTERN.match(block[0][0]["text"])
+    if not code_match:
+        return None
+    course_code = block[0][0]["text"]
+
+    section = None
+    sec_m = SECTION_RE_PATTERN.search(header_text)
+    if sec_m:
+        section = int(sec_m.group(1))
+
+    time_line_idx = None
+    start_time = end_time = None
+    for i, line in enumerate(block[1:], start=1):
+        t = TIME_RE_PATTERN.search(_line_text_from_words(line))
+        if t:
+            start_time, end_time = t.group(1), t.group(2)
+            time_line_idx = i
+            break
+
+    name_lines = block[1:time_line_idx] if time_line_idx else block[1:]
+    name = " ".join(_line_text_from_words(l) for l in name_lines).strip()
+
+    room = None
+    if time_line_idx is not None:
+        room_lines = block[time_line_idx + 1:]
+        room = " ".join(_line_text_from_words(l) for l in room_lines).strip() or None
+
+    return {
+        "course_code": course_code,
+        "section": section,
+        "name": name or None,
+        "start": start_time,
+        "end": end_time,
+        "room": room,
+    }
+
+def _parse_cards_from_lines(lines: List[List[dict]]) -> List[dict]:
+    start_idxs = [i for i, line in enumerate(lines) if CODE_RE_PATTERN.match(line[0]["text"])]
+    cards = []
+    for n, start in enumerate(start_idxs):
+        end = start_idxs[n + 1] if n + 1 < len(start_idxs) else len(lines)
+        block = lines[start:end]
+        c = _parse_single_card_from_block(block)
+        if c:
+            cards.append(c)
+    return cards
+
+def parse_schedule_image_ytu(image) -> dict:
+    words = _ocr_words_from_image(image)
+    if not words:
+        raise ValueError("Görselde OCR kelimesi bulunamadı.")
+    
+    header_centers = _find_header_columns_in_words(words)
+    if not header_centers:
+        raise ValueError("Şema gün başlıkları tespit edilemedi.")
+
+    header_bottom = max(w["top"] + w["height"] for w in words if w["top"] < 260)
+    body_words = [w for w in words if w["top"] > header_bottom]
+    columns = _refine_column_boundaries_in_words(header_centers, body_words, image.width)
+
+    schedule: Dict[str, list] = {d: [] for d in DAY_NAMES_LIST}
+    courses_summary_map: Dict[tuple, dict] = {}
+
+    for day, x_min, x_max in columns:
+        col_words = [w for w in body_words if x_min <= w["left"] < x_max]
+        if not col_words:
+            continue
+        lines = _group_words_into_lines(col_words)
+        cards = _parse_cards_from_lines(lines)
+        for c in cards:
+            start_t = c["start"] or "09:00"
+            end_t = c["end"] or "10:50"
+            sec_no = str(c["section"]) if c["section"] else "1"
+            code = c["course_code"].upper()
+            name = c["name"] or code
+            classroom = c["room"] or "Derslik"
+
+            item = {
+                "section": sec_no,
+                "code": code,
+                "name": name,
+                "classroom": classroom,
+                "instructor": "",
+                "start_time": start_t,
+                "end_time": end_t,
+                "is_lab": "LAB" in classroom.upper() or "LAB" in name.upper()
+            }
+            if day in schedule:
+                schedule[day].append(item)
+
+            ckey = (code, sec_no)
+            if ckey not in courses_summary_map:
+                courses_summary_map[ckey] = {
+                    "code": code,
+                    "name": name,
+                    "section": sec_no,
+                    "instructor": "",
+                    "classrooms": set(),
+                    "time_slots": []
+                }
+            courses_summary_map[ckey]["classrooms"].add(classroom)
+            courses_summary_map[ckey]["time_slots"].append({
+                "day": day,
+                "start_time": start_t,
+                "end_time": end_t,
+                "classroom": classroom,
+                "is_lab": item["is_lab"]
+            })
+
+    summary_list = []
+    for ckey, cinfo in courses_summary_map.items():
+        cinfo["classrooms"] = sorted(list(cinfo["classrooms"]))
+        summary_list.append(cinfo)
+
+    return {
+        "status": "success",
+        "student_id": "Görsel",
+        "student_name": "Öğrenci (Görsel)",
+        "term": "Aktif Dönem",
+        "title": "YTÜ Ders Programı Görseli",
+        "schedule": schedule,
+        "courses_summary": summary_list
+    }
+
 @app.post('/api/parse-schedule-file')
 async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
     filename = file.filename.lower()
@@ -233,7 +483,7 @@ async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
 
         try:
             img = Image.open(tmp_path)
-            # 1. PNG metadata (tEXt chunk / info) kontol et
+            # 1. PNG metadata (tEXt chunk / info) kontrol et
             raw_meta = img.info.get('schedule_data') or img.info.get('ptu_schedule')
             if raw_meta:
                 try:
@@ -242,10 +492,17 @@ async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
                 except Exception:
                     pass
             
-            # 2. Eğer metadata yoksa dosya adı / varsayılan yapı dönderilebilir veya istemci tarafında çözümlenebilir
+            # 2. Metadata yoksa kullanıcının YTÜ OCR script algoritması ile görseli ayrıştır
+            try:
+                data = parse_schedule_image_ytu(img)
+                if data and data.get("schedule"):
+                    return data
+            except Exception as ocr_err:
+                print("YTÜ OCR Parse error:", ocr_err)
+            
             raise HTTPException(
                 status_code=400, 
-                detail='Yüklenen görselde gömülü ders programı verisi bulunamadı. Lütfen siteden indirdiğiniz orijinal PNG belgesini veya OBS üzerinden aldığınız Report.pdf belgesini yükleyiniz.'
+                detail='Yüklenen görseldeki YTÜ ders programı şeması okunamadı. Lütfen görselin net ve yüksek çözünürlüklü olduğundan veya Report.pdf belgesi yüklediğinizden emin olun.'
             )
         except HTTPException:
             raise

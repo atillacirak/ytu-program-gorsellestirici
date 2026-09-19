@@ -4,3 +4,5 @@ pdfplumber
 pypdfium2
 python-multipart
 pydantic
+pytesseract
+pillow
