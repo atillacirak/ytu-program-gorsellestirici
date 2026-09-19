@@ -67,8 +67,17 @@ export function injectMetadataToPngDataUrl(dataUrl: string, payloadObj: any): st
     fullChunk.set(chunkData, 8);
     view.setUint32(8 + dataLen, crcVal, false);
 
-    // IHDR chunk'ından sonrasına (8 byte PNG header + 25 byte IHDR = offset 33) ekle
-    const insertOffset = 33;
+    // tEXt chunk'ini PNG dosyasinin sonundaki IEND chunk'indan hemen oncesine ekle
+    let insertOffset = bytes.length - 12;
+    // Güvenlik kontrolü: Eger son 12 byte IEND degilse dosya sonuna ekle
+    const decoder = new TextDecoder('utf-8');
+    if (bytes.length >= 12) {
+      const tailType = decoder.decode(bytes.subarray(bytes.length - 8, bytes.length - 4));
+      if (tailType !== 'IEND') {
+        insertOffset = bytes.length;
+      }
+    }
+
     const newBytes = new Uint8Array(bytes.length + chunkTotalLen);
     newBytes.set(bytes.subarray(0, insertOffset), 0);
     newBytes.set(fullChunk, insertOffset);

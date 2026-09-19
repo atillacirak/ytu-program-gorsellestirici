@@ -120,7 +120,7 @@ export default function CompareView() {
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || 'Dosya ayrıştırılamadı. Lütfen geçerli bir Report.pdf veya siteden indirilmiş PNG yükleyin.');
+          throw new Error(errData.detail || 'Yüklenen PNG görselinde veri bulunamadı. Ekran görüntüsü (ss) veya WhatsApp ile gönderilen görsellerde veri kaybolabilir. Lütfen orijinal Report.pdf belgesini veya siteden doğrudan yeni indirilmiş PNG belgesini yükleyiniz.');
         }
         parsedData = await res.json();
       }
