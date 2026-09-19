@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { extractMetadataFromPngArrayBuffer } from '../utils/pngMetadata';
+import { parseScheduleImageWithOcr } from '../utils/pngOcrParser';
 
 export interface StudentSchedule {
   id: string;
@@ -108,6 +109,15 @@ export default function CompareView() {
         parsedData = extractMetadataFromPngArrayBuffer(buffer);
       }
 
+      if (!parsedData && file.name.toLowerCase().match(/\.(png|jpg|jpeg)$/)) {
+        // Metadatasız veya SS/WhatsApp PNG görselleri için OCR tablosu ayrıştırmasını dene
+        try {
+          parsedData = await parseScheduleImageWithOcr(file);
+        } catch (ocrErr) {
+          console.warn('OCR fallback error, attempting backend parse:', ocrErr);
+        }
+      }
+
       if (!parsedData) {
         // Backend API'ye gönder
         const formData = new FormData();
@@ -120,7 +130,7 @@ export default function CompareView() {
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || 'Yüklenen PNG görselinde veri bulunamadı. Ekran görüntüsü (ss) veya WhatsApp ile gönderilen görsellerde veri kaybolabilir. Lütfen orijinal Report.pdf belgesini veya siteden doğrudan yeni indirilmiş PNG belgesini yükleyiniz.');
+          throw new Error(errData.detail || 'Dosya okunamadı. Lütfen görselin net olduğundan veya Report.pdf yüklediğinizden emin olun.');
         }
         parsedData = await res.json();
       }
