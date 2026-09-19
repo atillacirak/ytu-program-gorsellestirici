@@ -218,155 +218,289 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                 pass
 
 
-
 # ---------------------------------------------------------------------------
-# PNG / gorsel ayrıstırma -- basit saat+gun tespiti
-# Ders kodu zorunlu degil; bulunamazsa 'Ders' yazar.
+# Coklu-Strateji PNG / Gorsel Ayrıştırıcı (Istemci Tesseract.js ile senkron)
 # ---------------------------------------------------------------------------
 
-_DAYS_DISPLAY = ['Pazartesi', 'Sali', 'Carsamba', 'Persembe', 'Cuma', 'Cumartesi', 'Pazar']
+ALL_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
+WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma']
+DAY_INDEX_MAP = {'Pazartesi': 0, 'Salı': 1, 'Çarşamba': 2, 'Perşembe': 3, 'Cuma': 4}
 
-_DAY_NORM_MAP = {
-    'PAZARTESI': 'Pazartesi',
-    'SALI':      'Sali',
-    'CARSAMBA':  'Carsamba',
-    'PERSEMBE':  'Persembe',
-    'CUMA':      'Cuma',
-    'CUMARTESI': 'Cumartesi',
-    'PAZAR':     'Pazar',
-}
+TIME_RANGE_RE = re.compile(r'(\d{1,2})[\s.:](\d{2})\s*[-–~to/]\s*(\d{1,2})[\s.:](\d{2})')
+SINGLE_TIME_RE = re.compile(r'^(\d{1,2})[\s.:](\d{2})$')
+COURSE_CODE_RE = re.compile(r'([A-Za-zÇĞİÖŞÜçğıöşü]{2,6}\s*\d{3,6})')
 
-_TRANGE_RE  = re.compile(r'(\d{1,2})[.:](\d{2})\s*[-–]\s*(\d{1,2})[.:](\d{2})')
-_TSINGLE_RE = re.compile(r'^\d{1,2}[.:]\d{2}$')
-_CODE_RE    = re.compile(r'([A-ZÇĞİÖŞÜ]{2,6}\s*\d{3,6})')
+def _match_day_name(raw_str: str) -> Optional[str]:
+    s = raw_str.lower().translate(str.maketrans('İıŞşÇçĞğÖöÜü', 'iissccggoouu'))
+    if re.search(r'pazar.*tesi|pzr.*tes|pzt|pazarte', s):
+        return 'Pazartesi'
+    if re.search(r'sal[i1!l]', s):
+        return 'Salı'
+    if re.search(r'c[a-z]*r[s]am|car[s]|crs', s):
+        return 'Çarşamba'
+    if re.search(r'per[s]em|prs', s):
+        return 'Perşembe'
+    if re.search(r'cum[a-z]*tesi|cmt', s):
+        return 'Cumartesi'
+    if re.search(r'cum[a!]', s):
+        return 'Cuma'
+    if re.search(r'pazar', s):
+        return 'Pazar'
+    return None
 
-def _tr_norm(s):
-    table = str.maketrans('IışŞçÇğĞöÖüÜ', 'IISSCCGGOOUu')
-    return s.translate(table).upper().strip()
+def _to_minutes(time_str: str) -> int:
+    parts = time_str.replace('.', ':').split(':')
+    h = int(parts[0]) if len(parts) > 0 and parts[0].isdigit() else 0
+    m = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+    return h * 60 + m
 
-def _ocr_words(image, lang='tur+eng'):
+def _ocr_words_data(image, lang: str = 'tur+eng') -> List[dict]:
     import pytesseract
     try:
         raw = pytesseract.image_to_data(image, lang=lang, output_type=pytesseract.Output.DICT)
     except Exception:
         raw = pytesseract.image_to_data(image, lang='eng', output_type=pytesseract.Output.DICT)
-    out = []
+
+    words = []
     for i, txt in enumerate(raw.get('text', [])):
         txt = (txt or '').strip()
         if txt:
-            out.append({'text': txt, 'left': raw['left'][i], 'top': raw['top'][i],
-                        'w': raw['width'][i], 'h': raw['height'][i]})
-    return out
+            left = raw['left'][i]
+            top = raw['top'][i]
+            w = raw['width'][i]
+            h = raw['height'][i]
+            words.append({
+                'text': txt,
+                'left': left,
+                'top': top,
+                'w': w,
+                'h': h,
+                'cx': left + w / 2,
+                'cy': top + h / 2,
+            })
+    return words
 
-def _group_lines(words, tol=12):
-    lines = []
-    for w in sorted(words, key=lambda x: x['top']):
-        for ln in lines:
-            if abs(ln[0]['top'] - w['top']) <= tol:
-                ln.append(w)
-                break
-        else:
-            lines.append([w])
-    for ln in lines:
-        ln.sort(key=lambda x: x['left'])
-    return sorted(lines, key=lambda ln: ln[0]['top'])
-
-def parse_schedule_image_ytu(image):
-    words = _ocr_words(image)
+def parse_schedule_image_ytu(image) -> dict:
+    words = _ocr_words_data(image)
     if not words:
-        raise ValueError('OCR kelimesi bulunamadi.')
+        raise ValueError('Görselde OCR kelimesi bulunamadı.')
 
     img_w = image.width
     img_h = image.height
-    header_limit = min(int(img_h * 0.28), 350)
 
-    # 1. Gun sutunlarini bul
-    day_cols = {}
-    for w in words:
-        if w['top'] >= header_limit:
-            continue
-        norm = _tr_norm(w['text'])
-        if norm in _DAY_NORM_MAP:
-            display = _DAY_NORM_MAP[norm]
-            if display not in day_cols:
-                cx = w['left'] + w['w'] / 2
-                day_cols[display] = {'cx': cx, 'x0': w['left'], 'x1': w['left'] + w['w']}
+    # 1. Gün Sütunlarını Tespit Et (Üst %40)
+    header_limit = min(int(img_h * 0.40), 400)
+    header_words = [w for w in words if w['top'] < header_limit]
 
-    if day_cols:
-        sdays = sorted(day_cols.items(), key=lambda kv: kv[1]['cx'])
-        for i, (day, info) in enumerate(sdays):
-            info['xmin'] = (sdays[i-1][1]['cx'] + info['cx']) / 2 if i > 0 else 0
-            info['xmax'] = (info['cx'] + sdays[i+1][1]['cx']) / 2 if i < len(sdays)-1 else img_w
-
-    # 2. Saat araligini iceren satirlari bul
-    all_lines = _group_lines(words)
-    time_rows = []
-    for ln in all_lines:
-        txt = ' '.join(x['text'] for x in ln)
-        m = _TRANGE_RE.search(txt)
-        if m:
-            start = '{:02d}:{}'.format(int(m.group(1)), m.group(2))
-            end   = '{:02d}:{}'.format(int(m.group(3)), m.group(4))
-            y_mid = ln[0]['top'] + ln[0]['h'] / 2
-            time_rows.append({'y': y_mid, 'start': start, 'end': end, 'ln': ln})
-
-    # 3. Body kelimeleri (baslik altinda)
-    hdr_bottom = max((w['top'] + w['h'] for w in words if w['top'] < header_limit), default=100)
-    body = [w for w in words if w['top'] > hdr_bottom]
-
-    # 4. Her (gun, saat) icin ders var mi?
-    schedule = {d: [] for d in _DAYS_DISPLAY}
-    summary_map = {}
-
-    t_sorted = sorted(time_rows, key=lambda r: r['y'])
-    for ti, tr in enumerate(t_sorted):
-        ln_h = tr['ln'][0]['h'] if tr['ln'] else 20
-        y0 = tr['y'] - ln_h * 0.8
-        y1 = t_sorted[ti+1]['y'] - ln_h * 0.3 if ti+1 < len(t_sorted) else tr['y'] + ln_h * 6
-
-        for day, col in day_cols.items():
-            xmin = col.get('xmin', col['x0'] - 30)
-            xmax = col.get('xmax', col['x1'] + 30)
-
-            slot_wds = [
-                w for w in body
-                if xmin <= (w['left'] + w['w'] / 2) < xmax
-                and y0 <= w['top'] < y1
-                and not _TRANGE_RE.search(w['text'])
-                and not _TSINGLE_RE.match(w['text'])
-                and len(w['text']) >= 2
-            ]
-            if not slot_wds:
-                continue
-
-            slot_txt = ' '.join(x['text'] for x in slot_wds)
-            cm = _CODE_RE.search(slot_txt)
-            code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
-
-            item = {
-                'section': '1', 'code': code, 'name': code,
-                'classroom': '', 'instructor': '',
-                'start_time': tr['start'], 'end_time': tr['end'], 'is_lab': False,
+    detected_days = {}
+    for w in header_words:
+        d = _match_day_name(w['text'])
+        if d and d not in detected_days:
+            detected_days[d] = {
+                'day': d,
+                'cx': w['cx'],
+                'top': w['top'],
+                'bottom': w['top'] + w['h'],
             }
-            if day in schedule and not any(s['start_time'] == tr['start'] for s in schedule[day]):
-                schedule[day].append(item)
 
-            key = (code, day, tr['start'])
+    detected_entries = sorted(detected_days.values(), key=lambda x: x['cx'])
+    day_cols = {}
+
+    if len(detected_entries) >= 2:
+        first = detected_entries[0]
+        last = detected_entries[-1]
+        first_idx = DAY_INDEX_MAP.get(first['day'], 0)
+        last_idx = DAY_INDEX_MAP.get(last['day'], 4)
+        col_width = (last['cx'] - first['cx']) / max(1, last_idx - first_idx)
+
+        for idx, day in enumerate(WEEKDAYS):
+            cx = first['cx'] + (idx - first_idx) * col_width
+            day_cols[day] = {
+                'cx': cx,
+                'xmin': max(0.0, cx - col_width / 2),
+                'xmax': min(float(img_w), cx + col_width / 2),
+            }
+    else:
+        left_margin = img_w * 0.14
+        col_width = (img_w - left_margin) / 5
+        for idx, day in enumerate(WEEKDAYS):
+            cx = left_margin + (idx + 0.5) * col_width
+            day_cols[day] = {
+                'cx': cx,
+                'xmin': left_margin + idx * col_width,
+                'xmax': left_margin + (idx + 1) * col_width,
+            }
+
+    header_bottom = max((d['bottom'] for d in detected_entries), default=img_h * 0.12)
+    body_words = [w for w in words if w['top'] > header_bottom]
+
+    schedule: Dict[str, list] = {d: [] for d in ALL_DAYS}
+
+    # STRATEJİ 1: Sütun İçinde Doğrudan Saat Aralığı Tespiti
+    for day in WEEKDAYS:
+        col = day_cols.get(day)
+        if not col:
+            continue
+        col_wds = [w for w in body_words if col['xmin'] <= w['cx'] < col['xmax']]
+        if not col_wds:
+            continue
+
+        # Satırlara grupla
+        col_lines: List[List[dict]] = []
+        for w in sorted(col_wds, key=lambda x: x['top']):
+            for line in col_lines:
+                if abs(line[0]['top'] - w['top']) <= 14:
+                    line.append(w)
+                    break
+            else:
+                col_lines.append([w])
+
+        for line in col_lines:
+            line_str = ' '.join(w['text'] for w in line)
+            tm = TIME_RANGE_RE.search(line_str)
+            if tm:
+                start = f"{int(tm.group(1)):02d}:{tm.group(2)}"
+                end = f"{int(tm.group(3)):02d}:{tm.group(4)}"
+                cm = COURSE_CODE_RE.search(line_str)
+                code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
+
+                if not any(s['start_time'] == start for s in schedule[day]):
+                    schedule[day].append({
+                        'section': '1',
+                        'code': code,
+                        'name': code,
+                        'classroom': '',
+                        'instructor': '',
+                        'start_time': start,
+                        'end_time': end,
+                        'is_lab': False,
+                    })
+
+    # STRATEJİ 2: Izgara / Satır-Sütun Kesişim Tespiti (Klasik Tablo)
+    total_found = sum(len(v) for v in schedule.values())
+    if total_found == 0:
+        first_col_xmin = day_cols.get('Pazartesi', {}).get('xmin', img_w * 0.15)
+        left_words = [w for w in words if w['cx'] < first_col_xmin + 30 and w['top'] > header_bottom]
+
+        hour_rows = []
+        for w in left_words:
+            trm = TIME_RANGE_RE.search(w['text'])
+            if trm:
+                hour_rows.append({
+                    'start': f"{int(trm.group(1)):02d}:{trm.group(2)}",
+                    'end': f"{int(trm.group(3)):02d}:{trm.group(4)}",
+                    'y': w['cy'],
+                })
+                continue
+            sm = SINGLE_TIME_RE.match(w['text'])
+            if sm:
+                h_num = int(sm.group(1))
+                hour_rows.append({
+                    'start': f"{h_num:02d}:{sm.group(2)}",
+                    'end': f"{h_num:02d}:50",
+                    'y': w['cy'],
+                })
+
+        # Tekrarlayan Y saatlerini temizle
+        hour_rows_sorted = sorted(hour_rows, key=lambda r: r['y'])
+        clean_rows = []
+        for r in hour_rows_sorted:
+            if not any(abs(cr['y'] - r['y']) < 15 or cr['start'] == r['start'] for cr in clean_rows):
+                clean_rows.append(r)
+
+        if clean_rows:
+            for r_idx, row in enumerate(clean_rows):
+                if r_idx + 1 < len(clean_rows):
+                    row_h = clean_rows[r_idx + 1]['y'] - row['y']
+                elif r_idx > 0:
+                    row_h = row['y'] - clean_rows[r_idx - 1]['y']
+                else:
+                    row_h = 50.0
+
+                y_top = row['y'] - row_h * 0.45
+                y_bot = row['y'] + row_h * 0.55
+
+                for day in WEEKDAYS:
+                    col = day_cols.get(day)
+                    if not col:
+                        continue
+                    cell_wds = [
+                        w for w in body_words
+                        if (col['xmin'] + 5) <= w['cx'] < (col['xmax'] - 5)
+                        and y_top <= w['cy'] < y_bot
+                        and not TIME_RANGE_RE.search(w['text'])
+                        and not SINGLE_TIME_RE.match(w['text'])
+                        and len(w['text']) >= 2
+                    ]
+                    if cell_wds:
+                        cell_txt = ' '.join(w['text'] for w in cell_wds)
+                        cm = COURSE_CODE_RE.search(cell_txt)
+                        code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
+
+                        schedule[day].append({
+                            'section': '1',
+                            'code': code,
+                            'name': code,
+                            'classroom': '',
+                            'instructor': '',
+                            'start_time': row['start'],
+                            'end_time': row['end'],
+                            'is_lab': False,
+                        })
+
+            # Ardışık saatleri birleştir
+            for day in WEEKDAYS:
+                slots = schedule[day]
+                if len(slots) <= 1:
+                    continue
+                slots.sort(key=lambda s: _to_minutes(s['start_time']))
+                merged = []
+                for s in slots:
+                    if not merged:
+                        merged.append(dict(s))
+                        continue
+                    prev = merged[-1]
+                    prev_end = _to_minutes(prev['end_time'])
+                    curr_start = _to_minutes(s['start_time'])
+                    if curr_start - prev_end <= 15 and curr_start >= prev_end - 10:
+                        prev['end_time'] = s['end_time']
+                    else:
+                        merged.append(dict(s))
+                schedule[day] = merged
+
+    summary_map = {}
+    for day, items in schedule.items():
+        for it in items:
+            key = (it['code'], day, it['start_time'])
             if key not in summary_map:
                 summary_map[key] = {
-                    'code': code, 'name': code, 'section': '1',
-                    'instructor': '', 'classrooms': [],
-                    'time_slots': [{'day': day, 'start_time': tr['start'],
-                                    'end_time': tr['end'], 'classroom': '', 'is_lab': False}]
+                    'code': it['code'],
+                    'name': it['name'],
+                    'section': it['section'],
+                    'instructor': '',
+                    'classrooms': [],
+                    'time_slots': [{
+                        'day': day,
+                        'start_time': it['start_time'],
+                        'end_time': it['end_time'],
+                        'classroom': '',
+                        'is_lab': False,
+                    }]
                 }
+
+    total_courses = sum(len(v) for v in schedule.values())
+    if total_courses == 0:
+        raise ValueError('Görselde ders programı tespit edilemedi.')
 
     return {
         'status': 'success',
-        'student_id': 'Gorsel', 'student_name': 'Ogrenci (Gorsel)',
-        'term': 'Aktif Donem', 'title': 'YTU Ders Programi',
-        'schedule': schedule, 'courses_summary': list(summary_map.values()),
+        'student_id': 'Görsel',
+        'student_name': 'Ders Programı',
+        'term': 'Aktif Dönem',
+        'title': 'YTÜ Ders Programı Görseli',
+        'schedule': schedule,
+        'courses_summary': list(summary_map.values()),
     }
-
 
 @app.post('/api/parse-schedule-file')
 async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
@@ -384,30 +518,38 @@ async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
 
         try:
             img = Image.open(tmp_path)
+            # 1. PNG metadata (tEXt chunk) kontrol et
             raw_meta = img.info.get('schedule_data') or img.info.get('ptu_schedule')
             if raw_meta:
                 try:
-                    return json.loads(raw_meta)
+                    data = json.loads(raw_meta)
+                    if data and data.get('schedule'):
+                        return data
                 except Exception:
                     pass
+
+            # 2. Metadata yoksa Çift Stratejili OCR ile ayrıştır
             try:
                 data = parse_schedule_image_ytu(img)
                 total = sum(len(v) for v in data.get('schedule', {}).values())
                 if total > 0:
                     return data
             except Exception as ocr_err:
-                print('OCR error:', ocr_err)
+                print('Backend OCR error:', ocr_err)
 
-            raise HTTPException(status_code=400,
-                detail='Gorseldeki ders programi okunamadi. Yuksek cozunurluklu gorsel veya Report.pdf yukleyin.')
+            raise HTTPException(
+                status_code=400,
+                detail='Görseldeki ders saatleri okunamadı. Lütfen görselin net olduğundan veya Report.pdf yüklediğinizden emin olun.'
+            )
         except HTTPException:
             raise
         except Exception as e:
-            raise HTTPException(status_code=500, detail='Gorsel islem hatasi: ' + str(e))
+            raise HTTPException(status_code=500, detail=f'Görsel işleme hatası: {str(e)}')
         finally:
-            try:
-                os.remove(tmp_path)
-            except Exception:
-                pass
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except Exception:
+                    pass
     else:
-        raise HTTPException(status_code=400, detail='Lutfen gecerli bir PDF veya PNG dosyasi yukleyin.')
+        raise HTTPException(status_code=400, detail='Lütfen geçerli bir PDF veya PNG/JPG görseli yükleyin.')
