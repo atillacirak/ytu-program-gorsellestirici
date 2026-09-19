@@ -96,64 +96,122 @@ export default function CompareView() {
     setStudents(students.map(s => s.id === id ? { ...s, name: newName } : s));
   };
 
+  // Tekil dosya ayrıştırma yardımcısı
+  const parseSingleFile = async (file: File) => {
+    let parsedData: any = null;
+
+    if (file.name.toLowerCase().endsWith('.png')) {
+      const buffer = await file.arrayBuffer();
+      parsedData = extractMetadataFromPngArrayBuffer(buffer);
+    }
+
+    if (!parsedData && file.name.toLowerCase().match(/\.(png|jpg|jpeg)$/)) {
+      try {
+        parsedData = await parseScheduleImageWithOcr(file);
+      } catch (ocrErr) {
+        console.warn('OCR fallback error:', ocrErr);
+      }
+    }
+
+    if (!parsedData) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API_BASE}/api/parse-schedule-file`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Dosya okunamadı.');
+      }
+      parsedData = await res.json();
+    }
+    return parsedData;
+  };
+
+  // Toplu dosya yükleme fonksiyonu (Birden fazla PDF/PNG dosyasını tek seferde işler)
+  const handleBatchFilesUpload = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+
+    const newStudents: StudentSchedule[] = files.map((file, idx) => ({
+      id: String(Date.now() + idx),
+      name: file.name.replace(/\.[^/.]+$/, '').substring(0, 15) || `${idx + 1}. Öğrenci`,
+      color: STUDENT_COLORS[idx % STUDENT_COLORS.length].bg,
+      file,
+      loading: true,
+      error: null,
+      data: null,
+    }));
+
+    setStudents(newStudents);
+
+    // Tüm dosyaları sırayla/paralel ayrıştır
+    await Promise.all(
+      files.map(async (file, idx) => {
+        const studentId = newStudents[idx].id;
+        try {
+          const parsedData = await parseSingleFile(file);
+          if (parsedData && parsedData.schedule) {
+            setStudents(prev =>
+              prev.map(s =>
+                s.id === studentId
+                  ? {
+                      ...s,
+                      loading: false,
+                      data: parsedData,
+                      name: parsedData.student_name ? parsedData.student_name.split(' ')[0] : s.name,
+                    }
+                  : s
+              )
+            );
+          } else {
+            setStudents(prev =>
+              prev.map(s => (s.id === studentId ? { ...s, loading: false, error: 'Ayrıştırılamadı.' } : s))
+            );
+          }
+        } catch (err: any) {
+          setStudents(prev =>
+            prev.map(s =>
+              s.id === studentId ? { ...s, loading: false, error: err.message || 'Okuma hatası.' } : s
+            )
+          );
+        }
+      })
+    );
+  };
+
   // Dosya yükleme ve ayrıştırma (PDF veya PNG)
   const handleFileUpload = async (id: string, file: File) => {
-    setStudents(prev => prev.map(s => s.id === id ? { ...s, file, loading: true, error: null } : s));
+    setStudents(prev => prev.map(s => (s.id === id ? { ...s, file, loading: true, error: null } : s)));
 
     try {
-      let parsedData: any = null;
-
-      if (file.name.toLowerCase().endsWith('.png')) {
-        // Önce istemci tarafında gömülü metadata okumayı dene
-        const buffer = await file.arrayBuffer();
-        parsedData = extractMetadataFromPngArrayBuffer(buffer);
-      }
-
-      if (!parsedData && file.name.toLowerCase().match(/\.(png|jpg|jpeg)$/)) {
-        // Metadatasız veya SS/WhatsApp PNG görselleri için OCR tablosu ayrıştırmasını dene
-        try {
-          parsedData = await parseScheduleImageWithOcr(file);
-        } catch (ocrErr) {
-          console.warn('OCR fallback error, attempting backend parse:', ocrErr);
-        }
-      }
-
-      if (!parsedData) {
-        // Backend API'ye gönder
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const res = await fetch(`${API_BASE}/api/parse-schedule-file`, {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.detail || 'Dosya okunamadı. Lütfen görselin net olduğundan veya Report.pdf yüklediğinizden emin olun.');
-        }
-        parsedData = await res.json();
-      }
+      const parsedData = await parseSingleFile(file);
 
       if (parsedData && parsedData.schedule) {
-        setStudents(prev => prev.map(s => s.id === id ? {
-          ...s,
-          loading: false,
-          data: parsedData,
-          name: s.name === `${students.findIndex(x => x.id === id) + 1}. Öğrenci` && parsedData.student_name
-            ? parsedData.student_name.split(' ')[0]
-            : s.name
-        } : s));
+        setStudents(prev =>
+          prev.map(s =>
+            s.id === id
+              ? {
+                  ...s,
+                  loading: false,
+                  data: parsedData,
+                  name:
+                    s.name === `${students.findIndex(x => x.id === id) + 1}. Öğrenci` && parsedData.student_name
+                      ? parsedData.student_name.split(' ')[0]
+                      : s.name,
+                }
+              : s
+          )
+        );
       } else {
         throw new Error('Dosyadan ders programı okunamadı.');
       }
     } catch (err: any) {
       console.error('File parse error:', err);
-      setStudents(prev => prev.map(s => s.id === id ? {
-        ...s,
-        loading: false,
-        error: err.message || 'Dosya okuma hatası'
-      } : s));
+      setStudents(prev =>
+        prev.map(s => (s.id === id ? { ...s, loading: false, error: err.message || 'Dosya okuma hatası' } : s))
+      );
     }
   };
 
@@ -250,23 +308,63 @@ export default function CompareView() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Toplu Dosya Yükleme Butonu */}
+            <label className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer">
+              <Upload className="w-3.5 h-3.5" />
+              <span>📂 Toplu Dosya Seç (Birden Çok PDF / PNG)</span>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.png,.jpg,.jpeg"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleBatchFilesUpload(e.target.files);
+                  }
+                }}
+                className="hidden"
+              />
+            </label>
+
             <button
               onClick={handleAddStudent}
               disabled={students.length >= 6}
               className="px-3.5 py-1.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Kişi Ekle</span>
+              <span>+ Tekil Kişi Ekle</span>
             </button>
           </div>
         </div>
 
-        {/* Kurallar ve Desteklenen Formatlar */}
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-3 text-xs text-slate-600">
-          <Info className="w-4 h-4 text-[#002855] flex-shrink-0" />
-          <span>
-            OBS sisteminden aldığınız resmi <strong>Report.pdf</strong> belgesini veya bu siteden indirdiğiniz <strong>PNG</strong> ders programı görsellerini yükleyebilirsiniz.
-          </span>
+        {/* Sürükle Bırak / Toplu Yükleme Dropzone Alanı */}
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              handleBatchFilesUpload(e.dataTransfer.files);
+            }
+          }}
+          className="border-2 border-dashed border-amber-300 bg-amber-50/40 hover:bg-amber-50/70 p-4 rounded-xl text-center space-y-1 transition-all cursor-pointer relative"
+        >
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.png,.jpg,.jpeg"
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleBatchFilesUpload(e.target.files);
+              }
+            }}
+            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+          />
+          <div className="flex items-center justify-center gap-2 text-xs font-bold text-amber-950">
+            <Upload className="w-4 h-4 text-amber-600" />
+            <span>Tüm Ders Programı Dosyalarını Buraya Sürükleyip Bırakın veya Tıklayın</span>
+          </div>
+          <p className="text-[11px] text-amber-800">
+            Birden çok Report.pdf veya PNG belgesini tek seferde topluca seçip bırakabilirsiniz
+          </p>
         </div>
       </div>
 
