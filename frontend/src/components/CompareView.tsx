@@ -27,12 +27,12 @@ export interface StudentSchedule {
 }
 
 const STUDENT_COLORS = [
-  { bg: 'bg-blue-500', lightBg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-300' },
-  { bg: 'bg-emerald-500', lightBg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-300' },
-  { bg: 'bg-purple-500', lightBg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-300' },
-  { bg: 'bg-amber-500', lightBg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-300' },
-  { bg: 'bg-rose-500', lightBg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-300' },
-  { bg: 'bg-indigo-500', lightBg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-300' },
+  { bg: 'bg-blue-600', lightBg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-300' },
+  { bg: 'bg-violet-600', lightBg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-300' },
+  { bg: 'bg-rose-600', lightBg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-300' },
+  { bg: 'bg-amber-600', lightBg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-300' },
+  { bg: 'bg-cyan-600', lightBg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-300' },
+  { bg: 'bg-fuchsia-600', lightBg: 'bg-fuchsia-50', text: 'text-fuchsia-700', border: 'border-fuchsia-300' },
 ];
 
 const HOURS = [
@@ -59,8 +59,8 @@ export default function CompareView() {
   const [selectedSlotDetails, setSelectedSlotDetails] = useState<{
     day: string;
     hour: string;
-    busy: { studentName: string; color: string; course: any }[];
-    free: { studentName: string; color: string }[];
+    busy: { studentId: string; studentName: string; color: string; course: any }[];
+    free: { studentId: string; studentName: string; color: string }[];
   } | null>(null);
 
   // Yeni öğrenci ekleme
@@ -217,10 +217,18 @@ export default function CompareView() {
 
   // Bir saat diliminde öğrencinin derste olup olmadığını döndürür
   const getStudentBusySlot = (studentData: any, day: string, hourStr: string) => {
-    if (!studentData || !studentData.schedule || !studentData.schedule[day]) return null;
+    if (!studentData || !studentData.schedule) return null;
+
+    const normalizeDay = (d: string) =>
+      d.toLowerCase().replace(/ı/g, 'i').replace(/ç/g, 'c').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ö/g, 'o').replace(/ü/g, 'u').trim();
+
+    const targetDay = normalizeDay(day);
+    const dayKey = Object.keys(studentData.schedule).find(k => normalizeDay(k) === targetDay);
+    if (!dayKey || !Array.isArray(studentData.schedule[dayKey])) return null;
+
     const hrM = toMinutes(hourStr);
 
-    for (const item of studentData.schedule[day]) {
+    for (const item of studentData.schedule[dayKey]) {
       const startM = toMinutes(item.start_time);
       const endM = toMinutes(item.end_time);
       if (hrM >= startM && hrM < endM) {
@@ -542,20 +550,32 @@ export default function CompareView() {
                 </p>
               </div>
 
-              {/* Lejant (Renk Renk İndikatörler) */}
-              <div className="flex items-center gap-3 text-xs font-medium text-slate-700">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500 border border-emerald-600" />
-                  <span>Tam Müsait</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-amber-400 border border-amber-500" />
-                  <span>Kısmen Müsait</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-slate-300 border border-slate-400" />
-                  <span>Dolu</span>
-                </span>
+              {/* Lejant & Öğrenci Renkleri */}
+              <div className="flex items-center gap-3 text-xs font-medium text-slate-700 flex-wrap">
+                <div className="flex items-center gap-2 border-r border-slate-200 pr-3">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 border border-emerald-600" />
+                    <span>Tam Müsait</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500" />
+                    <span>Kısmen Müsait</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-300 border border-slate-400" />
+                    <span>Dolu</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-slate-400 text-[11px]">Kişi Renkleri:</span>
+                  {loadedStudents.map((st) => (
+                    <span key={st.id} className="flex items-center gap-1 text-[11px] font-semibold text-slate-700">
+                      <span className={`w-2.5 h-2.5 rounded-full ${st.color}`} />
+                      <span>{st.name}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -589,15 +609,15 @@ export default function CompareView() {
                       </td>
 
                       {DAYS.map((day, dIdx) => {
-                        const busyList: { studentName: string; color: string; course: any }[] = [];
-                        const freeList: { studentName: string; color: string }[] = [];
+                        const busyList: { studentId: string; studentName: string; color: string; course: any }[] = [];
+                        const freeList: { studentId: string; studentName: string; color: string }[] = [];
 
                         loadedStudents.forEach((st) => {
                           const course = getStudentBusySlot(st.data, day, hour);
                           if (course) {
-                            busyList.push({ studentName: st.name, color: st.color, course });
+                            busyList.push({ studentId: st.id, studentName: st.name, color: st.color, course });
                           } else {
-                            freeList.push({ studentName: st.name, color: st.color });
+                            freeList.push({ studentId: st.id, studentName: st.name, color: st.color });
                           }
                         });
 
@@ -633,21 +653,20 @@ export default function CompareView() {
                                 )}
                               </div>
 
-                              {/* Derste Olan Kişilerin Minik Renkli Noktaları */}
-                              <div className="flex items-center gap-1 flex-wrap pt-0.5">
-                                {loadedStudents.map((st) => {
-                                  const isBusy = busyList.some(b => b.studentName === st.name);
-                                  return (
+                              {/* SADECE Derste Olan Kişilerin Renkli Çemberleri */}
+                              {busyList.length > 0 && (
+                                <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                                  {busyList.map((b) => (
                                     <span
-                                      key={st.id}
-                                      className={`w-2.5 h-2.5 rounded-full border ${
-                                        isBusy ? `${st.color} border-slate-400` : 'bg-white border-emerald-500'
-                                      }`}
-                                      title={`${st.name}: ${isBusy ? 'Derste' : 'Boş'}`}
-                                    />
-                                  );
-                                })}
-                              </div>
+                                      key={b.studentId}
+                                      className={`w-3.5 h-3.5 rounded-full border border-white shadow-xs flex items-center justify-center text-[8px] font-bold text-white ${b.color}`}
+                                      title={`${b.studentName}: Derste (${b.course?.code || b.course?.name || 'Ders'})`}
+                                    >
+                                      {b.studentName.charAt(0).toUpperCase()}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </td>
                         );
