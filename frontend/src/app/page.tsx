@@ -54,7 +54,7 @@ export default function Home() {
   const [visualizerError, setVisualizerError] = useState<string | null>(null);
   const [visualizerViewMode, setVisualizerViewMode] = useState<'table' | 'cards' | 'summary'>('table');
   const [visualizerColorMode, setVisualizerColorMode] = useState<'colored' | 'monochrome'>('colored');
-  const [showInstructor, setShowInstructor] = useState<boolean>(true);
+  const [showInstructor, setShowInstructor] = useState<boolean>(false);
   const [showSection, setShowSection] = useState<boolean>(true);
   const [showNotes, setShowNotes] = useState<boolean>(true);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -94,6 +94,8 @@ export default function Home() {
       const savedShowInst = localStorage.getItem('ytu_show_instructor');
       if (savedShowInst !== null) {
         setShowInstructor(savedShowInst === 'true');
+      } else {
+        setShowInstructor(false);
       }
       const savedShowSec = localStorage.getItem('ytu_show_section');
       if (savedShowSec !== null) {
@@ -274,9 +276,9 @@ export default function Home() {
       localStorage.setItem('ytu_schedule_scale', '1.0');
     } catch (e) {}
 
-    setShowInstructor(true);
+    setShowInstructor(false);
     try {
-      localStorage.setItem('ytu_show_instructor', 'true');
+      localStorage.setItem('ytu_show_instructor', 'false');
     } catch (e) {}
 
     setShowSection(true);
