@@ -51,6 +51,15 @@ export const INSTRUCTOR_MAP: Record<string, string> = {
   'ŞD': 'Arş. Grv. Şeyma Derdiyok',
 };
 
+// Reverse map for quick lookup
+const REVERSE_MAP: Record<string, string> = {};
+Object.entries(INSTRUCTOR_MAP).forEach(([code, fullName]) => {
+  REVERSE_MAP[fullName.toLowerCase()] = code;
+  // Also strip titles for lookup
+  const cleanName = fullName.replace(/^(Prof\.|Doç\.|Dr\.|Arş\.\s*Grv\.|Öğr\.\s*Gör\.)\s*/gi, '').trim().toLowerCase();
+  REVERSE_MAP[cleanName] = code;
+});
+
 export function getFullInstructorName(codeOrName?: string): string {
   if (!codeOrName) return '';
   const trimmed = codeOrName.trim();
@@ -62,4 +71,55 @@ export function getFullInstructorName(codeOrName?: string): string {
     return INSTRUCTOR_MAP[trimmed];
   }
   return codeOrName;
+}
+
+export function getInstructorAbbreviation(codeOrName?: string): { short: string; full: string } {
+  if (!codeOrName) return { short: '', full: '' };
+  const trimmed = codeOrName.trim();
+  const lower = trimmed.toLowerCase();
+
+  const genericTerms = ['bölüm öğretim üyeleri', 'bölüm öğretim üyesi', 'bölüm öğr. el.', 'bölüm öğr. el', 'bilinmiyor', '-'];
+  if (genericTerms.includes(lower)) {
+    return { short: '', full: '' };
+  }
+
+  // 1. Direct code in map (e.g., "ACK" -> short: "ACK", full: "Doç. Dr. Ali Can Karaca")
+  if (INSTRUCTOR_MAP[trimmed]) {
+    return { short: trimmed, full: INSTRUCTOR_MAP[trimmed] };
+  }
+
+  // 2. Direct code in uppercase (e.g. "ack")
+  if (INSTRUCTOR_MAP[trimmed.toUpperCase()]) {
+    return { short: trimmed.toUpperCase(), full: INSTRUCTOR_MAP[trimmed.toUpperCase()] };
+  }
+
+  // 3. Full name in reverse map
+  if (REVERSE_MAP[lower]) {
+    const code = REVERSE_MAP[lower];
+    return { short: code, full: INSTRUCTOR_MAP[code] || trimmed };
+  }
+
+  // 4. If code is already short (<= 5 chars uppercase like "XYZ")
+  if (/^[A-ZÇĞİÖŞÜ0-9]{2,5}$/.test(trimmed)) {
+    return { short: trimmed, full: trimmed };
+  }
+
+  // 5. Generate abbreviation from name:
+  // Remove academic titles
+  const clean = trimmed
+    .replace(/^(Prof\.|Prof|Doç\.|Doç|Doc\.|Doc|Dr\.|Dr|Arş\.\s*Grv\.|Arş\.Grv\.|Öğr\.\s*Gör\.|Öğr\.Gör\.|Öğr\.\s*Üyesi)\s+/gi, '')
+    .trim();
+
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    return { short: parts[0].substring(0, 10), full: trimmed };
+  }
+  if (parts.length >= 2) {
+    const lastName = parts[parts.length - 1];
+    const initials = parts.slice(0, -1).map(p => p[0].toUpperCase() + '.').join('');
+    const short = `${initials} ${lastName}`;
+    return { short, full: trimmed };
+  }
+
+  return { short: trimmed, full: trimmed };
 }

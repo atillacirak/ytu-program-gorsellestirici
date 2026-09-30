@@ -101,4 +101,21 @@ body {
   }
 }
 
+/* Document Typography Modes - Force applies font-family to ALL child elements */
+.doc-font-inter, .doc-font-inter * {
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif !important;
+}
+
+.doc-font-outfit, .doc-font-outfit * {
+  font-family: var(--font-outfit), system-ui, -apple-system, sans-serif !important;
+}
+
+.doc-font-lora, .doc-font-lora * {
+  font-family: var(--font-lora), Georgia, 'Times New Roman', serif !important;
+}
+
+.doc-font-mono, .doc-font-mono * {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace !important;
+}
+
 

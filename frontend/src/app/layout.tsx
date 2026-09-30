@@ -1,10 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Lora, Outfit } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const lora = Lora({
+  variable: "--font-lora",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin", "latin-ext"],
   display: "swap",
 });
@@ -69,7 +81,7 @@ export default function RootLayout({
     <html
       lang="tr"
       style={{ colorScheme: "light" }}
-      className={`${inter.variable} ${jetbrainsMono.variable} font-sans h-full antialiased bg-[#f8fafc] text-slate-900`}
+      className={`${inter.variable} ${lora.variable} ${outfit.variable} ${jetbrainsMono.variable} font-sans h-full antialiased bg-[#f8fafc] text-slate-900`}
     >
       <body
         className="min-h-full flex flex-col bg-[#f8fafc] text-slate-900 font-sans"

@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Calendar, Building2, Upload, RefreshCw, FileText,
   AlertCircle, Download, Printer, LayoutGrid, BookOpen, Clock,
-  Sparkles, Layers, GraduationCap, Palette
+  Sparkles, Layers, GraduationCap, Palette, Pencil, X, Check,
+  Trash2, StickyNote, Users, Edit3, RotateCcw
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
-import { getFullInstructorName } from '../utils/instructors';
+import { getFullInstructorName, getInstructorAbbreviation } from '../utils/instructors';
 import CompareView from '../components/CompareView';
 import { injectMetadataToPngDataUrl } from '../utils/pngMetadata';
-import { Users } from 'lucide-react';
 
 // Bir ders slotunun süresini saat cinsinden hesaplar (örn: 09:00 - 10:50 -> 2 saat, 09:00 - 11:50 -> 3 saat, 09:00 - 09:50 -> 1 saat)
 const getSlotDurationHours = (startTime?: string, endTime?: string): number => {
@@ -50,10 +50,248 @@ export default function Home() {
     schedule: Record<string, any[]>;
     courses_summary: any[];
   } | null>(null);
+  const [originalVisualizerData, setOriginalVisualizerData] = useState<any | null>(null);
   const [visualizerError, setVisualizerError] = useState<string | null>(null);
   const [visualizerViewMode, setVisualizerViewMode] = useState<'table' | 'cards' | 'summary'>('table');
   const [visualizerColorMode, setVisualizerColorMode] = useState<'colored' | 'monochrome'>('colored');
+  const [showInstructor, setShowInstructor] = useState<boolean>(true);
+  const [showSection, setShowSection] = useState<boolean>(true);
+  const [showNotes, setShowNotes] = useState<boolean>(true);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [courseNotes, setCourseNotes] = useState<Record<string, string>>({});
+  const [scheduleFontFamily, setScheduleFontFamily] = useState<'default' | 'inter' | 'lora' | 'mono'>('default');
+  const [scheduleFontScale, setScheduleFontScale] = useState<number>(1.0);
+
+  const [editingCourse, setEditingCourse] = useState<any | null>(null);
+  const [editingCourseForm, setEditingCourseForm] = useState<{
+    originalCode: string;
+    originalSection: string;
+    code: string;
+    name: string;
+    section: string;
+    classroom: string;
+    instructor: string;
+    note: string;
+  }>({
+    originalCode: '',
+    originalSection: '',
+    code: '',
+    name: '',
+    section: '',
+    classroom: '',
+    instructor: '',
+    note: '',
+  });
+
   const visualizerScheduleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const savedNotes = localStorage.getItem('ytu_schedule_notes');
+      if (savedNotes) {
+        setCourseNotes(JSON.parse(savedNotes));
+      }
+      const savedShowInst = localStorage.getItem('ytu_show_instructor');
+      if (savedShowInst !== null) {
+        setShowInstructor(savedShowInst === 'true');
+      }
+      const savedShowSec = localStorage.getItem('ytu_show_section');
+      if (savedShowSec !== null) {
+        setShowSection(savedShowSec === 'true');
+      }
+      const savedShowNot = localStorage.getItem('ytu_show_notes');
+      if (savedShowNot !== null) {
+        setShowNotes(savedShowNot === 'true');
+      }
+      const savedFont = localStorage.getItem('ytu_schedule_font');
+      if (savedFont) {
+        if (savedFont === 'default') setScheduleFontFamily('default');
+        else if (savedFont === 'sans' || savedFont === 'outfit' || savedFont === 'inter') setScheduleFontFamily('inter');
+        else if (savedFont === 'serif' || savedFont === 'lora') setScheduleFontFamily('lora');
+        else if (savedFont === 'mono') setScheduleFontFamily('mono');
+      }
+      const savedScale = localStorage.getItem('ytu_schedule_scale');
+      if (savedScale) {
+        setScheduleFontScale(parseFloat(savedScale) || 1.0);
+      }
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+  }, []);
+
+  const handleToggleShowInstructor = (checked: boolean) => {
+    setShowInstructor(checked);
+    try {
+      localStorage.setItem('ytu_show_instructor', String(checked));
+    } catch (e) {}
+  };
+
+  const handleToggleShowSection = (checked: boolean) => {
+    setShowSection(checked);
+    try {
+      localStorage.setItem('ytu_show_section', String(checked));
+    } catch (e) {}
+  };
+
+  const handleToggleShowNotes = (checked: boolean) => {
+    setShowNotes(checked);
+    try {
+      localStorage.setItem('ytu_show_notes', String(checked));
+    } catch (e) {}
+  };
+
+  const handleChangeFontFamily = (family: 'default' | 'inter' | 'lora' | 'mono') => {
+    setScheduleFontFamily(family);
+    try {
+      localStorage.setItem('ytu_schedule_font', family);
+    } catch (e) {}
+  };
+
+  const handleChangeFontScale = (scale: number) => {
+    setScheduleFontScale(scale);
+    try {
+      localStorage.setItem('ytu_schedule_scale', String(scale));
+    } catch (e) {}
+  };
+
+  const getDocFontClass = () => {
+    if (scheduleFontFamily === 'lora') return 'doc-font-lora';
+    if (scheduleFontFamily === 'mono') return 'doc-font-mono';
+    if (scheduleFontFamily === 'inter') return 'doc-font-inter';
+    return '';
+  };
+
+  const handleOpenEditModal = (course: any) => {
+    setEditingCourse(course);
+    setEditingCourseForm({
+      originalCode: course.code,
+      originalSection: course.section || '',
+      code: course.code,
+      name: course.name || '',
+      section: course.section || '',
+      classroom: course.classroom || '',
+      instructor: course.instructor || '',
+      note: courseNotes[course.code] || '',
+    });
+  };
+
+  const handleSaveCourseForm = () => {
+    if (!editingCourse || !visualizerData) return;
+    const { originalCode, code, name, section, classroom, instructor, note } = editingCourseForm;
+    const cleanCode = code.trim().toUpperCase() || originalCode;
+
+    // 1. Update schedule items
+    const updatedSchedule: Record<string, any[]> = {};
+    Object.keys(visualizerData.schedule).forEach(day => {
+      updatedSchedule[day] = (visualizerData.schedule[day] || []).map((it: any) => {
+        if (it.code === originalCode) {
+          return {
+            ...it,
+            code: cleanCode,
+            name: name.trim() || it.name,
+            section: section.trim(),
+            classroom: classroom.trim(),
+            instructor: instructor.trim(),
+            is_lab: /lab/i.test(classroom),
+          };
+        }
+        return it;
+      });
+    });
+
+    // 2. Update courses_summary
+    const updatedSummary = (visualizerData.courses_summary || []).map((c: any) => {
+      if (c.code === originalCode) {
+        return {
+          ...c,
+          code: cleanCode,
+          name: name.trim() || c.name,
+          section: section.trim(),
+          instructor: instructor.trim(),
+          classrooms: [classroom.trim()],
+        };
+      }
+      return c;
+    });
+
+    // 3. Update notes
+    const newNotes = { ...courseNotes };
+    if (originalCode !== cleanCode) {
+      delete newNotes[originalCode];
+    }
+    if (note.trim()) {
+      newNotes[cleanCode] = note.trim();
+    } else {
+      delete newNotes[cleanCode];
+    }
+
+    setVisualizerData({
+      ...visualizerData,
+      schedule: updatedSchedule,
+      courses_summary: updatedSummary,
+    });
+
+    setCourseNotes(newNotes);
+    try {
+      localStorage.setItem('ytu_schedule_notes', JSON.stringify(newNotes));
+    } catch (e) {}
+
+    setEditingCourse(null);
+  };
+
+  const handleDeleteNoteFromForm = () => {
+    if (!editingCourseForm.originalCode) return;
+    const cleanCode = editingCourseForm.code.trim().toUpperCase() || editingCourseForm.originalCode;
+    const newNotes = { ...courseNotes };
+    delete newNotes[editingCourseForm.originalCode];
+    delete newNotes[cleanCode];
+    setCourseNotes(newNotes);
+    setEditingCourseForm(prev => ({ ...prev, note: '' }));
+    try {
+      localStorage.setItem('ytu_schedule_notes', JSON.stringify(newNotes));
+    } catch (e) {}
+  };
+  const handleResetChanges = () => {
+    if (!window.confirm("Yapılan tüm ders bilgisi düzenlemeleri, özel notlar ve yazı tipi ayarları orijinal haline sıfırlanacak. Onaylıyor musunuz?")) {
+      return;
+    }
+
+    if (originalVisualizerData) {
+      setVisualizerData(JSON.parse(JSON.stringify(originalVisualizerData)));
+    }
+    setCourseNotes({});
+    try {
+      localStorage.removeItem('ytu_schedule_notes');
+    } catch (e) {}
+
+    setScheduleFontFamily('default');
+    try {
+      localStorage.setItem('ytu_schedule_font', 'default');
+    } catch (e) {}
+
+    setScheduleFontScale(1.0);
+    try {
+      localStorage.setItem('ytu_schedule_scale', '1.0');
+    } catch (e) {}
+
+    setShowInstructor(true);
+    try {
+      localStorage.setItem('ytu_show_instructor', 'true');
+    } catch (e) {}
+
+    setShowSection(true);
+    try {
+      localStorage.setItem('ytu_show_section', 'true');
+    } catch (e) {}
+
+    setShowNotes(true);
+    try {
+      localStorage.setItem('ytu_show_notes', 'true');
+    } catch (e) {}
+
+    setEditingCourse(null);
+  };
+
   const handleVisualizerPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -78,6 +316,7 @@ export default function Home() {
       const data = await res.json();
       if (data && data.schedule) {
         setVisualizerData(data);
+        setOriginalVisualizerData(JSON.parse(JSON.stringify(data)));
       } else {
         throw new Error('PDF dosyasında ders programı bilgisi bulunamadı.');
       }
@@ -138,14 +377,27 @@ export default function Home() {
     <div className="min-h-screen flex flex-col font-sans bg-[#f8fafc] text-slate-900 transition-colors duration-200">
       <header className="border-b border-slate-200 bg-white sticky top-0 z-50 no-print shadow-xs">
         <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-lg bg-[#002855] flex items-center justify-center text-white shadow-xs">
+          <button
+            type="button"
+            onClick={() => {
+              setVisualizerData(null);
+              setActiveTab('single');
+              setIsEditMode(false);
+              setVisualizerError(null);
+            }}
+            className="flex items-center space-x-3.5 text-left group cursor-pointer focus:outline-none"
+            title="Yeni belge yükleme sayfasına dön"
+          >
+            <div className="w-10 h-10 rounded-lg bg-[#002855] group-hover:bg-[#001f42] flex items-center justify-center text-white shadow-xs transition-colors">
               <GraduationCap className="w-5 h-5 text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                  YTÜ Program Görselleştirici
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#002855] tracking-tight transition-colors flex items-center gap-1.5">
+                  <span>YTÜ Program Görselleştirici</span>
+                  <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                    v1.2
+                  </span>
                 </h1>
                 <span className="hidden sm:inline-block px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono rounded font-semibold">
                   OBS
@@ -155,7 +407,7 @@ export default function Home() {
                 Öğrenci Haftalık Ders Programı Çizelgesi Portalı
               </p>
             </div>
-          </div>
+          </button>
 
           <div className="flex items-center gap-3">
             {/* Sekme Değiştirici */}
@@ -414,9 +666,59 @@ export default function Home() {
                           title="Standart Renksiz / Sade Görünüm"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          <span>Sade (Renksiz)</span>
+                          <span>Sade</span>
                         </button>
                       </div>
+
+                      {/* Görünüm Tikleri (Hoca Kısaltması, Şube, Notlar) */}
+                      <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
+                        <label className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-50 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer transition-all select-none shadow-2xs" title="Hoca kısaltmalarını göster/gizle">
+                          <input
+                            type="checkbox"
+                            checked={showInstructor}
+                            onChange={(e) => handleToggleShowInstructor(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded text-[#002855] focus:ring-0 cursor-pointer accent-[#002855]"
+                          />
+                          <GraduationCap className="w-3.5 h-3.5 text-[#002855]" />
+                          <span>Hoca</span>
+                        </label>
+
+                        <label className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-50 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer transition-all select-none shadow-2xs" title="Şube (grup) bilgisini göster/gizle">
+                          <input
+                            type="checkbox"
+                            checked={showSection}
+                            onChange={(e) => handleToggleShowSection(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded text-[#002855] focus:ring-0 cursor-pointer accent-[#002855]"
+                          />
+                          <Layers className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Şube</span>
+                        </label>
+
+                        <label className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-50 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer transition-all select-none shadow-2xs" title="Ders notlarını göster/gizle">
+                          <input
+                            type="checkbox"
+                            checked={showNotes}
+                            onChange={(e) => handleToggleShowNotes(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded text-[#002855] focus:ring-0 cursor-pointer accent-[#002855]"
+                          />
+                          <StickyNote className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Notlar</span>
+                        </label>
+                      </div>
+
+                      {/* Düzenle Modu Butonu */}
+                      <button
+                        onClick={() => setIsEditMode(!isEditMode)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border shadow-2xs ${
+                          isEditMode
+                            ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 border-amber-600 font-bold'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+                        }`}
+                        title="Derslere tıklayarak not ekleme / düzenleme modunu aç/kapat"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>{isEditMode ? 'Düzenleme Açık' : 'Not Ekle / Düzenle'}</span>
+                      </button>
 
                       <button
                         onClick={handleExportVisualizerPNG}
@@ -428,7 +730,7 @@ export default function Home() {
 
                       <button
                         onClick={() => window.print()}
-                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-all cursor-pointer shadow-2xs"
+                        className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-all cursor-pointer shadow-2xs"
                         title="Yazdır"
                       >
                         <Printer className="w-3.5 h-3.5" />
@@ -447,6 +749,108 @@ export default function Home() {
                       </label>
                     </div>
                   </div>
+
+                  {/* Düzenle Modu Aktif Bilgilendirme ve Özelleştirme Çubuğu */}
+                  {isEditMode && (
+                    <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-950 shadow-2xs animate-fade-in no-print">
+                      <div className="flex items-center gap-2 font-medium">
+                        <Pencil className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span><strong>Düzenle Modu Aktif:</strong> Bilgileri veya notu değiştirmek için tablodaki derse tıklayın.</span>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        {/* Font Seçenekleri */}
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-amber-300 shadow-2xs">
+                          <span className="text-[11px] font-bold text-slate-600 mr-0.5">Yazı Tipi:</span>
+                          <button
+                            type="button"
+                            onClick={() => handleChangeFontFamily('default')}
+                            className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                              scheduleFontFamily === 'default' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                            }`}
+                            title="Default (Orijinal düzen - Başlıklar sans, kod/saat mono)"
+                          >
+                            Default
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleChangeFontFamily('inter')}
+                            className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
+                              scheduleFontFamily === 'inter' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                            }`}
+                            title="Modern (Inter Sans - Temiz ve kurumsal)"
+                          >
+                            Modern
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleChangeFontFamily('lora')}
+                            className={`px-2.5 py-0.5 rounded text-[11px] font-serif font-semibold transition-all cursor-pointer ${
+                              scheduleFontFamily === 'lora' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                            }`}
+                            title="Zarif (Lora Serif - Prestijli akademik tırnaklı)"
+                          >
+                            Zarif
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleChangeFontFamily('mono')}
+                            className={`px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold transition-all cursor-pointer ${
+                              scheduleFontFamily === 'mono' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                            }`}
+                            title="Kod (JetBrains Mono - Temiz teknik mono)"
+                          >
+                            Kod
+                          </button>
+                        </div>
+
+                        {/* Yazı Boyutu A- / A+ */}
+                        <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-amber-300 shadow-2xs">
+                          <span className="text-[11px] font-bold text-slate-600 mr-0.5">Boyut:</span>
+                          <button
+                            type="button"
+                            onClick={() => handleChangeFontScale(Math.max(0.8, Math.round((scheduleFontScale - 0.1) * 10) / 10))}
+                            disabled={scheduleFontScale <= 0.8}
+                            className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-800 font-bold rounded text-[11px] transition-all cursor-pointer"
+                            title="Yazıları Küçült"
+                          >
+                            A-
+                          </button>
+                          <span className="font-mono text-[11px] font-bold text-slate-800 px-1 min-w-[36px] text-center">
+                            %{Math.round(scheduleFontScale * 100)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleChangeFontScale(Math.min(1.4, Math.round((scheduleFontScale + 0.1) * 10) / 10))}
+                            disabled={scheduleFontScale >= 1.4}
+                            className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-slate-800 font-bold rounded text-[11px] transition-all cursor-pointer"
+                            title="Yazıları Büyüt"
+                          >
+                            A+
+                          </button>
+                        </div>
+
+                        {/* Sıfırla Butonu */}
+                        <button
+                          type="button"
+                          onClick={handleResetChanges}
+                          className="px-2.5 py-1 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 hover:border-rose-300 font-semibold rounded-lg transition-all text-[11px] shrink-0 shadow-2xs cursor-pointer flex items-center gap-1.5"
+                          title="Tüm ders düzenlemelerini, notları ve yazı tipi ayarlarını orijinal PDF haline sıfırlar"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Değişiklikleri Sıfırla</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsEditMode(false)}
+                          className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg transition-all text-[11px] shrink-0 shadow-2xs cursor-pointer"
+                        >
+                          Düzenlemeyi Bitir
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Özet Göstergeleri */}
                   <div className="flex items-center gap-3 pt-3 border-t border-slate-100 flex-wrap text-xs text-slate-600">
@@ -477,8 +881,11 @@ export default function Home() {
                     <div
                       id="visualizer-a4-document"
                       ref={visualizerScheduleRef}
-                      className="a4-print-target bg-white text-slate-900 p-6 space-y-3 w-full mx-auto rounded-none border-0"
-                      style={{ minWidth: '980px', maxWidth: '1120px' }}
+                      className={`a4-print-target bg-white text-slate-900 p-6 space-y-3 w-full mx-auto rounded-none border-0 transition-all ${getDocFontClass()}`}
+                      style={{
+                        minWidth: '980px',
+                        maxWidth: '1120px',
+                      }}
                     >
                       {/* Resmi Kurumsal Belge Başlığı */}
                       <div className="border-b border-slate-300 pb-2.5 flex items-center justify-between">
@@ -651,6 +1058,8 @@ export default function Home() {
                                     );
 
                                     const isMonochrome = visualizerColorMode === 'monochrome';
+                                    const noteText = courseNotes[it.code];
+                                    const instInfo = getInstructorAbbreviation(it.instructor);
 
                                     return (
                                       <td
@@ -661,56 +1070,139 @@ export default function Home() {
                                           isLastCol ? 'border-r-0' : ''
                                         }`}
                                       >
-                                        <div className={`h-full w-full p-2 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between ${span === 1 ? 'space-y-0.5' : 'space-y-1.5'} transition-all shadow-xs overflow-hidden`}>
-                                          <div className="space-y-0.5 min-w-0">
-                                            {/* Başlık, Şube Bilgisi ve Online Kayıt Simgesi */}
+                                        <div
+                                          onClick={() => {
+                                            if (isEditMode) handleOpenEditModal(it);
+                                          }}
+                                          className={`h-full w-full p-2 rounded border ${palette.bg} ${palette.border} flex flex-col justify-between ${
+                                            span === 1 ? 'space-y-0.5' : 'space-y-1.5'
+                                          } transition-all shadow-xs overflow-hidden relative ${
+                                            isEditMode
+                                              ? 'cursor-pointer ring-2 ring-amber-400 ring-offset-1 hover:brightness-95 hover:shadow-md'
+                                              : ''
+                                          }`}
+                                        >
+                                          <div className="space-y-1 min-w-0">
+                                            {/* Başlık, Şube Bilgisi, Düzenle ve Online Simgeleri */}
                                             <div className="flex items-center justify-between gap-1 min-w-0">
-                                              <span className={`font-mono font-bold text-[12px] truncate ${palette.accent}`}>
-                                                {it.code} {it.section ? `(Şb. ${it.section})` : ''}
+                                              <span
+                                                style={{ fontSize: `${Math.round(12 * scheduleFontScale)}px` }}
+                                                className={`font-mono font-bold whitespace-nowrap ${palette.accent}`}
+                                              >
+                                                {it.code} {showSection && it.section ? `(Şb. ${it.section})` : ''}
                                               </span>
 
-                                              {isOnline && (
-                                                <span
-                                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-mono shrink-0 shadow-2xs ${
-                                                    isMonochrome
-                                                      ? 'bg-white border-slate-300 text-slate-800'
-                                                      : 'bg-rose-50/80 border-rose-300 text-rose-600'
-                                                  }`}
-                                                  title="Online / Sanal Ders"
-                                                >
+                                              <div className="flex items-center gap-1 shrink-0">
+                                                {isEditMode && (
                                                   <span
-                                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                                      isMonochrome ? 'bg-slate-700' : 'bg-rose-500 animate-pulse'
+                                                    className="p-0.5 rounded bg-amber-400 text-slate-950 text-[9px] shadow-2xs font-bold leading-none"
+                                                    title="Not Ekle / Düzenle"
+                                                  >
+                                                    ✏️
+                                                  </span>
+                                                )}
+
+                                                {isOnline && (
+                                                  <span
+                                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-mono shrink-0 shadow-2xs ${
+                                                      isMonochrome
+                                                        ? 'bg-white border-slate-300 text-slate-800'
+                                                        : 'bg-rose-50/80 border-rose-300 text-rose-600'
                                                     }`}
-                                                  />
-                                                  <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                                  </svg>
-                                                </span>
-                                              )}
+                                                    title="Online / Sanal Ders"
+                                                  >
+                                                    <span
+                                                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                                        isMonochrome ? 'bg-slate-700' : 'bg-rose-500 animate-pulse'
+                                                      }`}
+                                                    />
+                                                    <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                    </svg>
+                                                  </span>
+                                                )}
+                                              </div>
                                             </div>
 
                                             {/* Ders Adı */}
-                                            <h4 className={`text-[11px] font-semibold ${palette.text} leading-tight ${span === 1 ? 'line-clamp-1' : 'line-clamp-2'} break-words`}>
+                                            <h4
+                                              style={{ fontSize: `${Math.round(11 * scheduleFontScale)}px`, lineHeight: 1.25 }}
+                                              className={`font-semibold ${palette.text} break-words whitespace-normal leading-snug`}
+                                            >
                                               {it.name}
                                             </h4>
+
+                                            {/* Not Kısmı: Ders Adı ile Saat/Derslik Arasında */}
+                                            {showNotes && (
+                                              noteText ? (
+                                                <div
+                                                  onClick={(e) => {
+                                                    if (isEditMode) {
+                                                      e.stopPropagation();
+                                                      handleOpenEditModal(it);
+                                                    }
+                                                  }}
+                                                  style={{ fontSize: `${Math.round(10 * scheduleFontScale)}px` }}
+                                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border font-semibold max-w-full shadow-2xs ${
+                                                    isEditMode ? 'cursor-pointer hover:bg-amber-200/90' : ''
+                                                  } ${
+                                                    isMonochrome
+                                                      ? 'bg-white border-slate-300 text-slate-800'
+                                                      : 'bg-amber-100/90 border-amber-300 text-amber-950'
+                                                  }`}
+                                                  title={`Not: ${noteText}`}
+                                                >
+                                                  <span className="shrink-0">📌</span>
+                                                  <span className="truncate max-w-[130px]">{noteText}</span>
+                                                </div>
+                                              ) : isEditMode ? (
+                                                <div
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenEditModal(it);
+                                                  }}
+                                                  style={{ fontSize: `${Math.round(10 * scheduleFontScale)}px` }}
+                                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-dashed border-amber-400 bg-amber-50/70 hover:bg-amber-100/90 text-amber-900 font-medium cursor-pointer transition-colors max-w-full shadow-2xs"
+                                                  title="Bu derse not ekle"
+                                                >
+                                                  <span className="text-[9px]">✏️</span>
+                                                  <span className="truncate">+ Not ekle...</span>
+                                                </div>
+                                              ) : null
+                                            )}
                                           </div>
 
-                                          {/* Alt Bilgi: Saat ve Derslik Rozeti */}
+                                          {/* Alt Bilgi: Saat, Derslik Rozeti ve Hoca Kısaltması */}
                                           <div className="pt-1 border-t border-slate-200/80 text-slate-600 space-y-1 min-w-0">
-                                            <p className="font-mono text-slate-500 text-[9.5px] font-medium whitespace-nowrap">
+                                            <p
+                                              style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
+                                              className="font-mono text-slate-500 font-medium whitespace-nowrap"
+                                            >
                                               {it.start_time} - {it.end_time}
                                             </p>
-                                            {it.classroom ? (
-                                              <div
-                                                className={`inline-block max-w-full px-2 py-0.5 rounded-md border text-[11.5px] font-mono font-bold shadow-2xs ${palette.badge}`}
-                                                title={it.classroom}
-                                              >
-                                                <span className="truncate block">
-                                                  {formatClassroomLabel(it.classroom, it.is_lab)}
-                                                </span>
-                                              </div>
-                                            ) : null}
+
+                                            <div className="flex items-center gap-1 flex-wrap">
+                                              {it.classroom ? (
+                                                <div
+                                                  style={{ fontSize: `${Math.round(10.5 * scheduleFontScale)}px` }}
+                                                  className={`inline-block px-1.5 py-0.5 rounded-md border font-mono font-bold shadow-2xs whitespace-nowrap shrink-0 ${palette.badge}`}
+                                                >
+                                                  <span>
+                                                    {formatClassroomLabel(it.classroom, it.is_lab)}
+                                                  </span>
+                                                </div>
+                                              ) : null}
+
+                                              {showInstructor && it.instructor ? (
+                                                <div
+                                                  style={{ fontSize: `${Math.round(10.5 * scheduleFontScale)}px` }}
+                                                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono font-bold shadow-2xs whitespace-nowrap shrink-0 ${palette.badge}`}
+                                                >
+                                                  <span className="text-[9.5px]">👤</span>
+                                                  <span>{it.instructor.trim()}</span>
+                                                </div>
+                                              ) : null}
+                                            </div>
                                           </div>
                                         </div>
                                       </td>
@@ -728,7 +1220,7 @@ export default function Home() {
 
                 {/* GÖRÜNÜM 2: GÜNLÜK DERS DAĞILIMI */}
                 {visualizerViewMode === 'cards' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${getDocFontClass()}`}>
                     {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map(day => {
                       const dayItems = visualizerData.schedule[day] || [];
                       if (dayItems.length === 0) return null;
@@ -747,24 +1239,67 @@ export default function Home() {
 
                           <div className="space-y-2.5">
                             {dayItems.map((it: any, idx: number) => {
-                              const fullInst = getFullInstructorName(it.instructor);
+                              const noteText = courseNotes[it.code];
+                              const instInfo = getInstructorAbbreviation(it.instructor);
+
                               return (
                                 <div
                                   key={idx}
-                                  className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 shadow-2xs"
+                                  onClick={() => {
+                                    if (isEditMode) handleOpenEditModal(it);
+                                  }}
+                                  className={`p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 shadow-2xs ${
+                                    isEditMode ? 'cursor-pointer ring-2 ring-amber-400 ring-offset-1 hover:brightness-95' : ''
+                                  }`}
                                 >
                                   <div className="flex items-center justify-between gap-2">
-                                    <span className="font-mono font-bold text-xs text-blue-700 whitespace-nowrap">
-                                      {it.code} {it.section ? `(Şb. ${it.section})` : ''}
+                                    <span
+                                      style={{ fontSize: `${Math.round(12 * scheduleFontScale)}px` }}
+                                      className="font-mono font-bold text-blue-700 whitespace-nowrap"
+                                    >
+                                      {it.code} {showSection && it.section ? `(Şb. ${it.section})` : ''}
                                     </span>
-                                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white border border-slate-300 text-slate-700 whitespace-nowrap shrink-0 font-medium">
-                                      {it.classroom}
-                                    </span>
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {it.classroom && (
+                                        <span
+                                          style={{ fontSize: `${Math.round(10 * scheduleFontScale)}px` }}
+                                          className="font-mono px-1.5 py-0.5 rounded bg-white border border-slate-300 text-slate-700 whitespace-nowrap shrink-0 font-medium"
+                                        >
+                                          {it.classroom}
+                                        </span>
+                                      )}
+                                      {showInstructor && it.instructor && (
+                                        <span
+                                          style={{ fontSize: `${Math.round(10 * scheduleFontScale)}px` }}
+                                          className="font-mono px-1.5 py-0.5 rounded bg-white border border-slate-300 text-slate-800 whitespace-nowrap shrink-0 font-bold flex items-center gap-1"
+                                        >
+                                          <span>👤</span>
+                                          <span>{it.instructor.trim()}</span>
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
 
-                                  <h4 className="text-xs font-semibold text-slate-900">
+                                  <h4
+                                    style={{ fontSize: `${Math.round(12 * scheduleFontScale)}px` }}
+                                    className="font-semibold text-slate-900"
+                                  >
                                     {it.name}
                                   </h4>
+
+                                  {showNotes && noteText && (
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenEditModal(it);
+                                      }}
+                                      style={{ fontSize: `${Math.round(10.5 * scheduleFontScale)}px` }}
+                                      className="px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 font-medium flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <span className="shrink-0">📌</span>
+                                      <span className="truncate">{noteText}</span>
+                                    </div>
+                                  )}
 
                                   <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-200">
                                     <span className="font-mono text-slate-600 font-medium">
@@ -784,13 +1319,13 @@ export default function Home() {
 
                 {/* GÖRÜNÜM 3: DERSLİK VE DERS LİSTESİ */}
                 {visualizerViewMode === 'summary' && (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 text-slate-900">
+                  <div className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 text-slate-900 ${getDocFontClass()}`}>
                     <div className="border-b border-slate-100 pb-3">
                       <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-[#002855]" />
-                        Kayıtlı Dersler ve Derslik Dağılımı Dökümü
+                        Kayıtlı Dersler, Öğretim Üyeleri ve Derslik Dağılımı Dökümü
                       </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">Ders kodları, şubeler ve derslik ortamları listesi</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Ders kodları, hocalar, şubeler, derslik ortamları ve özel notlar listesi</p>
                     </div>
 
                     <div className="overflow-x-auto">
@@ -800,12 +1335,16 @@ export default function Home() {
                             <th className="p-2.5">Ders Kodu</th>
                             <th className="p-2.5">Ders Adı</th>
                             <th className="p-2.5">Şube</th>
+                            <th className="p-2.5">Öğr. Üyesi / Kısaltma</th>
                             <th className="p-2.5">Derslik / Ortam</th>
                             <th className="p-2.5">Ders Saatleri</th>
+                            <th className="p-2.5">Özel Not</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                           {visualizerData.courses_summary?.map((c: any, idx: number) => {
+                            const noteText = courseNotes[c.code];
+
                             return (
                               <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                 <td className="p-2.5 font-mono font-bold text-blue-700 whitespace-nowrap">
@@ -816,6 +1355,15 @@ export default function Home() {
                                 </td>
                                 <td className="p-2.5 font-mono text-slate-600 whitespace-nowrap">
                                   Şb. {c.section}
+                                </td>
+                                <td className="p-2.5 whitespace-nowrap font-mono text-slate-800">
+                                  {c.instructor ? (
+                                    <span className="font-semibold px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">
+                                      {c.instructor}
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 italic">-</span>
+                                  )}
                                 </td>
                                 <td className="p-2.5">
                                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -840,6 +1388,24 @@ export default function Home() {
                                     ))}
                                   </div>
                                 </td>
+                                <td className="p-2.5">
+                                  {noteText ? (
+                                    <button
+                                      onClick={() => handleOpenEditModal(c)}
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[10.5px] font-medium text-left max-w-xs cursor-pointer"
+                                    >
+                                      <span>📌</span>
+                                      <span className="truncate">{noteText}</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleOpenEditModal(c)}
+                                      className="text-[11px] text-slate-400 hover:text-blue-600 underline cursor-pointer"
+                                    >
+                                      + Not Ekle
+                                    </button>
+                                  )}
+                                </td>
                               </tr>
                             );
                           })}
@@ -852,6 +1418,181 @@ export default function Home() {
             )}
           </div>
       </main>
+
+      {/* DERS BİLGİLERİ VE NOT DÜZENLEME MODALI */}
+      {editingCourse && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in no-print">
+          <div className={`bg-white rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-slate-200 relative ${getDocFontClass()}`}>
+            <button
+              onClick={() => setEditingCourse(null)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Başlık */}
+            <div className="border-b border-slate-100 pb-3 flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-blue-50 text-[#002855]">
+                <Edit3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">
+                  Ders Bilgilerini Düzenle & Not Ekle
+                </h3>
+                <p className="text-[11.5px] text-slate-500">
+                  Ders kodunu, dersliğini, hocasını veya ismini güncelleyebilir, programa not ekleyebilirsiniz.
+                </p>
+              </div>
+            </div>
+
+            {/* Düzenlenebilir Ders Alanları */}
+            <div className="space-y-3">
+              <div className="grid grid-cols-12 gap-3">
+                <div className="col-span-4">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Ders Kodu
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCourseForm.code}
+                    onChange={(e) => setEditingCourseForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    placeholder="Örn: BLM1011"
+                    className="w-full text-xs font-mono font-semibold text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none uppercase"
+                  />
+                </div>
+                <div className="col-span-3">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Şube (Grup)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCourseForm.section}
+                    onChange={(e) => setEditingCourseForm(prev => ({ ...prev, section: e.target.value }))}
+                    placeholder="Örn: 1 veya A"
+                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                  />
+                </div>
+                <div className="col-span-5">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                    <span>Hoca Kısaltması</span>
+                    <span className="text-[10px] text-slate-400 font-normal">(👤)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCourseForm.instructor}
+                    onChange={(e) => setEditingCourseForm(prev => ({ ...prev, instructor: e.target.value }))}
+                    placeholder="Örn: ACK, MEK"
+                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-12 gap-3">
+                <div className="col-span-8">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Ders Adı
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCourseForm.name}
+                    onChange={(e) => setEditingCourseForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Dersin tam veya kısa adı"
+                    className="w-full text-xs font-medium text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                  />
+                </div>
+                <div className="col-span-4">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    Derslik
+                  </label>
+                  <input
+                    type="text"
+                    value={editingCourseForm.classroom}
+                    onChange={(e) => setEditingCourseForm(prev => ({ ...prev, classroom: e.target.value }))}
+                    placeholder="Örn: D-201, Lab 3"
+                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Not Giriş Alanı */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <StickyNote className="w-4 h-4 text-amber-500" />
+                <span>Bu Derse Özel Not / Hatırlatıcı (Programda Gözükür):</span>
+              </label>
+              <textarea
+                rows={2}
+                value={editingCourseForm.note}
+                onChange={(e) => setEditingCourseForm(prev => ({ ...prev, note: e.target.value }))}
+                placeholder="Örn: Vize %40, Proje %30 | Yoklama zorunlu | Teams kodu: abc123"
+                className="w-full text-xs text-slate-900 p-2.5 rounded-xl border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none transition-all placeholder:text-slate-400"
+              />
+
+              {/* Hızlı Not Şablonları */}
+              <div className="space-y-1">
+                <span className="text-[10.5px] font-medium text-slate-500">Hızlı Ekle:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Lablar 2 haftada bir',
+                    'Uygulama saati',
+                    'Ekipman ile gel',
+                    'Yoklama zorunlu',
+                  ].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => {
+                        setEditingCourseForm(prev => ({
+                          ...prev,
+                          note: prev.note ? `${prev.note} | ${tag}` : tag,
+                        }));
+                      }}
+                      className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-medium transition-all cursor-pointer border border-slate-200"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Alt Butonlar */}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+              <div>
+                {(courseNotes[editingCourseForm.originalCode] || editingCourseForm.note) && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteNoteFromForm}
+                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Notu Temizle</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCourse(null)}
+                  className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-all cursor-pointer"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCourseForm}
+                  className="px-4 py-2 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Değişiklikleri Kaydet</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 bg-white no-print">
