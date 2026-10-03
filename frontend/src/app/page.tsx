@@ -11,6 +11,9 @@ import { toPng } from 'html-to-image';
 import { getFullInstructorName, getInstructorAbbreviation } from '../utils/instructors';
 import CompareView from '../components/CompareView';
 import { injectMetadataToPngDataUrl } from '../utils/pngMetadata';
+import prepDataRaw from '../data/prepSchedules.json';
+
+const prepData: Record<string, any> = prepDataRaw;
 
 // Bir ders slotunun süresini saat cinsinden hesaplar (örn: 09:00 - 10:50 -> 2 saat, 09:00 - 11:50 -> 3 saat, 09:00 - 09:50 -> 1 saat)
 const getSlotDurationHours = (startTime?: string, endTime?: string): number => {
@@ -62,6 +65,9 @@ export default function Home() {
   const [scheduleFontFamily, setScheduleFontFamily] = useState<'default' | 'inter' | 'lora' | 'mono'>('default');
   const [scheduleFontScale, setScheduleFontScale] = useState<number>(1.0);
 
+  const [selectedPrepLevel, setSelectedPrepLevel] = useState<string>('');
+  const [selectedPrepClass, setSelectedPrepClass] = useState<string>('');
+
   const [editingCourse, setEditingCourse] = useState<any | null>(null);
   const [editingCourseForm, setEditingCourseForm] = useState<{
     originalCode: string;
@@ -84,6 +90,87 @@ export default function Home() {
   });
 
   const visualizerScheduleRef = useRef<HTMLDivElement>(null);
+
+  const prepLevels = React.useMemo(() => {
+    const levels = new Set<string>();
+    Object.keys(prepData).forEach(k => {
+      const level = k.split('-')[0];
+      if (level) levels.add(level);
+    });
+    return Array.from(levels).sort();
+  }, []);
+
+  const uniqueColorKeysForSchedule = React.useMemo(() => {
+    if (!visualizerData) return [];
+    const keys = new Set<string>();
+    Object.values(visualizerData.schedule).forEach(dayArr => {
+      dayArr.forEach((it: any) => {
+        const key = it.instructor && it.instructor.trim() ? it.instructor.trim() : it.code;
+        keys.add(key);
+      });
+    });
+    return Array.from(keys).sort();
+  }, [visualizerData]);
+
+  const prepClassesForLevel = React.useMemo(() => {
+    if (!selectedPrepLevel) return [];
+    return Object.keys(prepData)
+      .filter(k => k.startsWith(selectedPrepLevel + '-'))
+      .sort((a, b) => {
+        // e.g., P1-01 vs P1-02
+        return a.localeCompare(b);
+      });
+  }, [selectedPrepLevel]);
+
+  const handlePrepClassSelect = () => {
+    if (!selectedPrepClass || !prepData[selectedPrepClass]) return;
+    const classData = prepData[selectedPrepClass];
+    
+    // Extract section from label: e.g., P1-01/D-201 -> 01
+    let sectionNo = '';
+    const parts = selectedPrepClass.split('/');
+    if (parts.length > 0) {
+      const mainPart = parts[0]; // P1-01
+      if (mainPart.includes('-')) {
+        sectionNo = mainPart.split('-')[1];
+      }
+    }
+
+    const mockData = {
+      student_id: "-",
+      student_name: "Hazırlık Öğrencisi",
+      term: "2026-2027 Güz",
+      title: `Hazırlık Ders Programı (${selectedPrepClass})`,
+      schedule: classData.schedule,
+      courses_summary: [
+        {
+          code: "HAZIRLIK",
+          name: "İngilizce Hazırlık",
+          instructor: "Hazırlık Okutmanları",
+          section: sectionNo,
+          classroom: classData.room,
+          classrooms: classData.room ? [classData.room] : [],
+          time_slots: [] as any[]
+        }
+      ]
+    };
+    
+    const summarySlots: any[] = [];
+    Object.keys(classData.schedule).forEach(day => {
+      classData.schedule[day].forEach((slot: any) => {
+        summarySlots.push({
+          day: day,
+          start_time: slot.start_time,
+          end_time: slot.end_time
+        });
+      });
+    });
+    mockData.courses_summary[0].time_slots = summarySlots;
+    
+    setVisualizerData(mockData);
+    setOriginalVisualizerData(JSON.parse(JSON.stringify(mockData)));
+    setVisualizerError(null);
+  };
 
   useEffect(() => {
     try {
@@ -556,6 +643,59 @@ export default function Home() {
                     )}
                   </label>
 
+                  {/* Hazırlık Öğrencileri İçin Menü */}
+                  <div className="max-w-2xl mx-auto mt-6 pt-6 border-t border-slate-200 text-left">
+                    <div className="flex items-center gap-2 mb-4">
+                      <GraduationCap className="w-5 h-5 text-amber-500" />
+                      <h3 className="text-sm font-bold text-slate-800">Hazırlık Öğrencisi Misin?</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">1. Kur / Program Seçin</label>
+                        <select
+                          value={selectedPrepLevel}
+                          onChange={(e) => {
+                            setSelectedPrepLevel(e.target.value);
+                            setSelectedPrepClass('');
+                          }}
+                          className="w-full text-sm font-medium text-slate-900 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-[#002855] focus:border-[#002855] outline-none transition-all cursor-pointer"
+                        >
+                          <option value="">Seçiniz...</option>
+                          {prepLevels.map(lvl => (
+                            <option key={lvl} value={lvl}>{lvl} (Kur)</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">2. Sınıf Seçin</label>
+                        <div className="flex gap-2">
+                          <select
+                            value={selectedPrepClass}
+                            onChange={(e) => setSelectedPrepClass(e.target.value)}
+                            disabled={!selectedPrepLevel}
+                            className="flex-1 text-sm font-medium text-slate-900 bg-slate-50 border border-slate-300 rounded-lg px-2 py-2.5 focus:ring-2 focus:ring-[#002855] focus:border-[#002855] outline-none disabled:opacity-50 transition-all cursor-pointer"
+                          >
+                            <option value="">Sınıf Seçin</option>
+                            {prepClassesForLevel.map(cls => {
+                               const clsNo = cls.split('/')[0].split('-')[1];
+                               const room = cls.split('/')[1] || '';
+                               return (
+                                 <option key={cls} value={cls}>Sınıf {clsNo} (Derslik: {room})</option>
+                               );
+                            })}
+                          </select>
+                          <button
+                            onClick={handlePrepClassSelect}
+                            disabled={!selectedPrepClass}
+                            className="px-5 py-2.5 bg-[#002855] hover:bg-[#001f42] disabled:bg-slate-300 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-xs disabled:cursor-not-allowed"
+                          >
+                            Getir
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Resmi Bilgi Kartları */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
@@ -891,7 +1031,7 @@ export default function Home() {
                     >
                       {/* Resmi Kurumsal Belge Başlığı */}
                       <div className="border-b border-slate-300 pb-2.5 flex items-center justify-between">
-                        <div className="space-y-0.5">
+                        <div className="space-y-0.5 min-w-[200px]">
                           <h2 className="font-black text-sm tracking-wide uppercase text-slate-950">
                             YILDIZ TEKNİK ÜNİVERSİTESİ
                           </h2>
@@ -900,11 +1040,24 @@ export default function Home() {
                           </h3>
                         </div>
 
+                        {visualizerData?.courses_summary?.some((c: any) => c.code === "HAZIRLIK") && selectedPrepClass && (
+                          <div className="text-center px-4 flex flex-col items-center justify-center">
+                            <span className="text-[9px] font-bold tracking-[0.25em] text-slate-500 uppercase mb-0.5">
+                              İNGİLİZCE HAZIRLIK
+                            </span>
+                            <span className="font-black text-xl text-[#002855] tracking-tight leading-none">
+                              {selectedPrepClass.replace('/', ' / ')}
+                            </span>
+                          </div>
+                        )}
+
                         {visualizerData.term && (
-                          <div className="text-right text-xs bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-                            <p className="text-slate-700 text-[11px] font-mono font-semibold">
-                              {visualizerData.term} Yarıyılı
-                            </p>
+                          <div className="min-w-[200px] flex justify-end">
+                            <div className="text-right text-xs bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                              <p className="text-slate-700 text-[11px] font-mono font-semibold">
+                                {visualizerData.term.trim()} Yarıyılı
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -930,8 +1083,31 @@ export default function Home() {
                         </thead>
                         <tbody>
                           {(() => {
-                            const VISUALIZER_HOURS = [
-                              '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+                            const isPrep = visualizerData.courses_summary?.some((c: any) => c.code === "HAZIRLIK");
+                            const VISUALIZER_HOURS = isPrep ? [
+                              { start: '07:30', end: '08:15' },
+                              { start: '08:30', end: '09:15' },
+                              { start: '09:30', end: '10:15' },
+                              { start: '10:30', end: '11:15' },
+                              { start: '11:30', end: '12:15' },
+                              { start: '12:15', end: '13:15', isBreak: true, label: 'ÖĞLE ARASI' },
+                              { start: '13:15', end: '14:00' },
+                              { start: '14:15', end: '15:00' },
+                              { start: '15:15', end: '16:00' }
+                            ] : [
+                              { start: '08:00', end: '08:50' },
+                              { start: '09:00', end: '09:50' },
+                              { start: '10:00', end: '10:50' },
+                              { start: '11:00', end: '11:50' },
+                              { start: '12:00', end: '12:50' },
+                              { start: '13:00', end: '13:50' },
+                              { start: '14:00', end: '14:50' },
+                              { start: '15:00', end: '15:50' },
+                              { start: '16:00', end: '16:50' },
+                              { start: '17:00', end: '17:50' },
+                              { start: '18:00', end: '18:50' },
+                              { start: '19:00', end: '19:50' },
+                              { start: '20:00', end: '20:50' }
                             ];
 
                             const VIS_DAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
@@ -942,20 +1118,18 @@ export default function Home() {
                             };
 
                             // Sade, Kurumsal ve Baskıya Uygun Ofis Renk Paletleri (Açık Kağıt Üzerinde, Canlı ve Ayırt Edici)
+                            // Birbirine benzeyen tonlar (indigo, sky, violet) çıkarılarak net 10 renk bırakılmıştır.
                             const CLEAN_OFFICE_PALETTES = [
                               { bg: 'bg-blue-50/90', border: 'border-blue-200/90', text: 'text-blue-950', accent: 'text-blue-700', badge: 'bg-white text-blue-800 border-blue-200' },
                               { bg: 'bg-emerald-50/90', border: 'border-emerald-200/90', text: 'text-emerald-950', accent: 'text-emerald-800', badge: 'bg-white text-emerald-800 border-emerald-200' },
                               { bg: 'bg-rose-50/90', border: 'border-rose-200/90', text: 'text-rose-950', accent: 'text-rose-800', badge: 'bg-white text-rose-800 border-rose-200' },
                               { bg: 'bg-amber-50/90', border: 'border-amber-200/90', text: 'text-amber-950', accent: 'text-amber-800', badge: 'bg-white text-amber-800 border-amber-200' },
-                              { bg: 'bg-indigo-50/90', border: 'border-indigo-200/90', text: 'text-indigo-950', accent: 'text-indigo-800', badge: 'bg-white text-indigo-800 border-indigo-200' },
-                              { bg: 'bg-teal-50/90', border: 'border-teal-200/90', text: 'text-teal-950', accent: 'text-teal-800', badge: 'bg-white text-teal-800 border-teal-200' },
                               { bg: 'bg-purple-50/90', border: 'border-purple-200/90', text: 'text-purple-950', accent: 'text-purple-800', badge: 'bg-white text-purple-800 border-purple-200' },
-                              { bg: 'bg-sky-50/90', border: 'border-sky-200/90', text: 'text-sky-950', accent: 'text-sky-800', badge: 'bg-white text-sky-800 border-sky-200' },
+                              { bg: 'bg-teal-50/90', border: 'border-teal-200/90', text: 'text-teal-950', accent: 'text-teal-800', badge: 'bg-white text-teal-800 border-teal-200' },
                               { bg: 'bg-orange-50/90', border: 'border-orange-200/90', text: 'text-orange-950', accent: 'text-orange-800', badge: 'bg-white text-orange-800 border-orange-200' },
-                              { bg: 'bg-violet-50/90', border: 'border-violet-200/90', text: 'text-violet-950', accent: 'text-violet-800', badge: 'bg-white text-violet-800 border-violet-200' },
                               { bg: 'bg-cyan-50/90', border: 'border-cyan-200/90', text: 'text-cyan-950', accent: 'text-cyan-800', badge: 'bg-white text-cyan-800 border-cyan-200' },
-                              { bg: 'bg-lime-50/90', border: 'border-lime-200/90', text: 'text-lime-950', accent: 'text-lime-800', badge: 'bg-white text-lime-800 border-lime-200' },
                               { bg: 'bg-fuchsia-50/90', border: 'border-fuchsia-200/90', text: 'text-fuchsia-950', accent: 'text-fuchsia-800', badge: 'bg-white text-fuchsia-800 border-fuchsia-200' },
+                              { bg: 'bg-lime-50/90', border: 'border-lime-200/90', text: 'text-lime-950', accent: 'text-lime-800', badge: 'bg-white text-lime-800 border-lime-200' },
                             ];
 
                             const MONOCHROME_PALETTE = {
@@ -966,16 +1140,29 @@ export default function Home() {
                               badge: 'bg-white text-slate-900 border-slate-300 font-semibold'
                             };
 
-                            const getCourseColor = (code: string) => {
+                            const activePalettes = isPrep 
+                              ? CLEAN_OFFICE_PALETTES.filter(p => !p.bg.includes('amber') && !p.bg.includes('orange'))
+                              : CLEAN_OFFICE_PALETTES;
+
+                            const getCourseColor = (code: string, instructor?: string) => {
                               if (visualizerColorMode === 'monochrome') {
                                 return MONOCHROME_PALETTE;
                               }
-                              const codes = (visualizerData.courses_summary || []).map((c: any) => c.code);
-                              const idx = codes.indexOf(code);
-                              if (idx !== -1) return CLEAN_OFFICE_PALETTES[idx % CLEAN_OFFICE_PALETTES.length];
+                              
+                              const colorKey = instructor && instructor.trim() ? instructor.trim() : code;
+                              
+                              // Tabloda var olan eşsiz hoca/ders sayısına göre sırayla dağıt (çakışmayı önler)
+                              const idx = uniqueColorKeysForSchedule.indexOf(colorKey);
+                              if (idx !== -1) {
+                                return activePalettes[idx % activePalettes.length];
+                              }
+                              
+                              // Fallback hash
                               let hash = 0;
-                              for (let i = 0; i < code.length; i++) hash = code.charCodeAt(i) + ((hash << 5) - hash);
-                              return CLEAN_OFFICE_PALETTES[Math.abs(hash) % CLEAN_OFFICE_PALETTES.length];
+                              for (let i = 0; i < colorKey.length; i++) {
+                                hash = colorKey.charCodeAt(i) + ((hash << 5) - hash);
+                              }
+                              return activePalettes[Math.abs(hash) % activePalettes.length];
                             };
 
                             const grid: Record<string, Record<number, any>> = {};
@@ -987,8 +1174,9 @@ export default function Home() {
                                 const startM = toMinutes(it.start_time);
                                 const endM = toMinutes(it.end_time);
 
-                                VISUALIZER_HOURS.forEach((hr, hrIdx) => {
-                                  const hrM = toMinutes(hr);
+                                VISUALIZER_HOURS.forEach((hrSlot, hrIdx) => {
+                                  if ((hrSlot as any).isBreak) return;
+                                  const hrM = toMinutes(hrSlot.start);
                                   if (hrM >= startM && hrM < endM) {
                                     grid[day][hrIdx] = it;
                                   }
@@ -1001,12 +1189,32 @@ export default function Home() {
 
                             const SLOT_HEIGHT = 54;
 
-                            return VISUALIZER_HOURS.map((hour, hrIdx) => {
-                              const nextHour = `${parseInt(hour.split(':')[0], 10)}:50`;
-                              const hourLabel = `${hour} - ${nextHour}`;
+                            return VISUALIZER_HOURS.map((hrSlot: any, hrIdx) => {
+                              if (hrSlot.isBreak) {
+                                return (
+                                  <tr key={hrSlot.start} className="border-b border-slate-300" style={{ height: `${Math.round(SLOT_HEIGHT * 0.7)}px` }}>
+                                    <td
+                                      className="p-1 border-r border-slate-300 text-center font-mono text-[11px] font-medium text-slate-600 bg-slate-50 align-middle whitespace-nowrap"
+                                      style={{ height: `${Math.round(SLOT_HEIGHT * 0.7)}px` }}
+                                    >
+                                      {hrSlot.start} - {hrSlot.end}
+                                    </td>
+                                    <td colSpan={5} className="p-1 bg-amber-50/70 border-amber-200 text-amber-700 text-center uppercase h-full relative">
+                                      <div className="flex items-center justify-center gap-2 w-full h-full">
+                                        <span className="font-bold text-xs tracking-[0.2em]">{hrSlot.label}</span>
+                                        <span className="font-normal text-xs tracking-normal opacity-90">
+                                          ({hrSlot.start} - {hrSlot.end})
+                                        </span>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              const hourLabel = `${hrSlot.start} - ${hrSlot.end}`;
 
                               return (
-                                <tr key={hour} className="border-b border-slate-300" style={{ height: `${SLOT_HEIGHT}px` }}>
+                                <tr key={hrSlot.start} className="border-b border-slate-300" style={{ height: `${SLOT_HEIGHT}px` }}>
                                   <td
                                     className="p-1 border-r border-slate-300 text-center font-mono text-[11px] font-medium text-slate-600 bg-slate-50 align-middle whitespace-nowrap"
                                     style={{ height: `${SLOT_HEIGHT}px` }}
@@ -1037,13 +1245,16 @@ export default function Home() {
                                       hrIdx + span < VISUALIZER_HOURS.length &&
                                       grid[day][hrIdx + span]?.code === it.code &&
                                       grid[day][hrIdx + span]?.section === it.section &&
-                                      grid[day][hrIdx + span]?.classroom === it.classroom
+                                      grid[day][hrIdx + span]?.classroom === it.classroom &&
+                                      grid[day][hrIdx + span]?.instructor === it.instructor
                                     ) {
                                       skipCells[day].add(hrIdx + span);
                                       span++;
                                     }
 
-                                    const palette = getCourseColor(it.code);
+                                    const displayEndTime = grid[day][hrIdx + span - 1]?.end_time || it.end_time;
+
+                                    const palette = getCourseColor(it.code, it.instructor);
 
                                     const formatClassroomLabel = (cr: string, isLab: boolean) => {
                                       if (!cr) return 'Derslik';
@@ -1180,7 +1391,7 @@ export default function Home() {
                                               style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
                                               className="font-mono text-slate-500 font-medium whitespace-nowrap"
                                             >
-                                              {it.start_time} - {it.end_time}
+                                              {it.start_time} - {displayEndTime}
                                             </p>
 
                                             <div className="flex items-center gap-1 flex-wrap">
