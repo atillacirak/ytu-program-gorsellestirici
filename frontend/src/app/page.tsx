@@ -67,7 +67,23 @@ export default function Home() {
 
   // Fetch stats on mount
   useEffect(() => {
-    fetch(`${API_BASE}/api/stats/visit`, { method: 'POST' }).catch(() => {});
+    // Geliştirici modu kontrolü
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('dev')) {
+        localStorage.setItem('ytu_ignore_stats', 'true');
+        alert('Geliştirici Modu Aktif: Artık bu tarayıcıdaki ziyaretleriniz ve oluşturduğunuz programlar sayaca DAHİL EDİLMEYECEK.');
+        // Remove param from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
+
+    if (!isDev) {
+      fetch(`${API_BASE}/api/stats/visit`, { method: 'POST' }).catch(() => {});
+    }
+    
     fetch(`${API_BASE}/api/stats`)
       .then(res => res.json())
       .then(data => setStats(data))
@@ -75,8 +91,11 @@ export default function Home() {
   }, []);
 
   const incrementGenerateStat = () => {
-    fetch(`${API_BASE}/api/stats/generate`, { method: 'POST' }).catch(() => {});
-    setStats(prev => prev ? { ...prev, total_generated: prev.total_generated + 1 } : null);
+    const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
+    if (!isDev) {
+      fetch(`${API_BASE}/api/stats/generate`, { method: 'POST' }).catch(() => {});
+      setStats(prev => prev ? { ...prev, total_generated: prev.total_generated + 1 } : null);
+    }
   };
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [courseNotes, setCourseNotes] = useState<Record<string, string>>({});
