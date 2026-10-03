@@ -42,6 +42,8 @@ const getTotalWeeklyHours = (coursesSummary?: any[]): number => {
   }, 0);
 };
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'single' | 'compare'>('single');
   const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
@@ -65,15 +67,15 @@ export default function Home() {
 
   // Fetch stats on mount
   useEffect(() => {
-    fetch('http://localhost:8000/api/stats/visit', { method: 'POST' }).catch(() => {});
-    fetch('http://localhost:8000/api/stats')
+    fetch(`${API_BASE}/api/stats/visit`, { method: 'POST' }).catch(() => {});
+    fetch(`${API_BASE}/api/stats`)
       .then(res => res.json())
       .then(data => setStats(data))
       .catch(() => {});
   }, []);
 
   const incrementGenerateStat = () => {
-    fetch('http://localhost:8000/api/stats/generate', { method: 'POST' }).catch(() => {});
+    fetch(`${API_BASE}/api/stats/generate`, { method: 'POST' }).catch(() => {});
     setStats(prev => prev ? { ...prev, total_generated: prev.total_generated + 1 } : null);
   };
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -484,7 +486,6 @@ export default function Home() {
       alert('PNG görseli oluşturulurken hata oluştu.');
     }
   };
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#f8fafc] text-slate-900 transition-colors duration-200">
