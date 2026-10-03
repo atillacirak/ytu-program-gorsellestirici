@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import pdfplumber
 import json
 import re
@@ -38,9 +38,23 @@ with pdfplumber.open("prep_schedule.pdf") as pdf:
         chunks = []
         current_chunk = []
         for row in table:
-            if row and len(row) > 2 and row[2] == "MONDAY" and row[3] == "TUESDAY":
+            # Normal header: MONDAY in col 2, TUESDAY in col 3
+            is_normal_header = row and len(row) > 3 and row[2] == "MONDAY" and row[3] == "TUESDAY"
+            # Truncated header: MONDAY/TUESDAY columns are empty/missing but WEDNESDAY is in col 4
+            # This happens on some pages where the class grid spans a page boundary
+            is_truncated_header = (row and len(row) > 4 and 
+                                   (not row[2] or not row[2].strip()) and 
+                                   (not row[3] or not row[3].strip()) and 
+                                   row[4] == "WEDNESDAY")
+            
+            if is_normal_header or is_truncated_header:
                 if current_chunk:
                     chunks.append(current_chunk)
+                # For truncated headers, synthesize a full header row
+                if is_truncated_header:
+                    row = list(row)
+                    row[2] = "MONDAY"
+                    row[3] = "TUESDAY"
                 current_chunk = [row]
             elif current_chunk:
                 current_chunk.append(row)

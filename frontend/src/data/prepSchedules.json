@@ -2851,54 +2851,6 @@
           "name": "İngilizce Hazırlık",
           "instructor": "NERGİS KIZILKAN",
           "classroom": "N-208"
-        },
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ROZET MODİANO",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ROZET MODİANO",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TANJU SARI",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TANJU SARI",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "13:15",
-          "end_time": "14:00",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TANJU SARI",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "14:15",
-          "end_time": "15:00",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TANJU SARI",
-          "classroom": "N-208"
         }
       ],
       "Salı": [
@@ -2932,38 +2884,6 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "NERGİS KIZILKAN",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ROZET MODİANO",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ROZET MODİANO",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TULON KURTER",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TULON KURTER",
           "classroom": "N-208"
         }
       ],
@@ -2999,38 +2919,6 @@
           "name": "İngilizce Hazırlık",
           "instructor": "BUKET TANJU",
           "classroom": "N-208"
-        },
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
-          "classroom": "N-208"
         }
       ],
       "Perşembe": [
@@ -3080,54 +2968,6 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "BUKET TANJU",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ROZET MODİANO",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ROZET MODİANO",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "13:15",
-          "end_time": "14:00",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
-          "classroom": "N-208"
-        },
-        {
-          "start_time": "14:15",
-          "end_time": "15:00",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TALHA AĞYAR ALTUNAY",
           "classroom": "N-208"
         }
       ],
@@ -3144,7 +2984,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "ROZET MODİANO",
           "classroom": "N-209"
         },
         {
@@ -3152,7 +2992,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "ROZET MODİANO",
           "classroom": "N-209"
         },
         {
@@ -3160,7 +3000,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "TANJU SARI",
           "classroom": "N-209"
         },
         {
@@ -3168,7 +3008,23 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "TANJU SARI",
+          "classroom": "N-209"
+        },
+        {
+          "start_time": "13:15",
+          "end_time": "14:00",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "TANJU SARI",
+          "classroom": "N-209"
+        },
+        {
+          "start_time": "14:15",
+          "end_time": "15:00",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "TANJU SARI",
           "classroom": "N-209"
         }
       ],
@@ -3178,7 +3034,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "ROZET MODİANO",
           "classroom": "N-209"
         },
         {
@@ -3186,7 +3042,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "ROZET MODİANO",
           "classroom": "N-209"
         },
         {
@@ -3194,7 +3050,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "TULON KURTER",
           "classroom": "N-209"
         },
         {
@@ -3202,34 +3058,51 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
-          "classroom": "N-209"
-        },
-        {
-          "start_time": "13:15",
-          "end_time": "14:00",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
-          "classroom": "N-209"
-        },
-        {
-          "start_time": "14:15",
-          "end_time": "15:00",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "TÜLAY VURAL",
+          "instructor": "TULON KURTER",
           "classroom": "N-209"
         }
       ],
-      "Çarşamba": [],
+      "Çarşamba": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "TALHA AĞYAR ALTUNAY",
+          "classroom": "N-209"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "TALHA AĞYAR ALTUNAY",
+          "classroom": "N-209"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "TALHA AĞYAR ALTUNAY",
+          "classroom": "N-209"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "TALHA AĞYAR ALTUNAY",
+          "classroom": "N-209"
+        }
+      ],
       "Perşembe": [
         {
           "start_time": "08:30",
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "ROZET MODİANO",
           "classroom": "N-209"
         },
         {
@@ -3237,7 +3110,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "ROZET MODİANO",
           "classroom": "N-209"
         },
         {
@@ -3245,7 +3118,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "TALHA AĞYAR ALTUNAY",
           "classroom": "N-209"
         },
         {
@@ -3253,7 +3126,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "TALHA AĞYAR ALTUNAY",
           "classroom": "N-209"
         },
         {
@@ -3261,7 +3134,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "TALHA AĞYAR ALTUNAY",
           "classroom": "N-209"
         },
         {
@@ -3269,44 +3142,11 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "TALHA AĞYAR ALTUNAY",
           "classroom": "N-209"
         }
       ],
-      "Cuma": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "BERAT EMRE ŞAHİN",
-          "classroom": "N-209"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "BERAT EMRE ŞAHİN",
-          "classroom": "N-209"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "BERAT EMRE ŞAHİN",
-          "classroom": "N-209"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "BERAT EMRE ŞAHİN",
-          "classroom": "N-209"
-        }
-      ]
+      "Cuma": []
     }
   },
   "P3-01/N-211": {
@@ -3319,7 +3159,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3327,7 +3167,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3335,7 +3175,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3343,7 +3183,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         }
       ],
@@ -3353,7 +3193,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3361,7 +3201,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3369,7 +3209,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3377,7 +3217,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3385,7 +3225,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         },
         {
@@ -3393,7 +3233,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRAH GÜLTEKİN",
+          "instructor": "TÜLAY VURAL",
           "classroom": "N-211"
         }
       ],
@@ -3404,7 +3244,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-211"
         },
         {
@@ -3412,7 +3252,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-211"
         },
         {
@@ -3420,7 +3260,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-211"
         },
         {
@@ -3428,7 +3268,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-211"
         },
         {
@@ -3436,7 +3276,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-211"
         },
         {
@@ -3444,7 +3284,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-211"
         }
       ],
@@ -3454,7 +3294,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "BERAT EMRE ŞAHİN",
           "classroom": "N-211"
         },
         {
@@ -3462,7 +3302,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "HATİCE HANDE GÖKŞEN",
+          "instructor": "BERAT EMRE ŞAHİN",
           "classroom": "N-211"
         },
         {
@@ -3470,7 +3310,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "BERAT EMRE ŞAHİN",
           "classroom": "N-211"
         },
         {
@@ -3478,7 +3318,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "RUKİYE AHU ERDEM",
+          "instructor": "BERAT EMRE ŞAHİN",
           "classroom": "N-211"
         }
       ]
@@ -3494,7 +3334,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3502,7 +3342,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3510,7 +3350,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3518,7 +3358,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         }
       ],
@@ -3528,7 +3368,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3536,7 +3376,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3544,7 +3384,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3552,7 +3392,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3560,7 +3400,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         },
         {
@@ -3568,7 +3408,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BUKET TANJU",
+          "instructor": "EMRAH GÜLTEKİN",
           "classroom": "N-212"
         }
       ],
@@ -3579,7 +3419,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SERPİL UÇAN",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         },
         {
@@ -3587,7 +3427,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SERPİL UÇAN",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         },
         {
@@ -3595,7 +3435,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BERRİN MUŞLU",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         },
         {
@@ -3603,7 +3443,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BERRİN MUŞLU",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         },
         {
@@ -3611,7 +3451,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SERPİL UÇAN",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         },
         {
@@ -3619,7 +3459,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SERPİL UÇAN",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         }
       ],
@@ -3629,7 +3469,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MEHMET AYTAR",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         },
         {
@@ -3637,7 +3477,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MEHMET AYTAR",
+          "instructor": "HATİCE HANDE GÖKŞEN",
           "classroom": "N-212"
         },
         {
@@ -3645,7 +3485,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MEHMET AYTAR",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-212"
         },
         {
@@ -3653,7 +3493,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MEHMET AYTAR",
+          "instructor": "RUKİYE AHU ERDEM",
           "classroom": "N-212"
         }
       ]
@@ -3669,7 +3509,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EFE KUTLAY",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3677,7 +3517,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EFE KUTLAY",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3685,7 +3525,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EFE KUTLAY",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3693,7 +3533,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EFE KUTLAY",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         }
       ],
@@ -3703,7 +3543,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3711,7 +3551,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3719,7 +3559,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3727,7 +3567,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3735,7 +3575,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         },
         {
@@ -3743,7 +3583,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "BUKET TANJU",
           "classroom": "N-213"
         }
       ],
@@ -3754,7 +3594,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "SERPİL UÇAN",
           "classroom": "N-213"
         },
         {
@@ -3762,7 +3602,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "SERPİL UÇAN",
           "classroom": "N-213"
         },
         {
@@ -3770,7 +3610,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "BERRİN MUŞLU",
           "classroom": "N-213"
         },
         {
@@ -3778,7 +3618,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "BERRİN MUŞLU",
           "classroom": "N-213"
         },
         {
@@ -3786,7 +3626,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "SERPİL UÇAN",
           "classroom": "N-213"
         },
         {
@@ -3794,7 +3634,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "SERPİL UÇAN",
           "classroom": "N-213"
         }
       ],
@@ -3804,7 +3644,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "MEHMET AYTAR",
           "classroom": "N-213"
         },
         {
@@ -3812,7 +3652,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "MEHMET AYTAR",
           "classroom": "N-213"
         },
         {
@@ -3820,7 +3660,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "MEHMET AYTAR",
           "classroom": "N-213"
         },
         {
@@ -3828,7 +3668,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "MEHMET AYTAR",
           "classroom": "N-213"
         }
       ]
@@ -3844,7 +3684,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "EFE KUTLAY",
           "classroom": "D-301"
         },
         {
@@ -3852,7 +3692,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "EFE KUTLAY",
           "classroom": "D-301"
         },
         {
@@ -3860,7 +3700,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "EFE KUTLAY",
           "classroom": "D-301"
         },
         {
@@ -3868,7 +3708,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "EFE KUTLAY",
           "classroom": "D-301"
         }
       ],
@@ -3878,7 +3718,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EFE KUTLAY",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-301"
         },
         {
@@ -3886,7 +3726,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EFE KUTLAY",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-301"
         },
         {
@@ -3894,7 +3734,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-301"
         },
         {
@@ -3902,7 +3742,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-301"
         },
         {
@@ -3910,7 +3750,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-301"
         },
         {
@@ -3918,7 +3758,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-301"
         }
       ],
@@ -3929,7 +3769,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -3937,7 +3777,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -3945,7 +3785,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -3953,7 +3793,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -3961,7 +3801,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -3969,7 +3809,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         }
       ],
@@ -3979,7 +3819,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -3987,7 +3827,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -3995,7 +3835,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         },
         {
@@ -4003,7 +3843,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BELMA BEZMEZ",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-301"
         }
       ]
@@ -4019,7 +3859,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         },
         {
@@ -4027,7 +3867,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         },
         {
@@ -4035,7 +3875,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         },
         {
@@ -4043,7 +3883,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         }
       ],
@@ -4053,7 +3893,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TANJU SARI",
+          "instructor": "EFE KUTLAY",
           "classroom": "D-302"
         },
         {
@@ -4061,7 +3901,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "TANJU SARI",
+          "instructor": "EFE KUTLAY",
           "classroom": "D-302"
         },
         {
@@ -4069,7 +3909,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         },
         {
@@ -4077,7 +3917,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         },
         {
@@ -4085,7 +3925,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         },
         {
@@ -4093,7 +3933,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CANAN CANKAYA",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-302"
         }
       ],
@@ -4104,7 +3944,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4112,7 +3952,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4120,7 +3960,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4128,7 +3968,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4136,7 +3976,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4144,7 +3984,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         }
       ],
@@ -4154,7 +3994,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4162,7 +4002,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4170,7 +4010,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         },
         {
@@ -4178,7 +4018,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "BELMA BEZMEZ",
           "classroom": "D-302"
         }
       ]
@@ -4194,7 +4034,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "GİZEM GİRGİN",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         },
         {
@@ -4202,7 +4042,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "GİZEM GİRGİN",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         },
         {
@@ -4210,7 +4050,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         },
         {
@@ -4218,7 +4058,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         }
       ],
@@ -4228,7 +4068,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "GİZEM GİRGİN",
+          "instructor": "TANJU SARI",
           "classroom": "D-303"
         },
         {
@@ -4236,7 +4076,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "GİZEM GİRGİN",
+          "instructor": "TANJU SARI",
           "classroom": "D-303"
         },
         {
@@ -4244,7 +4084,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         },
         {
@@ -4252,7 +4092,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         },
         {
@@ -4260,7 +4100,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         },
         {
@@ -4268,7 +4108,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ZEYNEP KANDEMİR",
+          "instructor": "CANAN CANKAYA",
           "classroom": "D-303"
         }
       ],
@@ -4279,7 +4119,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4287,7 +4127,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4295,7 +4135,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4303,7 +4143,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4311,7 +4151,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4319,7 +4159,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         }
       ],
@@ -4329,7 +4169,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4337,7 +4177,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4345,7 +4185,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         },
         {
@@ -4353,7 +4193,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "CEMİLE GÜLER",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-303"
         }
       ]
@@ -4369,7 +4209,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "GİZEM GİRGİN",
           "classroom": "D-304"
         },
         {
@@ -4377,7 +4217,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "GİZEM GİRGİN",
           "classroom": "D-304"
         },
         {
@@ -4385,7 +4225,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-304"
         },
         {
@@ -4393,7 +4233,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-304"
         }
       ],
@@ -4403,7 +4243,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "GİZEM GİRGİN",
           "classroom": "D-304"
         },
         {
@@ -4411,7 +4251,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "GİZEM GİRGİN",
           "classroom": "D-304"
         },
         {
@@ -4419,7 +4259,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-304"
         },
         {
@@ -4427,7 +4267,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-304"
         },
         {
@@ -4435,7 +4275,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-304"
         },
         {
@@ -4443,7 +4283,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "ZEYNEP KANDEMİR",
           "classroom": "D-304"
         }
       ],
@@ -4454,7 +4294,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4462,7 +4302,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4470,7 +4310,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4478,7 +4318,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4486,7 +4326,7 @@
           "end_time": "14:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4494,7 +4334,7 @@
           "end_time": "15:00",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         }
       ],
@@ -4504,7 +4344,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4512,7 +4352,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4520,7 +4360,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
         },
         {
@@ -4528,8 +4368,183 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ÖZGE GEZERLER KOÇ",
+          "instructor": "CEMİLE GÜLER",
           "classroom": "D-304"
+        }
+      ]
+    }
+  },
+  "P3-08/D-203": {
+    "label": "P3-08/D-203",
+    "room": "D-203",
+    "schedule": {
+      "Pazartesi": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        }
+      ],
+      "Salı": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "13:15",
+          "end_time": "14:00",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "14:15",
+          "end_time": "15:00",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        }
+      ],
+      "Çarşamba": [],
+      "Perşembe": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "13:15",
+          "end_time": "14:00",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "14:15",
+          "end_time": "15:00",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-203"
+        }
+      ],
+      "Cuma": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "ÖZGE GEZERLER KOÇ",
+          "classroom": "D-203"
         }
       ]
     }
@@ -11168,14 +11183,13 @@
     "label": "P4-04/D-403",
     "room": "D-403",
     "schedule": {
-      "Pazartesi": [],
-      "Salı": [
+      "Pazartesi": [
         {
           "start_time": "08:30",
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "ESİN YÖRÜK ERBATUR",
           "classroom": "D-403"
         },
         {
@@ -11183,7 +11197,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "ESİN YÖRÜK ERBATUR",
           "classroom": "D-403"
         },
         {
@@ -11191,7 +11205,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRE ERBATUR",
+          "instructor": "BURCU EREN TÜRK",
           "classroom": "D-403"
         },
         {
@@ -11199,7 +11213,41 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRE ERBATUR",
+          "instructor": "BURCU EREN TÜRK",
+          "classroom": "D-403"
+        }
+      ],
+      "Salı": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BURCU EREN TÜRK",
+          "classroom": "D-403"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BURCU EREN TÜRK",
+          "classroom": "D-403"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BURCU EREN TÜRK",
+          "classroom": "D-403"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BURCU EREN TÜRK",
           "classroom": "D-403"
         }
       ],
@@ -11209,7 +11257,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRE ERBATUR",
+          "instructor": "AYŞE EMENGEN",
           "classroom": "D-403"
         },
         {
@@ -11217,7 +11265,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRE ERBATUR",
+          "instructor": "AYŞE EMENGEN",
           "classroom": "D-403"
         },
         {
@@ -11225,7 +11273,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRE ERBATUR",
+          "instructor": "AYŞE EMENGEN",
           "classroom": "D-403"
         },
         {
@@ -11233,44 +11281,11 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "EMRE ERBATUR",
+          "instructor": "AYŞE EMENGEN",
           "classroom": "D-403"
         }
       ],
-      "Perşembe": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ASUMAN ÇOM",
-          "classroom": "D-403"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ASUMAN ÇOM",
-          "classroom": "D-403"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ASUMAN ÇOM",
-          "classroom": "D-403"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "ASUMAN ÇOM",
-          "classroom": "D-403"
-        }
-      ],
+      "Perşembe": [],
       "Cuma": []
     }
   },
@@ -11285,7 +11300,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "PHİLİP ZALE",
           "classroom": "D-404"
         },
         {
@@ -11293,7 +11308,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "PHİLİP ZALE",
           "classroom": "D-404"
         },
         {
@@ -11301,7 +11316,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "EMRE ERBATUR",
           "classroom": "D-404"
         },
         {
@@ -11309,7 +11324,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "EMRE ERBATUR",
           "classroom": "D-404"
         }
       ],
@@ -11319,7 +11334,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BÜŞRA COŞKUN",
+          "instructor": "EMRE ERBATUR",
           "classroom": "D-404"
         },
         {
@@ -11327,7 +11342,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BÜŞRA COŞKUN",
+          "instructor": "EMRE ERBATUR",
           "classroom": "D-404"
         },
         {
@@ -11335,7 +11350,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BÜŞRA COŞKUN",
+          "instructor": "EMRE ERBATUR",
           "classroom": "D-404"
         },
         {
@@ -11343,7 +11358,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "BÜŞRA COŞKUN",
+          "instructor": "EMRE ERBATUR",
           "classroom": "D-404"
         }
       ],
@@ -11353,7 +11368,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "ASUMAN ÇOM",
           "classroom": "D-404"
         },
         {
@@ -11361,7 +11376,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "ASUMAN ÇOM",
           "classroom": "D-404"
         },
         {
@@ -11369,7 +11384,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "ASUMAN ÇOM",
           "classroom": "D-404"
         },
         {
@@ -11377,7 +11392,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MÜJDE DİDEM SUNGUR",
+          "instructor": "ASUMAN ÇOM",
           "classroom": "D-404"
         }
       ],
@@ -11389,14 +11404,13 @@
     "room": "D-405",
     "schedule": {
       "Pazartesi": [],
-      "Salı": [],
-      "Çarşamba": [
+      "Salı": [
         {
           "start_time": "08:30",
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "MÜJDE DİDEM SUNGUR",
           "classroom": "D-405"
         },
         {
@@ -11404,7 +11418,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "MÜJDE DİDEM SUNGUR",
           "classroom": "D-405"
         },
         {
@@ -11412,7 +11426,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "MÜJDE DİDEM SUNGUR",
           "classroom": "D-405"
         },
         {
@@ -11420,7 +11434,41 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "MÜJDE DİDEM SUNGUR",
+          "classroom": "D-405"
+        }
+      ],
+      "Çarşamba": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BÜŞRA COŞKUN",
+          "classroom": "D-405"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BÜŞRA COŞKUN",
+          "classroom": "D-405"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BÜŞRA COŞKUN",
+          "classroom": "D-405"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "BÜŞRA COŞKUN",
           "classroom": "D-405"
         }
       ],
@@ -11430,7 +11478,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "FERAH ERÇELÖZSU",
+          "instructor": "MÜJDE DİDEM SUNGUR",
           "classroom": "D-405"
         },
         {
@@ -11438,7 +11486,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "FERAH ERÇELÖZSU",
+          "instructor": "MÜJDE DİDEM SUNGUR",
           "classroom": "D-405"
         },
         {
@@ -11446,7 +11494,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "FERAH ERÇELÖZSU",
+          "instructor": "MÜJDE DİDEM SUNGUR",
           "classroom": "D-405"
         },
         {
@@ -11454,44 +11502,11 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "FERAH ERÇELÖZSU",
+          "instructor": "MÜJDE DİDEM SUNGUR",
           "classroom": "D-405"
         }
       ],
-      "Cuma": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
-          "classroom": "D-405"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
-          "classroom": "D-405"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
-          "classroom": "D-405"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
-          "classroom": "D-405"
-        }
-      ]
+      "Cuma": []
     }
   },
   "P4-07/D-204": {
@@ -11506,7 +11521,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-204"
         },
         {
@@ -11514,7 +11529,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-204"
         },
         {
@@ -11522,7 +11537,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-204"
         },
         {
@@ -11530,7 +11545,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-204"
         }
       ],
@@ -11540,7 +11555,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "FERAH ERÇELÖZSU",
           "classroom": "D-204"
         },
         {
@@ -11548,7 +11563,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "FERAH ERÇELÖZSU",
           "classroom": "D-204"
         },
         {
@@ -11556,7 +11571,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "FERAH ERÇELÖZSU",
           "classroom": "D-204"
         },
         {
@@ -11564,7 +11579,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "FERAH ERÇELÖZSU",
           "classroom": "D-204"
         }
       ],
@@ -11574,7 +11589,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "NERGİS KIZILKAN",
           "classroom": "D-204"
         },
         {
@@ -11582,7 +11597,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DENİZ TOKGÖZ",
+          "instructor": "NERGİS KIZILKAN",
           "classroom": "D-204"
         },
         {
@@ -11590,7 +11605,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "NERGİS KIZILKAN",
           "classroom": "D-204"
         },
         {
@@ -11598,7 +11613,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "NERGİS KIZILKAN",
           "classroom": "D-204"
         }
       ]
@@ -11609,47 +11624,14 @@
     "room": "D-407",
     "schedule": {
       "Pazartesi": [],
-      "Salı": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
-          "classroom": "D-407"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
-          "classroom": "D-407"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
-          "classroom": "D-407"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
-          "classroom": "D-407"
-        }
-      ],
+      "Salı": [],
       "Çarşamba": [
         {
           "start_time": "08:30",
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
           "classroom": "D-407"
         },
         {
@@ -11657,7 +11639,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
           "classroom": "D-407"
         },
         {
@@ -11665,7 +11647,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
           "classroom": "D-407"
         },
         {
@@ -11673,7 +11655,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
           "classroom": "D-407"
         }
       ],
@@ -11683,7 +11665,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-407"
         },
         {
@@ -11691,7 +11673,41 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "instructor": "DENİZ TOKGÖZ",
+          "classroom": "D-407"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "DENİZ TOKGÖZ",
+          "classroom": "D-407"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "DENİZ TOKGÖZ",
+          "classroom": "D-407"
+        }
+      ],
+      "Cuma": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "DENİZ TOKGÖZ",
+          "classroom": "D-407"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "DENİZ TOKGÖZ",
           "classroom": "D-407"
         },
         {
@@ -11710,55 +11726,21 @@
           "instructor": "PINAR AYTEKİN ÖZKAN",
           "classroom": "D-407"
         }
-      ],
-      "Cuma": []
+      ]
     }
   },
   "P4-09/D-408": {
     "label": "P4-09/D-408",
     "room": "D-408",
     "schedule": {
-      "Pazartesi": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
-          "classroom": "D-408"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
-          "classroom": "D-408"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "NERİMAN SEVGİN KUTAY",
-          "classroom": "D-408"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "NERİMAN SEVGİN KUTAY",
-          "classroom": "D-408"
-        }
-      ],
+      "Pazartesi": [],
       "Salı": [
         {
           "start_time": "08:30",
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERİMAN SEVGİN KUTAY",
+          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
           "classroom": "D-408"
         },
         {
@@ -11766,7 +11748,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERİMAN SEVGİN KUTAY",
+          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
           "classroom": "D-408"
         },
         {
@@ -11774,7 +11756,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERİMAN SEVGİN KUTAY",
+          "instructor": "PHİLİP ZALE",
           "classroom": "D-408"
         },
         {
@@ -11782,7 +11764,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERİMAN SEVGİN KUTAY",
+          "instructor": "PHİLİP ZALE",
           "classroom": "D-408"
         }
       ],
@@ -11792,7 +11774,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
           "classroom": "D-408"
         },
         {
@@ -11800,7 +11782,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
           "classroom": "D-408"
         },
         {
@@ -11808,7 +11790,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
           "classroom": "D-408"
         },
         {
@@ -11816,11 +11798,44 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "DİDEM TUĞÇE ERDEM BÜYÜKGÖKÇESU",
           "classroom": "D-408"
         }
       ],
-      "Perşembe": [],
+      "Perşembe": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "classroom": "D-408"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "classroom": "D-408"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "classroom": "D-408"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR AYTEKİN ÖZKAN",
+          "classroom": "D-408"
+        }
+      ],
       "Cuma": []
     }
   },
@@ -11834,7 +11849,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NİL GİOUSOUF",
+          "instructor": "PHİLİP ZALE",
           "classroom": "D-409"
         },
         {
@@ -11842,7 +11857,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NİL GİOUSOUF",
+          "instructor": "PHİLİP ZALE",
           "classroom": "D-409"
         },
         {
@@ -11850,7 +11865,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "NERİMAN SEVGİN KUTAY",
           "classroom": "D-409"
         },
         {
@@ -11858,7 +11873,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "NERİMAN SEVGİN KUTAY",
           "classroom": "D-409"
         }
       ],
@@ -11868,7 +11883,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NİL GİOUSOUF",
+          "instructor": "NERİMAN SEVGİN KUTAY",
           "classroom": "D-409"
         },
         {
@@ -11876,7 +11891,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NİL GİOUSOUF",
+          "instructor": "NERİMAN SEVGİN KUTAY",
           "classroom": "D-409"
         },
         {
@@ -11884,7 +11899,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NİL GİOUSOUF",
+          "instructor": "NERİMAN SEVGİN KUTAY",
           "classroom": "D-409"
         },
         {
@@ -11892,7 +11907,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NİL GİOUSOUF",
+          "instructor": "NERİMAN SEVGİN KUTAY",
           "classroom": "D-409"
         }
       ],
@@ -11902,7 +11917,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-409"
         },
         {
@@ -11910,7 +11925,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-409"
         },
         {
@@ -11918,7 +11933,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-409"
         },
         {
@@ -11926,7 +11941,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "AYFER ERDOĞAN",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-409"
         }
       ],
@@ -11938,6 +11953,116 @@
     "label": "P4-11/D-410",
     "room": "D-410",
     "schedule": {
+      "Pazartesi": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NİL GİOUSOUF",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NİL GİOUSOUF",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PHİLİP ZALE",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PHİLİP ZALE",
+          "classroom": "D-410"
+        }
+      ],
+      "Salı": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NİL GİOUSOUF",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NİL GİOUSOUF",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NİL GİOUSOUF",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NİL GİOUSOUF",
+          "classroom": "D-410"
+        }
+      ],
+      "Çarşamba": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-410"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "AYFER ERDOĞAN",
+          "classroom": "D-410"
+        }
+      ],
+      "Perşembe": [],
+      "Cuma": []
+    }
+  },
+  "P4-12/D-411": {
+    "label": "P4-12/D-411",
+    "room": "D-411",
+    "schedule": {
       "Pazartesi": [],
       "Salı": [],
       "Çarşamba": [
@@ -11947,7 +12072,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "AYLİN BİRSEN YILMAZ",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "09:30",
@@ -11955,7 +12080,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "AYLİN BİRSEN YILMAZ",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "10:30",
@@ -11963,7 +12088,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "AYLİN BİRSEN YILMAZ",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "11:30",
@@ -11971,7 +12096,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "AYLİN BİRSEN YILMAZ",
-          "classroom": "D-410"
+          "classroom": "D-411"
         }
       ],
       "Perşembe": [
@@ -11981,7 +12106,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "PERİHAN BÜYÜK",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "09:30",
@@ -11989,7 +12114,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "PERİHAN BÜYÜK",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "10:30",
@@ -11997,7 +12122,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "PERİHAN BÜYÜK",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "11:30",
@@ -12005,7 +12130,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "PERİHAN BÜYÜK",
-          "classroom": "D-410"
+          "classroom": "D-411"
         }
       ],
       "Cuma": [
@@ -12015,7 +12140,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "DAMLA ÖZLEM GÖKSU",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "09:30",
@@ -12023,7 +12148,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "DAMLA ÖZLEM GÖKSU",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "10:30",
@@ -12031,7 +12156,7 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "DAMLA ÖZLEM GÖKSU",
-          "classroom": "D-410"
+          "classroom": "D-411"
         },
         {
           "start_time": "11:30",
@@ -12039,119 +12164,9 @@
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
           "instructor": "DAMLA ÖZLEM GÖKSU",
-          "classroom": "D-410"
+          "classroom": "D-411"
         }
       ]
-    }
-  },
-  "P4-12/D-411": {
-    "label": "P4-12/D-411",
-    "room": "D-411",
-    "schedule": {
-      "Pazartesi": [],
-      "Salı": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "UĞUR BÜTÜN",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "UĞUR BÜTÜN",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "UĞUR BÜTÜN",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "UĞUR BÜTÜN",
-          "classroom": "D-411"
-        }
-      ],
-      "Çarşamba": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        }
-      ],
-      "Perşembe": [
-        {
-          "start_time": "08:30",
-          "end_time": "09:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "09:30",
-          "end_time": "10:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "10:30",
-          "end_time": "11:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        },
-        {
-          "start_time": "11:30",
-          "end_time": "12:15",
-          "code": "HAZIRLIK",
-          "name": "İngilizce Hazırlık",
-          "instructor": "OSMAN ÇEVİKTAY",
-          "classroom": "D-411"
-        }
-      ],
-      "Cuma": []
     }
   },
   "P4-13/D-412": {
@@ -12165,7 +12180,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MARAL HARİRİ AKBARİ",
+          "instructor": "UĞUR BÜTÜN",
           "classroom": "D-412"
         },
         {
@@ -12173,7 +12188,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MARAL HARİRİ AKBARİ",
+          "instructor": "UĞUR BÜTÜN",
           "classroom": "D-412"
         },
         {
@@ -12181,7 +12196,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MARAL HARİRİ AKBARİ",
+          "instructor": "UĞUR BÜTÜN",
           "classroom": "D-412"
         },
         {
@@ -12189,7 +12204,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "MARAL HARİRİ AKBARİ",
+          "instructor": "UĞUR BÜTÜN",
           "classroom": "D-412"
         }
       ],
@@ -12199,7 +12214,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         },
         {
@@ -12207,7 +12222,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         },
         {
@@ -12215,7 +12230,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         },
         {
@@ -12223,7 +12238,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         }
       ],
@@ -12233,7 +12248,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         },
         {
@@ -12241,7 +12256,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         },
         {
@@ -12249,7 +12264,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         },
         {
@@ -12257,7 +12272,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SİBEL ATMACA",
+          "instructor": "OSMAN ÇEVİKTAY",
           "classroom": "D-412"
         }
       ],
@@ -12275,7 +12290,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ESRA USKAN",
+          "instructor": "MARAL HARİRİ AKBARİ",
           "classroom": "D-413"
         },
         {
@@ -12283,7 +12298,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ESRA USKAN",
+          "instructor": "MARAL HARİRİ AKBARİ",
           "classroom": "D-413"
         },
         {
@@ -12291,7 +12306,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ESRA USKAN",
+          "instructor": "MARAL HARİRİ AKBARİ",
           "classroom": "D-413"
         },
         {
@@ -12299,7 +12314,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "ESRA USKAN",
+          "instructor": "MARAL HARİRİ AKBARİ",
           "classroom": "D-413"
         }
       ],
@@ -12309,7 +12324,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "D-413"
         },
         {
@@ -12317,7 +12332,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "D-413"
         },
         {
@@ -12325,7 +12340,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "D-413"
         },
         {
@@ -12333,7 +12348,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PHİLİP ZALE",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "D-413"
         }
       ],
@@ -12343,7 +12358,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-413"
         },
         {
@@ -12351,7 +12366,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-413"
         },
         {
@@ -12359,7 +12374,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-413"
         },
         {
@@ -12367,7 +12382,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR KOCABAŞ GEDİK",
+          "instructor": "SİBEL ATMACA",
           "classroom": "D-413"
         }
       ],
@@ -12385,7 +12400,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR ULUSOY",
+          "instructor": "ESRA USKAN",
           "classroom": "E-401"
         },
         {
@@ -12393,7 +12408,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR ULUSOY",
+          "instructor": "ESRA USKAN",
           "classroom": "E-401"
         },
         {
@@ -12401,7 +12416,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR ULUSOY",
+          "instructor": "ESRA USKAN",
           "classroom": "E-401"
         },
         {
@@ -12409,7 +12424,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "PINAR ULUSOY",
+          "instructor": "ESRA USKAN",
           "classroom": "E-401"
         }
       ],
@@ -12419,7 +12434,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SAİME KARA DUMAN",
+          "instructor": "PHİLİP ZALE",
           "classroom": "E-401"
         },
         {
@@ -12427,7 +12442,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SAİME KARA DUMAN",
+          "instructor": "PHİLİP ZALE",
           "classroom": "E-401"
         },
         {
@@ -12435,7 +12450,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SAİME KARA DUMAN",
+          "instructor": "PHİLİP ZALE",
           "classroom": "E-401"
         },
         {
@@ -12443,7 +12458,7 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "SAİME KARA DUMAN",
+          "instructor": "PHİLİP ZALE",
           "classroom": "E-401"
         }
       ],
@@ -12453,7 +12468,7 @@
           "end_time": "09:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "E-401"
         },
         {
@@ -12461,7 +12476,7 @@
           "end_time": "10:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "E-401"
         },
         {
@@ -12469,7 +12484,7 @@
           "end_time": "11:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "E-401"
         },
         {
@@ -12477,8 +12492,118 @@
           "end_time": "12:15",
           "code": "HAZIRLIK",
           "name": "İngilizce Hazırlık",
-          "instructor": "NERGİS KIZILKAN",
+          "instructor": "PINAR KOCABAŞ GEDİK",
           "classroom": "E-401"
+        }
+      ],
+      "Cuma": []
+    }
+  },
+  "P4-16/E-402": {
+    "label": "P4-16/E-402",
+    "room": "E-402",
+    "schedule": {
+      "Pazartesi": [],
+      "Salı": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR ULUSOY",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR ULUSOY",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR ULUSOY",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "PINAR ULUSOY",
+          "classroom": "E-402"
+        }
+      ],
+      "Çarşamba": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "SAİME KARA DUMAN",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "SAİME KARA DUMAN",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "SAİME KARA DUMAN",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "SAİME KARA DUMAN",
+          "classroom": "E-402"
+        }
+      ],
+      "Perşembe": [
+        {
+          "start_time": "08:30",
+          "end_time": "09:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NERGİS KIZILKAN",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "09:30",
+          "end_time": "10:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NERGİS KIZILKAN",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "10:30",
+          "end_time": "11:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NERGİS KIZILKAN",
+          "classroom": "E-402"
+        },
+        {
+          "start_time": "11:30",
+          "end_time": "12:15",
+          "code": "HAZIRLIK",
+          "name": "İngilizce Hazırlık",
+          "instructor": "NERGİS KIZILKAN",
+          "classroom": "E-402"
         }
       ],
       "Cuma": []
