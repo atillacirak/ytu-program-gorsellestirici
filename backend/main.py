@@ -9,8 +9,29 @@ from typing import Dict, List, Any, Optional
 import pdfplumber
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import stats_db
 
 app = FastAPI(title='YTÜ Program Görselleştirici API', version='1.0.0')
+
+@app.get('/api/stats')
+def get_stats_endpoint():
+    return stats_db.get_stats()
+
+@app.post('/api/stats/visit')
+def increment_visit_endpoint():
+    try:
+        stats_db.increment_stat('total_visits')
+        return {'status': 'success'}
+    except Exception as e:
+        return {'status': 'error', 'detail': str(e)}
+
+@app.post('/api/stats/generate')
+def increment_generate_endpoint():
+    try:
+        stats_db.increment_stat('total_generated')
+        return {'status': 'success'}
+    except Exception as e:
+        return {'status': 'error', 'detail': str(e)}
 
 app.add_middleware(
     CORSMiddleware,

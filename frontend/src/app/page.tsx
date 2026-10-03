@@ -10,6 +10,7 @@ import {
 import { toPng } from 'html-to-image';
 import { getFullInstructorName, getInstructorAbbreviation } from '../utils/instructors';
 import CompareView from '../components/CompareView';
+import AnimatedCounter from '../components/AnimatedCounter';
 import { injectMetadataToPngDataUrl } from '../utils/pngMetadata';
 import prepDataRaw from '../data/prepSchedules.json';
 
@@ -60,6 +61,21 @@ export default function Home() {
   const [showInstructor, setShowInstructor] = useState<boolean>(false);
   const [showSection, setShowSection] = useState<boolean>(true);
   const [showNotes, setShowNotes] = useState<boolean>(true);
+  const [stats, setStats] = useState<{total_generated: number, total_visits: number} | null>(null);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    fetch('http://localhost:8000/api/stats/visit', { method: 'POST' }).catch(() => {});
+    fetch('http://localhost:8000/api/stats')
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(() => {});
+  }, []);
+
+  const incrementGenerateStat = () => {
+    fetch('http://localhost:8000/api/stats/generate', { method: 'POST' }).catch(() => {});
+    setStats(prev => prev ? { ...prev, total_generated: prev.total_generated + 1 } : null);
+  };
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [courseNotes, setCourseNotes] = useState<Record<string, string>>({});
   const [scheduleFontFamily, setScheduleFontFamily] = useState<'default' | 'inter' | 'lora' | 'mono'>('default');
@@ -170,6 +186,13 @@ export default function Home() {
     setVisualizerData(mockData);
     setOriginalVisualizerData(JSON.parse(JSON.stringify(mockData)));
     setVisualizerError(null);
+    incrementGenerateStat();
+    
+    // Hazırlık programında hocalar çok kritik olduğu için varsayılan olarak aç
+    setShowInstructor(true);
+    try {
+      localStorage.setItem('ytu_show_instructor', 'true');
+    } catch (e) {}
   };
 
   useEffect(() => {
@@ -406,6 +429,7 @@ export default function Home() {
       if (data && data.schedule) {
         setVisualizerData(data);
         setOriginalVisualizerData(JSON.parse(JSON.stringify(data)));
+        incrementGenerateStat();
       } else {
         throw new Error('PDF dosyasında ders programı bilgisi bulunamadı.');
       }
@@ -548,20 +572,32 @@ export default function Home() {
             ) : !visualizerData ? (
               /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
-                <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs relative overflow-hidden space-y-4">
-                  <div className="max-w-3xl space-y-2 relative z-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold">
-                      <GraduationCap className="w-4 h-4 text-amber-500" />
-                      <span>Yıldız Teknik Üniversitesi — Öğrenci Bilgi Sistemi (OBS)</span>
+                <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs relative overflow-hidden space-y-6">
+                  <div className="flex flex-col md:flex-row items-center gap-6 justify-between relative z-10">
+                    <div className="max-w-2xl space-y-2 text-center md:text-left">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold">
+                        <GraduationCap className="w-4 h-4 text-amber-500" />
+                        <span>Yıldız Teknik Üniversitesi — Öğrenci Bilgi Sistemi (OBS)</span>
+                      </div>
+
+                      <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                        Öğrenci Haftalık Ders Programı <span className="text-[#002855]">Çizelgesi</span>
+                      </h2>
+
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        OBS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek resmi A4 haftalık akademik çizelge formatında görselleştirilecektir.
+                      </p>
                     </div>
 
-                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                      Öğrenci Haftalık Ders Programı <span className="text-[#002855]">Çizelgesi</span>
-                    </h2>
-
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      OBS sistemi üzerinden temin ettiğiniz resmi <span className="font-mono text-slate-800 font-semibold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Report.pdf</span> (Öğrenci Ders Programı) belgesini sisteme yükleyiniz. Belgedeki ders kodları, şube numaraları, teori ve laboratuvar derslikleri ile öğretim elemanları otomatik olarak çözümlenerek resmi A4 haftalık akademik çizelge formatında görselleştirilecektir.
-                    </p>
+                    <div className="flex-shrink-0 w-full md:w-auto hidden sm:flex">
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center space-y-1 w-48 shadow-2xs">
+                        <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Bugüne Kadar</div>
+                        <div className="text-3xl font-black text-[#002855] font-mono tracking-tighter">
+                          {stats ? <AnimatedCounter value={stats.total_generated} /> : '...'}
+                        </div>
+                        <div className="text-xs font-medium text-slate-600">YTÜ'lü Program Çıkardı</div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* OBS Belge Alma Talimatı */}
