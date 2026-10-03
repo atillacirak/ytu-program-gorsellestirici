@@ -3,6 +3,10 @@ import os
 
 STATS_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stats.db')
 
+# Base counts stored as env vars so Render deploys don't reset accumulated stats
+BASE_GENERATED = int(os.environ.get('STATS_BASE_GENERATED', '0'))
+BASE_VISITS = int(os.environ.get('STATS_BASE_VISITS', '0'))
+
 def init_stats_db():
     conn = sqlite3.connect(STATS_DB_PATH)
     c = conn.cursor()
@@ -35,4 +39,7 @@ def get_stats():
     c.execute('''SELECT total_generated, total_visits FROM stats WHERE id = 1''')
     row = c.fetchone()
     conn.close()
-    return {'total_generated': row[0], 'total_visits': row[1]}
+    return {
+        'total_generated': row[0] + BASE_GENERATED,
+        'total_visits': row[1] + BASE_VISITS
+    }
