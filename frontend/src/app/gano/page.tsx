@@ -379,9 +379,6 @@ export default function GanoCalculator() {
                   </span>
                 </h1>
               </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                YTÜ&apos;lülerin yeni nesil ders ve not yönetim portalı.
-              </p>
             </div>
           </a>
           <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
@@ -411,10 +408,6 @@ export default function GanoCalculator() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-900">GANO Hesaplayıcı</h1>
-              </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                YTÜ'lülerin yeni nesil ders ve not yönetim portalı.
-              </p>
               <p className="text-slate-500 text-sm sm:text-base">Mevcut notlarınızı girin ve dönem sonu senaryonuzu oluşturun. Transkript yükleyerek verdiğiniz dersleri, ortalamanızı ve bu dönem aldığınız dersleri içe aktarabilirsiniz.</p>
             </div>
           </div>
