@@ -1,4 +1,4 @@
-﻿import type { NextConfig } from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   async redirects() {
@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
         ],
         destination: 'https://ytudostun.com/:path*',
         permanent: true,
+      },
+    ];
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/agno',
+        destination: '/gano',
       },
     ];
   },
