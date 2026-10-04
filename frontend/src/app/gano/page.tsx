@@ -579,7 +579,7 @@ export default function GanoCalculator() {
                               className={`w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-3 py-1.5 outline-none transition-all appearance-none cursor-pointer font-medium ${['FF', 'FD', 'DD', 'DC', 'F0'].includes(course.expectedGrade) ? 'text-red-500' : 'text-slate-800'}`}
                             >
                               <option value=""></option>
-                              {Object.keys(GRADE_WEIGHTS).map(grade => (
+                              {Object.keys(GRADE_WEIGHTS).filter(g => !['G', 'K', 'İ'].includes(g) || g === course.expectedGrade).map(grade => (
                                 <option key={grade} value={grade}>
                                   {grade} {GRADE_WEIGHTS[grade] === null && '(Katılmaz)'}
                                 </option>
@@ -731,7 +731,7 @@ export default function GanoCalculator() {
                           className={`w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-3 py-2 outline-none transition-all appearance-none cursor-pointer font-medium ${['FF', 'FD', 'DD', 'DC', 'F0'].includes(course.expectedGrade) ? 'text-red-500' : 'text-slate-800'}`}
                         >
                           <option value=""></option>
-                          {Object.keys(GRADE_WEIGHTS).map(grade => (
+                          {Object.keys(GRADE_WEIGHTS).filter(g => !['G', 'K', 'İ'].includes(g) || g === course.expectedGrade).map(grade => (
                             <option key={grade} value={grade}>
                               {grade} {GRADE_WEIGHTS[grade] === null && '(Katılmaz)'}
                             </option>
