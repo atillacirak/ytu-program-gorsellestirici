@@ -54,8 +54,8 @@ export default function GanoCalculator() {
   const [pastCourses, setPastCourses] = useState<ScenarioCourse[]>([]);
 
   // Target GPA State
-  const [targetCgpa, setTargetCgpa] = useState<string>('3.20');
-  const [nextSemesterCredits, setNextSemesterCredits] = useState<string>('16');
+  const [targetCgpa, setTargetCgpa] = useState<string>('');
+  const [nextSemesterCredits, setNextSemesterCredits] = useState<string>('');
 
   // Current semester courses
   const [currentCourses, setCurrentCourses] = useState<ScenarioCourse[]>([]);
