@@ -675,93 +675,100 @@ export default function GanoCalculator() {
         </div>
 
         {/* Target GPA Goal Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-4 sm:p-5 space-y-4">
-          <div className="flex items-center gap-2 font-bold text-slate-800 text-sm sm:text-base">
-            <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
-              <Trophy size={18} />
-            </div>
-            <span>Hedefine ulaşmak için ne gerekiyor?</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600">Hedef AGNO</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                max="4"
-                placeholder="3.20"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-medium text-sm"
-                value={targetCgpa}
-                onChange={(e) => setTargetCgpa(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600 flex items-center justify-between">
-                <span>Gelecek Dönem Kredi</span>
-                {currentSemesterTotalCredits > 0 && (
-                  <span className="text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-normal border border-purple-200">Derslerden senkronize</span>
-                )}
-              </label>
-              <input
-                type="number"
-                step="0.5"
-                min="1"
-                placeholder="16"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-medium text-sm"
-                value={nextSemesterCredits}
-                onChange={(e) => setNextSemesterCredits(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 pt-1">
-            <button
-              onClick={() => setTargetCgpa('3.00')}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '3.00' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
-            >
-              Onur Öğrencisi 3,00
-            </button>
-            <button
-              onClick={() => setTargetCgpa('2.72')}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.72' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
-            >
-              Çift anadal 2,72
-            </button>
-            <button
-              onClick={() => setTargetCgpa('2.50')}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.50' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
-            >
-              Yandal 2,50
-            </button>
-            <button
-              onClick={() => setTargetCgpa('2.40')}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.40' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
-            >
-              Erasmus 2,40
-            </button>
-          </div>
-
-          {targetCalculation ? (
-            targetCalculation.isAlreadyAchieved ? (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm font-medium">
-                🎉 Mevcut AGNO&apos;n zaten bu hedefin üzerinde! Gelecek dönem ortalaman 0.00 gelse dahi AGNO&apos;n <strong>{targetCalculation.target.toFixed(2)}</strong> altına düşmez.
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-3 border-b border-slate-100 bg-[#0c3f79]/5 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+            <div>
+              <div className="flex items-center gap-2 font-semibold text-slate-700">
+                <Trophy size={16} className="text-slate-400" />
+                Hedefine Ulaşmak İçin Ne Gerekiyor?
               </div>
-            ) : targetCalculation.isPossible ? (
-              <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm font-medium">
-                Gelecek dönem <strong>{targetCalculation.nextCredits}</strong> kredide ortalama <strong>{targetCalculation.requiredYano.toFixed(2)}</strong> yaparsan AGNO&apos;n <strong>{targetCalculation.target.toFixed(2)}</strong> olur.
+              <div className="text-[11px] text-slate-400 mt-1 md:ml-6">
+                Hedeflediğiniz AGNO için gelecek dönem almanız gereken ortalamayı hesaplayın
               </div>
+            </div>
+          </div>
+
+          <div className="p-4 md:p-5 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600">Hedef AGNO</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="4"
+                  placeholder="3.20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-medium text-sm"
+                  value={targetCgpa}
+                  onChange={(e) => setTargetCgpa(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 flex items-center justify-between">
+                  <span>Gelecek Dönem Kredi</span>
+                  {currentSemesterTotalCredits > 0 && (
+                    <span className="text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-normal border border-purple-200">Derslerden senkronize</span>
+                  )}
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="1"
+                  placeholder="16"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-medium text-sm"
+                  value={nextSemesterCredits}
+                  onChange={(e) => setNextSemesterCredits(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                onClick={() => setTargetCgpa('3.00')}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '3.00' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+              >
+                Onur Öğrencisi 3,00
+              </button>
+              <button
+                onClick={() => setTargetCgpa('2.72')}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.72' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+              >
+                Çift anadal 2,72
+              </button>
+              <button
+                onClick={() => setTargetCgpa('2.50')}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.50' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+              >
+                Yandal 2,50
+              </button>
+              <button
+                onClick={() => setTargetCgpa('2.40')}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.40' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+              >
+                Erasmus 2,40
+              </button>
+            </div>
+
+            {targetCalculation ? (
+              targetCalculation.isAlreadyAchieved ? (
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm font-medium">
+                  🎉 Mevcut AGNO&apos;n zaten bu hedefin üzerinde! Gelecek dönem ortalaman 0.00 gelse dahi AGNO&apos;n <strong>{targetCalculation.target.toFixed(2)}</strong> altına düşmez.
+                </div>
+              ) : targetCalculation.isPossible ? (
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm font-medium">
+                  Gelecek dönem <strong>{targetCalculation.nextCredits}</strong> kredide ortalama <strong>{targetCalculation.requiredYano.toFixed(2)}</strong> yaparsan AGNO&apos;n <strong>{targetCalculation.target.toFixed(2)}</strong> olur.
+                </div>
+              ) : (
+                <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs sm:text-sm font-medium">
+                  ⚠️ Bu hedefe <strong>{targetCalculation.nextCredits}</strong> kredide ulaşmak için ortalamanın <strong>{targetCalculation.requiredYano.toFixed(2)}</strong> olması gerekir (4.00 üstü). Tek dönemde ulaşmak mümkün değil.
+                </div>
+              )
             ) : (
-              <div className="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs sm:text-sm font-medium">
-                ⚠️ Bu hedefe <strong>{targetCalculation.nextCredits}</strong> kredide ulaşmak için ortalamanın <strong>{targetCalculation.requiredYano.toFixed(2)}</strong> olması gerekir (4.00 üstü). Tek dönemde ulaşmak mümkün değil.
+              <div className="p-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl text-xs">
+                💡 Hesaplamayı görmek için yukarıdaki &quot;Geçmiş Durum&quot; kartından mevcut AGNO ve tamamlanan kredinizi girin.
               </div>
-            )
-          ) : (
-            <div className="p-3 bg-slate-50 border border-slate-200 text-slate-500 rounded-xl text-xs">
-              💡 Hesaplamayı görmek için yukarıdaki &quot;Geçmiş Durum&quot; kartından mevcut AGNO ve tamamlanan kredinizi girin.
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Current Semester Card */}
