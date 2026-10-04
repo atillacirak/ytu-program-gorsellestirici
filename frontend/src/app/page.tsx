@@ -565,7 +565,7 @@ export default function Home() {
                 <span>Ortak Boş Saatler (Karşılaştır)</span>
               </button>
               <a
-                href="/gano"
+                href="/agno"
                 className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
               >
                 <Calculator className="w-3.5 h-3.5 text-blue-500" />

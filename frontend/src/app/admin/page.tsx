@@ -184,7 +184,7 @@ export default function AdminDashboard() {
             </div>
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <PieChart size={12} className="text-indigo-400" />
-              <span>/gano sayfasını açan kullanıcı sayısı</span>
+              <span>/agno sayfasını açan kullanıcı sayısı</span>
             </div>
           </div>
 

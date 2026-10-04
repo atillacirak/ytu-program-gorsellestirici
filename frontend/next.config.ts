@@ -14,13 +14,10 @@ const nextConfig: NextConfig = {
         destination: 'https://ytudostun.com/:path*',
         permanent: true,
       },
-    ];
-  },
-  async rewrites() {
-    return [
       {
-        source: '/agno',
-        destination: '/gano',
+        source: '/gano',
+        destination: '/agno',
+        permanent: true,
       },
     ];
   },
