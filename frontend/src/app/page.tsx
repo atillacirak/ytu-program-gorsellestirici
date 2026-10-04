@@ -521,12 +521,12 @@ export default function Home() {
             className="flex items-center space-x-3.5 text-left group cursor-pointer focus:outline-none"
             title="Yeni belge yükleme sayfasına dön"
           >
-            <div className="w-10 h-10 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
-              <GraduationCap className="w-6 h-6 text-[#e7a240]" />
+            <div className="w-9 h-9 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
+              <GraduationCap className="w-5 h-5 text-[#e7a240]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#0c3f79] tracking-tight transition-colors flex items-center gap-1.5">
+                <h1 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-[#0c3f79] tracking-tight transition-colors flex items-center gap-1.5">
                   <span>YTÜ Dostun</span>
                   <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
                     v2
@@ -544,7 +544,7 @@ export default function Home() {
             <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
               <button
                 onClick={() => setActiveTab('single')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'single'
                     ? 'bg-[#0c3f79] text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -555,7 +555,7 @@ export default function Home() {
               </button>
               <button
                 onClick={() => setActiveTab('compare')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'compare'
                     ? 'bg-[#0c3f79] text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -566,7 +566,7 @@ export default function Home() {
               </button>
               <a
                 href="/agno"
-                className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
+                className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
               >
                 <Calculator className="w-3.5 h-3.5 text-blue-500" />
                 <span>AGNO Hesapla</span>
@@ -596,7 +596,7 @@ export default function Home() {
             ) : !visualizerData ? (
               /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
-                <div className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 shadow-xs relative overflow-hidden space-y-6">
+                <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-xs relative overflow-hidden space-y-5">
                   <div className="flex flex-col md:flex-row items-center gap-6 justify-between relative z-10">
                     <div className="max-w-2xl space-y-2 text-center md:text-left">
                       <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 text-xs font-semibold">
@@ -604,7 +604,7 @@ export default function Home() {
                         <span>Yıldız Teknik Üniversitesi — Öğrenci Bilgi Sistemi (OBS)</span>
                       </div>
 
-                      <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                      <h2 className="text-base sm:text-xl font-bold text-slate-900 tracking-tight">
                         Öğrenci Haftalık Ders Programı <span className="text-[#0c3f79]">Çizelgesi</span>
                       </h2>
 
@@ -757,7 +757,7 @@ export default function Home() {
                   </div>
 
                   {/* Resmi Bilgi Kartları */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto pt-1">
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
                         <Calendar className="w-4 h-4 text-[#0c3f79]" />
@@ -1125,7 +1125,7 @@ export default function Home() {
                       {/* Resmi Tablo Gövdesi */}
                       <table className="w-full border-collapse text-xs select-none table-fixed border border-slate-300">
                         <thead>
-                          <tr className="border-b border-slate-300 text-slate-700 bg-slate-100">
+                          <tr className="border-b border-slate-300 text-slate-700 bg-slate-100 text-[10px]">
                             <th className="p-2 w-24 text-center font-bold text-[11.5px] border-r border-slate-300 uppercase tracking-wider">
                               Saat
                             </th>
