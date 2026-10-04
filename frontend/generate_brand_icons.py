@@ -140,7 +140,7 @@ def generate_og_image():
     # Feature Pills
     pills = [
         ("📅 Haftalık Ders Çizelgesi", 220),
-        ("🧮 GANO & YANO Hesaplama", 230),
+        ("🧮 AGNO & YANO Hesaplama", 230),
         ("⚡ Otomatik OBS Analizi", 210)
     ]
     

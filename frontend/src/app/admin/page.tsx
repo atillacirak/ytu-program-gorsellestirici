@@ -173,7 +173,7 @@ export default function AdminDashboard() {
           <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-indigo-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                GANO Sayfası Ziyareti
+                AGNO Sayfası Ziyareti
               </span>
               <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 <Calculator size={18} />
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
           <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-emerald-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                GANO Senaryo / Belge
+                AGNO Senaryo / Belge
               </span>
               <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <FileText size={18} />
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
             </div>
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <TrendingUp size={12} className="text-emerald-400" />
-              <span>GANO için yüklenen transkript/program</span>
+              <span>AGNO için yüklenen transkript/program</span>
             </div>
           </div>
 
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
             {/* Metric 2 */}
             <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold">GANO Sayfası İlgisi</span>
+                <span className="text-slate-400 font-semibold">AGNO Sayfası İlgisi</span>
                 <span className="font-mono font-bold text-indigo-400">%{ganoVisitRate}</span>
               </div>
               <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
@@ -257,14 +257,14 @@ export default function AdminDashboard() {
                 />
               </div>
               <p className="text-[11px] text-slate-500 leading-tight">
-                Ziyaretçilerin %{ganoVisitRate}'i GANO Hesaplama modülüne geçiş yaptı.
+                Ziyaretçilerin %{ganoVisitRate}'i AGNO Hesaplama modülüne geçiş yaptı.
               </p>
             </div>
 
             {/* Metric 3 */}
             <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold">GANO Belge Yükleme Başarısı</span>
+                <span className="text-slate-400 font-semibold">AGNO Belge Yükleme Başarısı</span>
                 <span className="font-mono font-bold text-emerald-400">%{ganoScenarioRate}</span>
               </div>
               <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
                 />
               </div>
               <p className="text-[11px] text-slate-500 leading-tight">
-                GANO sayfasına girenlerin %{ganoScenarioRate}'i belge yükleyerek senaryo oluşturdu.
+                AGNO sayfasına girenlerin %{ganoScenarioRate}'i belge yükleyerek senaryo oluşturdu.
               </p>
             </div>
 

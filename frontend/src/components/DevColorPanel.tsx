@@ -186,7 +186,7 @@ export default function DevColorPanel() {
               <span className="font-medium" style={{ color: navy }}>Panel arka planı önizleme</span>
             </div>
             <div className="p-2 flex items-center gap-2" style={{ background: `linear-gradient(135deg, ${gold}, ${darkenHex(gold, 20)})` }}>
-              <span className="text-white font-bold">Toplam Krd. · Yeni GANO</span>
+              <span className="text-white font-bold">Toplam Krd. · Yeni AGNO</span>
             </div>
           </div>
 

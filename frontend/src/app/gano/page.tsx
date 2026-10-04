@@ -274,7 +274,7 @@ export default function GanoCalculator() {
     }
   };
 
-  // Calculate new GANO
+  // Calculate new AGNO
   const calculatedGpa = useMemo(() => {
     const cgpa = parseFloat(pastCgpa) || 0;
     const pastCredits = parseFloat(pastTotalCredits) || 0;
@@ -292,7 +292,7 @@ export default function GanoCalculator() {
       if (course.expectedGrade && courseCredits > 0) {
         const weight = GRADE_WEIGHTS[course.expectedGrade];
         
-        // Sadece katsayısı olan harf notları (null olmayanlar) GANO'ya katılır
+        // Sadece katsayısı olan harf notları (null olmayanlar) AGNO'ya katılır
         if (weight !== undefined && weight !== null) {
           const points = weight * courseCredits;
           
@@ -416,7 +416,7 @@ export default function GanoCalculator() {
             </a>
             <div className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-[#0c3f79] text-white shadow-2xs">
               <Calculator className="w-3.5 h-3.5 text-blue-400" />
-              <span>GANO Hesapla</span>
+              <span>AGNO Hesapla</span>
             </div>
           </div>
         </div>
@@ -431,7 +431,7 @@ export default function GanoCalculator() {
               <Calculator size={28} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">GANO Hesaplayıcı</h1>
+              <h1 className="text-2xl font-bold text-slate-900">AGNO Hesaplayıcı</h1>
               <p className="text-slate-500 text-sm sm:text-base">Mevcut notlarınızı girin ve dönem sonu senaryonuzu oluşturun. Transkript yükleyerek verdiğiniz dersleri, ortalamanızı ve bu dönem aldığınız dersleri içe aktarabilirsiniz.</p>
             </div>
           </div>
@@ -497,7 +497,7 @@ export default function GanoCalculator() {
           
           <div className="p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-600">Mevcut GANO</label>
+              <label className="text-sm font-semibold text-slate-600">Mevcut AGNO</label>
               <input 
                 type="number" 
                 step="0.01"
@@ -797,7 +797,7 @@ export default function GanoCalculator() {
                 </div>
               </div>
               <div>
-                <div className="text-white/90 text-[10px] sm:text-xs font-medium uppercase tracking-wider mb-0.5">Yeni GANO</div>
+                <div className="text-white/90 text-[10px] sm:text-xs font-medium uppercase tracking-wider mb-0.5">Yeni AGNO</div>
                 <div className="text-xl sm:text-3xl font-bold flex items-center gap-1">
                   <AnimatedCounter value={calculatedGpa.newCgpa} decimals={2} />
                 </div>
