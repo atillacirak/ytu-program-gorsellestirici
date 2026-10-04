@@ -933,6 +933,9 @@ export default function GanoCalculator() {
                 </tbody>
               </table>
             )}
+          </div>
+        </div>
+
         {/* Footer info */}
         <div className="text-center text-xs text-slate-400 pt-6 pb-4">
           <p className="font-medium">YTÜ Dostun — AGNO &amp; YANO Hesaplayıcı</p>
