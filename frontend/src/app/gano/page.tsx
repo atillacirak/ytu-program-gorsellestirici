@@ -379,6 +379,9 @@ export default function GanoCalculator() {
                   </span>
                 </h1>
               </div>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 hidden sm:block">
+                YTÜ&apos;lülerin yeni nesil ders ve not yönetim portalı.
+              </p>
             </div>
           </a>
           <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
