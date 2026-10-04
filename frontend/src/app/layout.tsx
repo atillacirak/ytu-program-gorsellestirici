@@ -36,11 +36,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "YTÜ Dostun",
-  description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
+  description: "YTÜ'lülerin yeni nesil ders ve not yönetim portalı.",
   metadataBase: new URL("https://ytuprogram.vercel.app"),
   openGraph: {
     title: "YTÜ Dostun",
-    description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
+    description: "YTÜ'lülerin yeni nesil ders ve not yönetim portalı.",
     url: "https://ytuprogram.vercel.app",
     siteName: "YTÜ Dostun",
     images: [
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "YTÜ Dostun",
-    description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
+    description: "YTÜ'lülerin yeni nesil ders ve not yönetim portalı.",
     images: ["/og-image.png"],
   },
   icons: {
