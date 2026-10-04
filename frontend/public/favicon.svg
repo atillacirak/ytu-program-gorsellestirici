@@ -1,19 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <rect width="64" height="64" rx="14" fill="#002855"/>
-  <!-- Calendar Body -->
-  <rect x="10" y="14" width="44" height="40" rx="8" fill="#ffffff"/>
-  <!-- Calendar Header -->
-  <path d="M 10 22 C 10 17.578 13.578 14 18 14 L 46 14 C 50.422 14 54 17.578 54 22 L 54 26 L 10 26 Z" fill="#002855"/>
-  <!-- Binder Rings -->
-  <rect x="20" y="9" width="4" height="10" rx="2" fill="#f59e0b"/>
-  <rect x="40" y="9" width="4" height="10" rx="2" fill="#f59e0b"/>
-  <!-- Calendar Grid Dots -->
-  <rect x="16" y="32" width="6" height="5" rx="1.5" fill="#3b82f6"/>
-  <rect x="25" y="32" width="6" height="5" rx="1.5" fill="#10b981"/>
-  <rect x="33" y="32" width="6" height="5" rx="1.5" fill="#f43f5e"/>
-  <rect x="42" y="32" width="6" height="5" rx="1.5" fill="#f59e0b"/>
-  <rect x="16" y="42" width="6" height="5" rx="1.5" fill="#8b5cf6"/>
-  <rect x="25" y="42" width="6" height="5" rx="1.5" fill="#0ea5e9"/>
-  <rect x="33" y="42" width="6" height="5" rx="1.5" fill="#f59e0b"/>
-  <rect x="42" y="42" width="6" height="5" rx="1.5" fill="#002855"/>
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c3f79"/>
+      <stop offset="100%" stop-color="#00306a"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bgGrad)"/>
+  <g transform="translate(14, 14) scale(1.5)" fill="none" stroke="#e7a240" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/>
+    <path d="M22 10v6"/>
+    <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>
+  </g>
 </svg>

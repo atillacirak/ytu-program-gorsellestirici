@@ -38,18 +38,18 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "YTÜ Dostun",
   description: "YTÜ'lülerin yeni nesil ders ve not yönetim portalı.",
-  metadataBase: new URL("https://ytuprogram.vercel.app"),
+  metadataBase: new URL("https://ytudostun.com"),
   openGraph: {
     title: "YTÜ Dostun",
     description: "YTÜ'lülerin yeni nesil ders ve not yönetim portalı.",
-    url: "https://ytuprogram.vercel.app",
+    url: "https://ytudostun.com",
     siteName: "YTÜ Dostun",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "YTÜ Dostun - OBS Ders Programı Çizelgeleme",
+        alt: "YTÜ Dostun — Ders ve Not Yönetim Portalı",
       },
     ],
     locale: "tr_TR",
