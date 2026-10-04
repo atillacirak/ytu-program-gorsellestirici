@@ -745,36 +745,36 @@ export default function GanoCalculator() {
       </div>
 
       {/* Sticky Bottom Bar for Results */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          
-          <div className="flex items-center gap-6">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-3 py-2 sm:p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">
+        <div className="max-w-4xl mx-auto flex flex-row items-center justify-between gap-2 sm:gap-4">
+
+          <div className="flex items-center gap-3 sm:gap-6">
             <div className="text-center sm:text-left">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Dönem Ort. (YANO)</div>
-              <div className="text-2xl font-bold text-slate-800 flex items-center justify-center sm:justify-start gap-1">
+              <div className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Dönem Ort.</div>
+              <div className="text-base sm:text-2xl font-bold text-slate-800 flex items-center justify-center sm:justify-start gap-1">
                 <AnimatedCounter value={calculatedGpa.termGpa} decimals={2} />
               </div>
             </div>
-            <div className="h-10 w-px bg-slate-200 hidden sm:block"></div>
+            <div className="h-8 w-px bg-slate-200"></div>
             <div className="text-center sm:text-left">
-              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Dönem Kredisi</div>
-              <div className="text-xl font-bold text-slate-700">
+              <div className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Dönem Krd.</div>
+              <div className="text-base sm:text-xl font-bold text-slate-700">
                 {calculatedGpa.termCredits}
               </div>
             </div>
           </div>
 
-          <div className="flex-1 flex justify-end">
-            <div className="text-white px-6 py-3 rounded-2xl shadow-sm flex items-center gap-5 w-full sm:w-auto justify-center sm:justify-start" style={{ backgroundColor: '#ac966e' }}>
-              <div className="text-right border-r border-white/20 pr-5">
-                <div className="text-white/80 text-xs font-medium uppercase tracking-wider mb-1">Toplam Kredi</div>
-                <div className="text-xl font-bold flex items-center justify-end gap-1">
+          <div className="flex justify-end">
+            <div className="text-white px-3 py-1.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl shadow-sm flex items-center gap-3 sm:gap-5" style={{ backgroundColor: '#ac966e' }}>
+              <div className="text-right border-r border-white/20 pr-3 sm:pr-5">
+                <div className="text-white/80 text-[10px] sm:text-xs font-medium uppercase tracking-wider mb-0.5">Toplam Krd.</div>
+                <div className="text-base sm:text-xl font-bold flex items-center justify-end gap-1">
                   {calculatedGpa.totalCredits}
                 </div>
               </div>
               <div>
-                <div className="text-white/90 text-xs font-medium uppercase tracking-wider mb-1">Yeni GANO</div>
-                <div className="text-3xl font-bold flex items-center gap-1">
+                <div className="text-white/90 text-[10px] sm:text-xs font-medium uppercase tracking-wider mb-0.5">Yeni GANO</div>
+                <div className="text-xl sm:text-3xl font-bold flex items-center gap-1">
                   <AnimatedCounter value={calculatedGpa.newCgpa} decimals={2} />
                 </div>
               </div>
