@@ -337,11 +337,18 @@ export default function GanoCalculator() {
     };
   }, [pastCgpa, pastTotalCredits, currentCourses]);
 
+  const targetNum = parseFloat(targetCgpa.replace(',', '.'));
+  const isTargetInvalid = targetCgpa.trim() !== '' && !isNaN(targetNum) && (targetNum < 0 || targetNum > 4.00);
+
   const targetCalculation = useMemo(() => {
     const cgpa = parseFloat(pastCgpa.replace(',', '.'));
     const pastCredits = parseFloat(pastTotalCredits.replace(',', '.'));
     const target = parseFloat(targetCgpa.replace(',', '.'));
     const nextCredits = parseFloat(nextSemesterCredits.replace(',', '.'));
+
+    if (isTargetInvalid) {
+      return { isInvalidRange: true, requiredYano: 0, target: 0, nextCredits: 0, isPossible: false, isAlreadyAchieved: false };
+    }
 
     if (isNaN(cgpa) || isNaN(pastCredits) || isNaN(target) || isNaN(nextCredits) || pastCredits <= 0 || nextCredits <= 0) {
       return null;
@@ -354,13 +361,14 @@ export default function GanoCalculator() {
     const requiredYano = requiredPointsNext / nextCredits;
 
     return {
+      isInvalidRange: false,
       requiredYano,
       target,
       nextCredits,
       isPossible: requiredYano <= 4.00 && requiredYano >= 0,
       isAlreadyAchieved: requiredYano < 0
     };
-  }, [pastCgpa, pastTotalCredits, targetCgpa, nextSemesterCredits]);
+  }, [pastCgpa, pastTotalCredits, targetCgpa, nextSemesterCredits, isTargetInvalid]);
 
   const addManualCourse = () => {
     setCurrentCourses([
@@ -698,10 +706,20 @@ export default function GanoCalculator() {
                   min="0"
                   max="4"
                   placeholder="3.20"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-medium text-sm"
+                  className={`w-full bg-slate-50 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:border-transparent transition-all font-medium text-sm ${
+                    isTargetInvalid
+                      ? 'border-red-400 focus:ring-red-500 bg-red-50/40 text-red-700 font-semibold'
+                      : 'border-slate-200 focus:ring-purple-500'
+                  }`}
                   value={targetCgpa}
                   onChange={(e) => setTargetCgpa(e.target.value)}
                 />
+                {isTargetInvalid && (
+                  <p className="text-[11px] text-red-500 font-medium flex items-center gap-1 pt-0.5">
+                    <AlertCircle size={12} className="shrink-0" />
+                    <span>Hedef AGNO 0.00 ile 4.00 arasında olmalıdır.</span>
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600 flex items-center justify-between">
@@ -750,7 +768,12 @@ export default function GanoCalculator() {
             </div>
 
             {targetCalculation ? (
-              targetCalculation.isAlreadyAchieved ? (
+              targetCalculation.isInvalidRange ? (
+                <div className="p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs sm:text-sm font-medium flex items-center gap-2">
+                  <AlertCircle size={16} className="shrink-0 text-red-500" />
+                  <span>Hedef AGNO <strong>0.00 ile 4.00 arasında</strong> bir değer olmalıdır.</span>
+                </div>
+              ) : targetCalculation.isAlreadyAchieved ? (
                 <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm font-medium">
                   🎉 Mevcut AGNO&apos;n zaten bu hedefin üzerinde! Gelecek dönem ortalaman 0.00 gelse dahi AGNO&apos;n <strong>{targetCalculation.target.toFixed(2)}</strong> altına düşmez.
                 </div>
