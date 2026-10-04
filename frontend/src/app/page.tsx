@@ -534,7 +534,7 @@ export default function Home() {
                 </h1>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                YTÜ'lülerin yeni nesil ders ve not yönetim portalı.
+                YTÜ&apos;lülerin yeni nesil ders ve not yönetim portalı.
               </p>
             </div>
           </button>
