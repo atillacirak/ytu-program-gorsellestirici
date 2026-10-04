@@ -35,20 +35,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "YTÜ Program Görselleştirici",
+  title: "YTÜ Dostun",
   description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
   metadataBase: new URL("https://ytuprogram.vercel.app"),
   openGraph: {
-    title: "YTÜ Program Görselleştirici",
+    title: "YTÜ Dostun",
     description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
     url: "https://ytuprogram.vercel.app",
-    siteName: "YTÜ Program Görselleştirici",
+    siteName: "YTÜ Dostun",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "YTÜ Program Görselleştirici - OBS Ders Programı Çizelgeleme",
+        alt: "YTÜ Dostun - OBS Ders Programı Çizelgeleme",
       },
     ],
     locale: "tr_TR",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "YTÜ Program Görselleştirici",
+    title: "YTÜ Dostun",
     description: "YTÜ OBS ders programı görselleştirme - gönüllü proje",
     images: ["/og-image.png"],
   },

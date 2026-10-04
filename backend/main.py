@@ -564,3 +564,160 @@ async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
                     pass
     else:
         raise HTTPException(status_code=400, detail='Lütfen geçerli bir PDF veya PNG/JPG görseli yükleyin.')
+
+
+@app.post('/api/parse-transcript')
+async def parse_transcript(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail='Sadece PDF formatında transkript yükleyebilirsiniz.')
+        
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            shutil.copyfileobj(file.file, tmp)
+            tmp_path = tmp.name
+            
+        text = ""
+        with pdfplumber.open(tmp_path) as pdf:
+            for page in pdf.pages:
+                extracted = page.extract_text()
+                if extracted:
+                    text += extracted + "\n"
+                
+        os.remove(tmp_path)
+        
+        cgpa = None
+        total_credits = None
+        
+        # 1. YTU Orijinal Format
+        ytu_cgpa = re.search(r'\(AGNO\)\s*:\s*([\d.,]+)', text)
+        ytu_credits = re.search(r'Tamamlanan Yerel Kredi Say\S*\s*:\s*([\d.,]+)', text)
+        
+        # 2. e-Devlet Format
+        edev_cgpa = re.search(r'GNO\s*:\s*([\d.,]+)', text)
+        if not edev_cgpa:
+            edev_cgpa = re.search(r'\(Cumulative GPA\)\s*[\n:]*\s*([\d.,]+)', text)
+            
+        edev_credits = re.search(r'TUK\s*:\s*([\d.,]+)', text)
+        if not edev_credits:
+            edev_credits = re.search(r'\(Credits Completed\)\s*[\n:]*\s*([\d.,]+)', text)
+            
+        if ytu_cgpa:
+            cgpa = ytu_cgpa.group(1).replace(',', '.')
+        elif edev_cgpa:
+            cgpa = edev_cgpa.group(1).replace(',', '.')
+            
+        if ytu_credits:
+            total_credits = ytu_credits.group(1).replace(',', '.')
+        elif edev_credits:
+            total_credits = edev_credits.group(1).replace(',', '.')
+            
+        # Dersleri parse etme (Geçmiş durum tablosu için)
+        courses = []
+        valid_grades = ['AA', 'BA', 'BB', 'CB', 'CC', 'DC', 'DD', 'FD', 'FF', 'F0', 'G', 'K', 'M', 'İ', '--']
+        
+        current_term = ""
+        lines = text.split('\n')
+        for idx, line in enumerate(lines):
+            line = line.strip()
+            
+            # Dönem başlığını yakala
+            term_match = re.match(r'^20\d{2}-20\d{2}\s+([Gg].z|[Bb]ahar|[Yy]az|[Mm]uaf)', line)
+            if term_match:
+                term_parts = line.split()
+                if len(term_parts) >= 2:
+                    current_term = f"{term_parts[0]} {term_parts[1].capitalize()}"
+            
+            # Örn: MAT1071 veya *TIB1000 ile başlayan satırlar
+            code_match = re.match(r'^(\*?[A-Z]{3,4}\d{3,4})\s+', line)
+            if not code_match:
+                continue
+                
+            code = code_match.group(1).replace('*', '')
+            parts = line.split()
+            
+            best_grade = None
+            best_grade_idx = -1
+            max_numbers_before = -1
+            
+            for i in range(len(parts)-1, 0, -1):
+                if parts[i] in valid_grades:
+                    num_count = 0
+                    for j in range(i - 1, 0, -1):
+                        if re.match(r'^\d+(,\d+)?(\.\d+)?$', parts[j]):
+                            num_count += 1
+                        else:
+                            break
+                    if num_count > max_numbers_before:
+                        max_numbers_before = num_count
+                        best_grade = parts[i]
+                        best_grade_idx = i
+                        
+            if best_grade is None:
+                continue
+                
+            grade = best_grade if best_grade != '--' else ''
+            grade_idx = best_grade_idx
+            
+            # Notun hemen oncesindeki sayisal degerleri (AKTS, Kredi, U, T) topla
+            numbers_before_grade = []
+            for i in range(grade_idx - 1, 0, -1):
+                if re.match(r'^\d+(,\d+)?(\.\d+)?$', parts[i]):
+                    numbers_before_grade.append(parts[i].replace(',', '.'))
+                else:
+                    break
+                    
+            if len(numbers_before_grade) >= 2:
+                credit_str = numbers_before_grade[1]
+            elif len(numbers_before_grade) == 1:
+                credit_str = numbers_before_grade[0]
+            else:
+                credit_str = "0"
+                
+            # Ders Adı Çıkarımı
+            name_parts = []
+            for i in range(1, grade_idx - len(numbers_before_grade)):
+                if parts[i] not in ['TR', 'EN', 'Z', 'S', 'İng.', 'Türkçe', 'Tr']:
+                    name_parts.append(parts[i])
+                    
+            name = " ".join(name_parts).strip()
+            
+            # Eğer isim boş kaldıysa veya çok kısaysa, pdfplumber ders adını bir önceki satıra atmış olabilir
+            if len(name) < 3 and idx > 0:
+                prev_line = lines[idx-1].strip()
+                # Önceki satır bir başlık, kod veya boş değilse onu isim olarak al
+                if prev_line and not re.match(r'^(\*?[A-Z]{3,4}\d{3,4})', prev_line):
+                    name = prev_line
+                    
+            # Eğer yine boşsa, en azından boş kalmasın
+            if not name:
+                name = "Bilinmeyen Ders"
+            
+            courses.append({
+                "code": code,
+                "name": name,
+                "credits": float(credit_str) if credit_str else 0,
+                "expectedGrade": grade,
+                "term": current_term
+            })
+            
+        # Aynı kodlu derslerin son alınanını tut (Transkript kronolojiktir)
+        course_dict = {}
+        for c in courses:
+            course_dict[c['code']] = c
+            
+        final_courses = list(course_dict.values())
+            
+        return {
+            "status": "success",
+            "cgpa": float(cgpa) if cgpa else 0.0,
+            "total_credits": float(total_credits) if total_credits else 0.0,
+            "courses": final_courses
+        }
+        
+    except Exception as e:
+        if 'tmp_path' in locals() and os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except:
+                pass
+        raise HTTPException(status_code=500, detail=f'Transkript okunurken hata: {str(e)}')

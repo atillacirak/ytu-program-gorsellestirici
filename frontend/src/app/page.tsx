@@ -5,7 +5,7 @@ import {
   Calendar, Building2, Upload, RefreshCw, FileText,
   AlertCircle, Download, Printer, LayoutGrid, BookOpen, Clock,
   Sparkles, Layers, GraduationCap, Palette, Pencil, X, Check,
-  Trash2, StickyNote, Users, Edit3, RotateCcw
+  Trash2, StickyNote, Users, Edit3, RotateCcw, Calculator
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { getFullInstructorName, getInstructorAbbreviation } from '../utils/instructors';
@@ -527,14 +527,11 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#002855] tracking-tight transition-colors flex items-center gap-1.5">
-                  <span>YTÜ Program Görselleştirici</span>
+                  <span>YTÜ Dostun</span>
                   <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                    v1.2
+                    v2
                   </span>
                 </h1>
-                <span className="hidden sm:inline-block px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-mono rounded font-semibold">
-                  OBS
-                </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
                 Öğrenci Haftalık Ders Programı Çizelgesi Portalı
@@ -567,6 +564,13 @@ export default function Home() {
                 <Users className="w-3.5 h-3.5 text-amber-400" />
                 <span>Ortak Boş Saatler (Karşılaştır)</span>
               </button>
+              <a
+                href="/gano"
+                className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
+              >
+                <Calculator className="w-3.5 h-3.5 text-blue-500" />
+                <span>GANO Hesapla</span>
+              </a>
             </div>
 
             {visualizerData && activeTab === 'single' && (
@@ -1867,7 +1871,7 @@ export default function Home() {
       <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 bg-white no-print">
         <div className="max-w-7xl mx-auto px-4 space-y-1">
           <p className="font-semibold text-slate-700">
-            YTÜ Program Görselleştirici — Gönüllü Öğrenci Projesi
+            YTÜ Dostun — Gönüllü Öğrenci Projesi
           </p>
           <p className="text-[11px] text-slate-400">
             <a
