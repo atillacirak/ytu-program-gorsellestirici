@@ -67,6 +67,21 @@ export default function GanoCalculator() {
   const scheduleInputRef = useRef<HTMLInputElement>(null);
   const hasTrackedScenarioRef = useRef(false);
 
+  // Calculate total credits from current scenario courses
+  const currentSemesterTotalCredits = useMemo(() => {
+    return currentCourses.reduce((acc, c) => {
+      const cr = parseFloat(c.credits?.toString() || '0');
+      return acc + (isNaN(cr) ? 0 : cr);
+    }, 0);
+  }, [currentCourses]);
+
+  // Sync nextSemesterCredits when scenario courses credits change
+  useEffect(() => {
+    if (currentSemesterTotalCredits > 0) {
+      setNextSemesterCredits(currentSemesterTotalCredits.toString());
+    }
+  }, [currentSemesterTotalCredits]);
+
   useEffect(() => {
     const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
     if (!isDev) {
@@ -683,7 +698,12 @@ export default function GanoCalculator() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-600">Gelecek Dönem Kredi</label>
+              <label className="text-xs font-semibold text-slate-600 flex items-center justify-between">
+                <span>Gelecek Dönem Kredi</span>
+                {currentSemesterTotalCredits > 0 && (
+                  <span className="text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-normal border border-purple-200">Derslerden senkronize</span>
+                )}
+              </label>
               <input
                 type="number"
                 step="0.5"
