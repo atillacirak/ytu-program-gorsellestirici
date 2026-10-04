@@ -29,12 +29,13 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<FullStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [period, setPeriod] = useState<'24h' | '7d' | '30d' | 'all'>('all');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/stats`);
+      const res = await fetch(`${API_BASE}/api/stats?period=${period}`);
       if (res.ok) {
         const data = await res.json();
         setStats({
@@ -50,7 +51,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     fetchStats();
@@ -69,8 +70,13 @@ export default function AdminDashboard() {
     ? ((stats.total_generated / stats.total_visits) * 100).toFixed(1)
     : '0';
 
-  const ganoVisitRate = stats && stats.total_visits > 0
-    ? ((stats.total_gano_visits / stats.total_visits) * 100).toFixed(1)
+  // AGNO Interest Rate (For 'all' time, baseline starts at 3450 so 3500+ visits count fairly for new AGNO feature)
+  const effectiveVisitsForAgno = period === 'all'
+    ? Math.max(1, (stats?.total_visits || 0) - 3450)
+    : (stats?.total_visits || 1);
+
+  const ganoVisitRate = stats && effectiveVisitsForAgno > 0
+    ? Math.min(100, (stats.total_gano_visits / effectiveVisitsForAgno) * 100).toFixed(1)
     : '0';
 
   const ganoScenarioRate = stats && stats.total_gano_visits > 0
@@ -124,6 +130,56 @@ export default function AdminDashboard() {
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               <span>Yenile</span>
+            </button>
+          </div>
+        </div>
+
+        {/* --- Period Filter Bar --- */}
+        <div className="bg-slate-800/60 border border-slate-700/60 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-2 text-xs text-slate-300 font-semibold px-1">
+            <Calendar size={16} className="text-indigo-400" />
+            <span>Zaman Aralığı Filtresi:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-xl border border-slate-700/60">
+            <button
+              onClick={() => setPeriod('24h')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                period === '24h'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              Son 24 Saat
+            </button>
+            <button
+              onClick={() => setPeriod('7d')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                period === '7d'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              Son 7 Gün
+            </button>
+            <button
+              onClick={() => setPeriod('30d')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                period === '30d'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              Son 30 Gün
+            </button>
+            <button
+              onClick={() => setPeriod('all')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                period === 'all'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              Tüm Zamanlar
             </button>
           </div>
         </div>
@@ -257,7 +313,9 @@ export default function AdminDashboard() {
                 />
               </div>
               <p className="text-[11px] text-slate-500 leading-tight">
-                Ziyaretçilerin %{ganoVisitRate}'i AGNO Hesaplama modülüne geçiş yaptı.
+                {period === 'all'
+                  ? `Yeni ziyaretçilerin %${ganoVisitRate}'i AGNO modülüne geçti (3.450+ lansman sonrası ziyaretler).`
+                  : `Seçilen dönemdeki ziyaretçilerin %${ganoVisitRate}'i AGNO modülüne geçti.`}
               </p>
             </div>
 

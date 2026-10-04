@@ -14,8 +14,8 @@ import stats_db
 app = FastAPI(title='YTÜ Program Görselleştirici API', version='1.0.0')
 
 @app.get('/api/stats')
-def get_stats_endpoint():
-    return stats_db.get_stats()
+def get_stats_endpoint(period: str = 'all'):
+    return stats_db.get_stats(period)
 
 @app.post('/api/stats/visit')
 def increment_visit_endpoint():
