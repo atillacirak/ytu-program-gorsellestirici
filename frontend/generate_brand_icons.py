@@ -4,7 +4,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 public_dir = r'C:\Projeler\Ytü Görselleştir\frontend\public'
 
-# --- 1. Generate favicon.svg ---
+# --- 1. Generate favicon.svg with larger, bolder graduation cap ---
+# 64x64 box, scaling Lucide icon (24x24) to scale 1.9 (45.6px) and translating to center
 svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -13,7 +14,7 @@ svg_content = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" wid
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="16" fill="url(#bgGrad)"/>
-  <g transform="translate(14, 14) scale(1.5)" fill="none" stroke="#e7a240" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(8.5, 8.5) scale(1.95)" fill="none" stroke="#e7a240" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/>
     <path d="M22 10v6"/>
     <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>
@@ -24,7 +25,7 @@ with open(os.path.join(public_dir, 'favicon.svg'), 'w', encoding='utf-8') as f:
     f.write(svg_content)
 print("favicon.svg generated!")
 
-# --- Helper: Draw Squircle Logo with Graduation Cap ---
+# --- Helper: Draw Squircle Logo with Larger Graduation Cap ---
 def draw_logo(size=512):
     scale = 4
     img_size = size * scale
@@ -33,10 +34,7 @@ def draw_logo(size=512):
 
     # Background squircle
     radius = int(img_size * 0.25)
-    
-    # Draw gradient or solid rounded rectangle
     navy_top = (12, 63, 121, 255) # #0c3f79
-    navy_bottom = (0, 48, 106, 255) # #00306a
     
     # Base rounded rect
     draw.rounded_rectangle(
@@ -45,40 +43,36 @@ def draw_logo(size=512):
         fill=navy_top
     )
     
-    # Gold color
+    # Gold color & line width (bold & crisp)
     gold = (231, 162, 64, 255) # #e7a240
-    line_w = int(img_size * 0.05)
+    line_w = int(img_size * 0.065)
     
-    # Coordinate system for Graduation Cap (centered)
-    # Box from (0.2 * size, 0.2 * size) to (0.8 * size, 0.8 * size)
     cx, cy = img_size / 2, img_size / 2
     
-    # Cap diamond: Top (cx, cy - 0.22*size), Right (cx + 0.32*size, cy - 0.06*size), Bottom (cx, cy + 0.10*size), Left (cx - 0.32*size, cy - 0.06*size)
-    top_p = (cx, cy - img_size * 0.20)
-    right_p = (cx + img_size * 0.29, cy - img_size * 0.05)
-    bottom_p = (cx, cy + img_size * 0.10)
-    left_p = (cx - img_size * 0.29, cy - img_size * 0.05)
+    # Cap diamond: Enlarged to fill 76% of width
+    top_p = (cx, cy - img_size * 0.25)
+    right_p = (cx + img_size * 0.36, cy - img_size * 0.06)
+    bottom_p = (cx, cy + img_size * 0.13)
+    left_p = (cx - img_size * 0.36, cy - img_size * 0.06)
     
     # Draw rhombus cap
     draw.line([top_p, right_p, bottom_p, left_p, top_p], fill=gold, width=line_w, joint="round")
     
     # Draw tassel on the right side
-    tassel_x = cx + img_size * 0.30
-    tassel_y1 = cy - img_size * 0.05
-    tassel_y2 = cy + img_size * 0.16
+    tassel_x = cx + img_size * 0.37
+    tassel_y1 = cy - img_size * 0.06
+    tassel_y2 = cy + img_size * 0.20
     draw.line([(tassel_x, tassel_y1), (tassel_x, tassel_y2)], fill=gold, width=line_w, joint="round")
     
     # Draw arc / curve under the cap (skullcap headband)
-    # Arc from (cx - 0.20*size, cy + 0.03*size) down to (cx, cy + 0.24*size) then to (cx + 0.20*size, cy + 0.03*size)
-    arc_points = []
-    p1_x, p1_y = cx - img_size * 0.19, cy + img_size * 0.03
-    p2_x, p2_y = cx + img_size * 0.19, cy + img_size * 0.03
+    p1_x, p1_y = cx - img_size * 0.24, cy + img_size * 0.04
+    p2_x, p2_y = cx + img_size * 0.24, cy + img_size * 0.04
     
     steps = 40
+    arc_points = []
     for i in range(steps + 1):
         t = i / steps
-        # Quadratic curve
-        ctrl_x, ctrl_y = cx, cy + img_size * 0.28
+        ctrl_x, ctrl_y = cx, cy + img_size * 0.33
         x = (1-t)**2 * p1_x + 2*(1-t)*t * ctrl_x + t**2 * p2_x
         y = (1-t)**2 * p1_y + 2*(1-t)*t * ctrl_y + t**2 * p2_y
         arc_points.append((x, y))
@@ -161,4 +155,4 @@ def generate_og_image():
     print("og-image.png (1200x630) generated!")
 
 generate_og_image()
-print("All logos and preview icons generated successfully!")
+print("All resized logo icons and favicons generated successfully!")

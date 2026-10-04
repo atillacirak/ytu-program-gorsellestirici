@@ -389,7 +389,7 @@ export default function GanoCalculator() {
         <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <a href="/" className="flex items-center space-x-3.5 group transition-colors">
             <div className="w-10 h-10 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
-              <GraduationCap className="w-5 h-5 text-amber-400" />
+              <GraduationCap className="w-6 h-6 text-[#e7a240]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
