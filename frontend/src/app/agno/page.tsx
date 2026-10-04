@@ -417,14 +417,11 @@ export default function GanoCalculator() {
         if (found) {
           setCurrentCourses(prev => prev.map(c => {
             if (c.id !== id) return c;
-            const updated = { ...c };
-            if (!c.name || c.name.trim() === '' || c.name.toLowerCase() === c.code.toLowerCase()) {
-              updated.name = found.name;
-            }
-            if (!c.credits || c.credits === '' || c.credits === 0) {
-              updated.credits = found.credits;
-            }
-            return updated;
+            return {
+              ...c,
+              name: found.name,
+              credits: found.credits
+            };
           }));
         }
       });
@@ -458,14 +455,11 @@ export default function GanoCalculator() {
         if (found) {
           setPastCourses(prev => prev.map(c => {
             if (c.id !== id) return c;
-            const updated = { ...c };
-            if (!c.name || c.name.trim() === '' || c.name.toLowerCase() === c.code.toLowerCase()) {
-              updated.name = found.name;
-            }
-            if (!c.credits || c.credits === '' || c.credits === 0) {
-              updated.credits = found.credits;
-            }
-            return updated;
+            return {
+              ...c,
+              name: found.name,
+              credits: found.credits
+            };
           }));
         }
       });

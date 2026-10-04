@@ -79,11 +79,6 @@ def course_lookup_endpoint(code: str):
     cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) = ? LIMIT 1', (code_clean,))
     row = cursor.fetchone()
     
-    if not row:
-        # Try fuzzy/prefix match if exact code wasn't found
-        cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) LIKE ? LIMIT 1', (f"{code_clean}%",))
-        row = cursor.fetchone()
-        
     conn.close()
     
     if row:
