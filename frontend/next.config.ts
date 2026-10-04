@@ -1,7 +1,21 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'ytuprogram.vercel.app',
+          },
+        ],
+        destination: 'https://ytudostun.com/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
