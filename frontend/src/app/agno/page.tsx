@@ -13,7 +13,8 @@ import {
   RotateCcw,
   Calendar,
   Users,
-  Target
+  Target,
+  Trophy
 } from 'lucide-react';
 import AnimatedCounter from '../../components/AnimatedCounter';
 
@@ -662,7 +663,7 @@ export default function GanoCalculator() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden p-4 sm:p-5 space-y-4">
           <div className="flex items-center gap-2 font-bold text-slate-800 text-sm sm:text-base">
             <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
-              <Target size={18} />
+              <Trophy size={18} />
             </div>
             <span>Hedefine ulaşmak için ne gerekiyor?</span>
           </div>
@@ -697,6 +698,12 @@ export default function GanoCalculator() {
 
           <div className="flex flex-wrap gap-2 pt-1">
             <button
+              onClick={() => setTargetCgpa('3.00')}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '3.00' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
+            >
+              Onur Öğrencisi 3,00
+            </button>
+            <button
               onClick={() => setTargetCgpa('2.72')}
               className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.72' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
             >
@@ -713,12 +720,6 @@ export default function GanoCalculator() {
               className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '2.40' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
             >
               Erasmus 2,40
-            </button>
-            <button
-              onClick={() => setTargetCgpa('3.00')}
-              className={`text-xs px-3 py-1.5 rounded-full border transition-all font-medium cursor-pointer ${targetCgpa === '3.00' ? 'bg-purple-100 text-purple-700 border-purple-300 font-semibold' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'}`}
-            >
-              Onur Öğrencisi 3,00
             </button>
           </div>
 
