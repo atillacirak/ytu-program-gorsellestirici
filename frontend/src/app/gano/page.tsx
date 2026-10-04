@@ -60,6 +60,13 @@ export default function GanoCalculator() {
   const transcriptInputRef = useRef<HTMLInputElement>(null);
   const scheduleInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
+    if (!isDev) {
+      fetch(`${API_BASE}/api/stats/gano-visit`, { method: 'POST' }).catch(() => {});
+    }
+  }, []);
+
   const handleTranscriptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -108,6 +115,7 @@ export default function GanoCalculator() {
            });
            
            setPastCourses(past);
+           fetch(`${API_BASE}/api/stats/gano-scenario`, { method: 'POST' }).catch(() => {});
            
            if (current.length > 0) {
              setCurrentCourses(prev => {
@@ -174,6 +182,7 @@ export default function GanoCalculator() {
               return [...prev, ...filteredNew];
             });
             setIsUploadingSchedule(false);
+            fetch(`${API_BASE}/api/stats/gano-scenario`, { method: 'POST' }).catch(() => {});
             e.target.value = '';
             return; // Başarılı, backend'e gitmeye gerek yok!
           }

@@ -1882,6 +1882,13 @@ export default function Home() {
             >
               github.com/atillacirak
             </a>
+            <a
+              href="/admin"
+              className="hover:text-[#0c3f79] hover:underline transition-colors font-medium ml-2 text-slate-400"
+              title="Geliştirici İstatistik Paneli"
+            >
+              · Dev Panel 📊
+            </a>
           </p>
         </div>
       </footer>
