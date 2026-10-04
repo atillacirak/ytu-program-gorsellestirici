@@ -91,9 +91,11 @@ def generate_og_image():
     bg = Image.alpha_composite(bg, glow)
     draw = ImageDraw.Draw(bg)
     
-    # Gold top & bottom accent lines
+    # Gold accent frame on all 4 sides (top, bottom, left, right)
     draw.rectangle([(0, 0), (W, 6)], fill=(231, 162, 64, 255))
     draw.rectangle([(0, H - 6), (W, H)], fill=(231, 162, 64, 255))
+    draw.rectangle([(0, 0), (6, H)], fill=(231, 162, 64, 255))
+    draw.rectangle([(W - 6, 0), (W, H)], fill=(231, 162, 64, 255))
 
     # Place Logo (size 220x220)
     logo_size = 220
