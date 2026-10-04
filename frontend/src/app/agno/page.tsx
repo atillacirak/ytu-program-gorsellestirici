@@ -14,9 +14,11 @@ import {
   Calendar,
   Users,
   Target,
-  Trophy
+  Trophy,
+  ShieldCheck
 } from 'lucide-react';
 import AnimatedCounter from '../../components/AnimatedCounter';
+import PrivacyModal from '../../components/PrivacyModal';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
@@ -48,6 +50,7 @@ interface ScenarioCourse {
 }
 
 export default function GanoCalculator() {
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   // Past state
   const [pastCgpa, setPastCgpa] = useState<string>('');
   const [pastTotalCredits, setPastTotalCredits] = useState<string>('');
@@ -930,9 +933,31 @@ export default function GanoCalculator() {
                 </tbody>
               </table>
             )}
-          </div>
+        {/* Footer info */}
+        <div className="text-center text-xs text-slate-400 pt-6 pb-4">
+          <p className="font-medium">YTÜ Dostun — AGNO &amp; YANO Hesaplayıcı</p>
+          <p className="text-[11px] mt-1 flex items-center justify-center gap-2">
+            <a
+              href="https://github.com/atillacirak"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-slate-600 hover:underline transition-colors"
+            >
+              github.com/atillacirak
+            </a>
+            <span>·</span>
+            <button
+              onClick={() => setShowPrivacyModal(true)}
+              className="hover:text-emerald-700 text-slate-500 font-medium transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <ShieldCheck size={13} className="text-emerald-500" />
+              <span>Gizlilik &amp; Veri Güvenliği</span>
+            </button>
+          </p>
         </div>
       </div>
+
+      <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
 
       {/* Sticky Bottom Bar for Results */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-3 py-2 sm:p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50">

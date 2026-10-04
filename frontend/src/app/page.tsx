@@ -5,12 +5,13 @@ import {
   Calendar, Building2, Upload, RefreshCw, FileText,
   AlertCircle, Download, Printer, LayoutGrid, BookOpen, Clock,
   Sparkles, Layers, GraduationCap, Palette, Pencil, X, Check,
-  Trash2, StickyNote, Users, Edit3, RotateCcw, Calculator
+  Trash2, StickyNote, Users, Edit3, RotateCcw, Calculator, ShieldCheck
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { getFullInstructorName, getInstructorAbbreviation } from '../utils/instructors';
 import CompareView from '../components/CompareView';
 import AnimatedCounter from '../components/AnimatedCounter';
+import PrivacyModal from '../components/PrivacyModal';
 import { injectMetadataToPngDataUrl } from '../utils/pngMetadata';
 import prepDataRaw from '../data/prepSchedules.json';
 
@@ -46,6 +47,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'single' | 'compare'>('single');
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
   const [visualizerData, setVisualizerData] = useState<{
     student_id: string;
@@ -1873,7 +1875,7 @@ export default function Home() {
           <p className="font-semibold text-slate-700">
             YTÜ Dostun — Gönüllü Öğrenci Projesi
           </p>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-400 flex items-center justify-center gap-2">
             <a
               href="https://github.com/atillacirak"
               target="_blank"
@@ -1882,9 +1884,18 @@ export default function Home() {
             >
               github.com/atillacirak
             </a>
+            <span>·</span>
+            <button
+              onClick={() => setShowPrivacyModal(true)}
+              className="hover:text-emerald-700 text-slate-500 font-medium transition-colors cursor-pointer inline-flex items-center gap-1"
+            >
+              <ShieldCheck size={13} className="text-emerald-500" />
+              <span>Gizlilik &amp; Veri Güvenliği</span>
+            </button>
           </p>
         </div>
       </footer>
+      <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
     </div>
   );
 }
