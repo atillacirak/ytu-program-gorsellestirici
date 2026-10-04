@@ -63,6 +63,48 @@ DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ytu_courses.
 def root():
     return {'status': 'active', 'service': 'YTÜ Program Görselleştirici API'}
 
+@app.get('/api/course-lookup')
+def course_lookup_endpoint(code: str):
+    code_clean = code.strip().upper().replace(' ', '')
+    if not code_clean:
+        return {'status': 'success', 'found': False, 'message': 'Ders kodu boş.'}
+    
+    if not os.path.exists(DB_PATH):
+        return {'status': 'error', 'detail': 'Veritabanı bulunamadı.'}
+        
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) = ? LIMIT 1', (code_clean,))
+    row = cursor.fetchone()
+    
+    if not row:
+        # Try fuzzy/prefix match if exact code wasn't found
+        cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) LIKE ? LIMIT 1', (f"{code_clean}%",))
+        row = cursor.fetchone()
+        
+    conn.close()
+    
+    if row:
+        return {
+            'status': 'success',
+            'found': True,
+            'course': {
+                'code': row['code'],
+                'name': row['name'],
+                'credits': float(row['credits']) if row['credits'] is not None else 0.0,
+                'ects': float(row['ects']) if row['ects'] is not None else 0.0
+            }
+        }
+    else:
+        return {
+            'status': 'success',
+            'found': False,
+            'message': 'Ders veritabanında bulunamadı.'
+        }
+
+
 @app.post('/api/parse-student-schedule')
 async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
     if not file.filename.lower().endswith('.pdf'):
@@ -159,13 +201,17 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
 
                             course_name = code
                             instructor = ''
+                            credits_val = 0.0
+                            ects_val = 0.0
 
                             if cursor:
-                                cursor.execute('SELECT name, instructor FROM courses WHERE code = ? LIMIT 1', (code,))
+                                cursor.execute('SELECT name, instructor, credits, ects FROM courses WHERE code = ? LIMIT 1', (code,))
                                 c_row = cursor.fetchone()
                                 if c_row:
                                     course_name = c_row['name']
                                     instructor = c_row['instructor'] or ''
+                                    credits_val = float(c_row['credits']) if c_row['credits'] is not None else 0.0
+                                    ects_val = float(c_row['ects']) if c_row['ects'] is not None else 0.0
 
                                 cursor.execute(
                                     'SELECT instructor FROM sections WHERE course_code = ? AND (section_id = ? OR section_id = ? OR section_id = ?) LIMIT 1',
@@ -183,6 +229,8 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                                 'instructor': instructor,
                                 'start_time': start_t_clean,
                                 'end_time': end_t_clean,
+                                'credits': credits_val,
+                                'ects': ects_val,
                                 'is_lab': 'LAB' in classroom.upper()
                             })
 
@@ -217,6 +265,8 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                     courses_summary_map[ckey] = {
                         'code': it['code'],
                         'name': it['name'],
+                        'credits': it.get('credits', 0.0),
+                        'ects': it.get('ects', 0.0),
                         'section': it['section'],
                         'instructor': it['instructor'],
                         'classrooms': set(),

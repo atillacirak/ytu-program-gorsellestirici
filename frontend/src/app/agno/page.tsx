@@ -246,7 +246,7 @@ export default function GanoCalculator() {
           id: Math.random().toString(36).substr(2, 9) + index,
           code: course.code || '',
           name: course.name || '',
-          credits: '',
+          credits: course.credits || '',
           expectedGrade: ''
         }));
       } else if (data.schedule && typeof data.schedule === 'object') {
@@ -260,7 +260,7 @@ export default function GanoCalculator() {
                       id: Math.random().toString(36).substr(2, 9),
                       code: c.code || '',
                       name: c.name || '',
-                      credits: '',
+                      credits: c.credits || '',
                       expectedGrade: ''
                     });
                  }
@@ -390,10 +390,45 @@ export default function GanoCalculator() {
     setCurrentCourses(currentCourses.filter(c => c.id !== id));
   };
 
+  const lookupCourseData = async (codeStr: string) => {
+    const cleanCode = codeStr.trim().replace(/\s+/g, '').toUpperCase();
+    if (!cleanCode || cleanCode.length < 4) return null;
+    try {
+      const res = await fetch(`${API_BASE}/api/course-lookup?code=${encodeURIComponent(cleanCode)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success' && data.found && data.course) {
+          return data.course;
+        }
+      }
+    } catch (e) {
+      console.error('Course lookup error:', e);
+    }
+    return null;
+  };
+
   const updateCourse = (id: string, field: keyof ScenarioCourse, value: any) => {
-    setCurrentCourses(currentCourses.map(c => 
+    setCurrentCourses(prev => prev.map(c => 
       c.id === id ? { ...c, [field]: value } : c
     ));
+
+    if (field === 'code' && value && value.trim().length >= 4) {
+      lookupCourseData(value).then(found => {
+        if (found) {
+          setCurrentCourses(prev => prev.map(c => {
+            if (c.id !== id) return c;
+            const updated = { ...c };
+            if (!c.name || c.name.trim() === '' || c.name.toLowerCase() === c.code.toLowerCase()) {
+              updated.name = found.name;
+            }
+            if (!c.credits || c.credits === '' || c.credits === 0) {
+              updated.credits = found.credits;
+            }
+            return updated;
+          }));
+        }
+      });
+    }
   };
 
   const addPastCourse = () => {
@@ -414,9 +449,27 @@ export default function GanoCalculator() {
   };
 
   const updatePastCourse = (id: string, field: keyof ScenarioCourse, value: any) => {
-    setPastCourses(pastCourses.map(c => 
+    setPastCourses(prev => prev.map(c => 
       c.id === id ? { ...c, [field]: value } : c
     ));
+
+    if (field === 'code' && value && value.trim().length >= 4) {
+      lookupCourseData(value).then(found => {
+        if (found) {
+          setPastCourses(prev => prev.map(c => {
+            if (c.id !== id) return c;
+            const updated = { ...c };
+            if (!c.name || c.name.trim() === '' || c.name.toLowerCase() === c.code.toLowerCase()) {
+              updated.name = found.name;
+            }
+            if (!c.credits || c.credits === '' || c.credits === 0) {
+              updated.credits = found.credits;
+            }
+            return updated;
+          }));
+        }
+      });
+    }
   };
 
   const clearAllCourses = () => {
