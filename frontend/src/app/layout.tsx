@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Lora, Outfit } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import DevColorPanel from "../components/DevColorPanel";
 import "./globals.css";
 
 const inter = Inter({
@@ -89,6 +90,7 @@ export default function RootLayout({
       >
         {children}
         <Analytics />
+        <DevColorPanel />
       </body>
     </html>
   );

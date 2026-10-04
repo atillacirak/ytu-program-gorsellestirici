@@ -367,12 +367,12 @@ export default function GanoCalculator() {
       <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-xs mb-8">
         <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <a href="/" className="flex items-center space-x-3.5 group transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-[#002855] group-hover:bg-[#001f42] flex items-center justify-center text-white shadow-xs transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
               <GraduationCap className="w-5 h-5 text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#002855] tracking-tight transition-colors flex items-center gap-1.5">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#0c3f79] tracking-tight transition-colors flex items-center gap-1.5">
                   <span>YTÜ Dostun</span>
                   <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
                     v2
@@ -393,7 +393,7 @@ export default function GanoCalculator() {
               <Users className="w-3.5 h-3.5 text-amber-400" />
               <span>Ortak Boş Saatler (Karşılaştır)</span>
             </a>
-            <div className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-[#002855] text-white shadow-2xs">
+            <div className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-[#0c3f79] text-white shadow-2xs">
               <Calculator className="w-3.5 h-3.5 text-blue-400" />
               <span>GANO Hesapla</span>
             </div>
@@ -426,7 +426,7 @@ export default function GanoCalculator() {
 
         {/* Past GPA Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div className="p-4 border-b border-slate-100 bg-[#0c3f79]/5 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div>
               <div className="flex items-center gap-2 font-semibold text-slate-700">
                 <GraduationCap size={20} className="text-slate-400" />
@@ -448,7 +448,7 @@ export default function GanoCalculator() {
               <button 
                 onClick={() => transcriptInputRef.current?.click()}
                 disabled={isUploadingTranscript}
-                className={`text-sm flex items-center gap-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium ${isUploadingTranscript ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`text-sm flex items-center gap-1.5 text-[#8a5611] bg-[#e7a240]/15 hover:bg-[#e7a240]/25 border border-[#e7a240]/30 px-3 py-1.5 rounded-lg transition-colors font-medium ${isUploadingTranscript ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isUploadingTranscript ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
                 {isUploadingTranscript ? 'Okunuyor...' : 'Transkript Yükle'}
@@ -466,7 +466,7 @@ export default function GanoCalculator() {
               
               <button 
                 onClick={addPastCourse}
-                className="text-sm flex items-center gap-1.5 text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors font-medium shadow-sm"
+                className="text-sm flex items-center gap-1.5 text-white bg-[#0c3f79] hover:bg-[#00306a] px-3 py-1.5 rounded-lg transition-colors font-medium shadow-sm"
               >
                 <Plus size={16} />
                 Ders Ekle
@@ -507,9 +507,9 @@ export default function GanoCalculator() {
                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
                  Geçmiş Dönem Dersleri ({pastCourses.length})
                </div>
-               <div className="max-h-64 overflow-y-auto overflow-x-auto border border-slate-200 rounded-xl bg-slate-50/50">
+               <div className="max-h-64 overflow-y-auto overflow-x-auto border border-slate-200 rounded-xl bg-[#0c3f79]/[0.02]">
                   <table className="w-full text-left border-collapse min-w-[600px] text-sm">
-                    <thead className="sticky top-0 bg-slate-100/90 backdrop-blur-sm border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider z-10">
+                    <thead className="sticky top-0 bg-[#0c3f79]/5 backdrop-blur-sm border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider z-10">
                       <tr>
                         <th className="px-5 py-3 font-medium w-32">Ders Kodu</th>
                         <th className="px-5 py-3 font-medium">Ders Adı</th>
@@ -523,8 +523,8 @@ export default function GanoCalculator() {
                         let lastTerm = '';
                         return pastCourses.map(course => {
                           const termHeader = course.term && course.term !== lastTerm ? (
-                            <tr key={`term-${course.term}`} className="bg-[#002855]/5">
-                              <td colSpan={5} className="px-5 py-2 text-xs font-bold text-[#002855] uppercase tracking-wider border-y border-[#002855]/10 shadow-[inset_0_1px_0_0_rgba(0,40,85,0.05)]">
+                            <tr key={`term-${course.term}`} className="bg-[#0c3f79]/5">
+                              <td colSpan={5} className="px-5 py-2 text-xs font-bold text-[#0c3f79] uppercase tracking-wider border-y border-[#0c3f79]/10 shadow-[inset_0_1px_0_0_rgba(0,40,85,0.05)]">
                                 {course.term}
                               </td>
                             </tr>
@@ -534,7 +534,7 @@ export default function GanoCalculator() {
                           return (
                             <React.Fragment key={course.id}>
                               {termHeader}
-                              <tr className="hover:bg-slate-50/30 transition-colors">
+                              <tr className="hover:bg-[#0c3f79]/[0.04] transition-colors">
                           <td className="px-5 py-2">
                             <input 
                               type="text" 
@@ -599,7 +599,7 @@ export default function GanoCalculator() {
 
           {(!pastCgpa || !pastTotalCredits) && pastCourses.length === 0 && (
              <div className="px-5 pb-5 md:px-6 md:pb-6">
-               <div className="bg-amber-50 text-amber-700 p-3 rounded-xl flex gap-2 items-start text-sm border border-amber-100/50">
+               <div className="bg-[#e7a240]/[0.08] text-[#8a5611] p-3 rounded-xl flex gap-2 items-start text-sm border border-[#e7a240]/30">
                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
                  <p>Sadece bu dönemin YANO'sunu hesaplamak istiyorsanız bu alanları boş bırakabilirsiniz.</p>
                </div>
@@ -609,7 +609,7 @@ export default function GanoCalculator() {
 
         {/* Current Semester Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div className="p-4 border-b border-slate-100 bg-[#0c3f79]/5 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div>
               <div className="flex items-center gap-2 font-semibold text-slate-700">
                 <BookOpen size={20} className="text-slate-400" />
@@ -631,7 +631,7 @@ export default function GanoCalculator() {
               <button 
                 onClick={() => scheduleInputRef.current?.click()}
                 disabled={isUploadingSchedule}
-                className={`text-sm flex items-center gap-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium ${isUploadingSchedule ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`text-sm flex items-center gap-1.5 text-[#8a5611] bg-[#e7a240]/15 hover:bg-[#e7a240]/25 border border-[#e7a240]/30 px-3 py-1.5 rounded-lg transition-colors font-medium ${isUploadingSchedule ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isUploadingSchedule ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
                 {isUploadingSchedule ? 'Okunuyor...' : 'Programdan Çek'}
@@ -649,7 +649,7 @@ export default function GanoCalculator() {
               
               <button 
                 onClick={addManualCourse}
-                className="text-sm flex items-center gap-1.5 text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors font-medium shadow-sm"
+                className="text-sm flex items-center gap-1.5 text-white bg-[#0c3f79] hover:bg-[#00306a] px-3 py-1.5 rounded-lg transition-colors font-medium shadow-sm"
               >
                 <Plus size={16} />
                 Ders Ekle
@@ -676,7 +676,7 @@ export default function GanoCalculator() {
             ) : (
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
-                  <tr className="bg-slate-50/50 text-slate-500 text-xs uppercase tracking-wider">
+                  <tr className="bg-[#0c3f79]/5 text-slate-600 text-xs uppercase tracking-wider">
                     <th className="px-5 py-3 font-medium w-32">Ders Kodu</th>
                     <th className="px-5 py-3 font-medium">Ders Adı</th>
                     <th className="px-5 py-3 font-medium w-24">Kredi</th>
@@ -686,7 +686,7 @@ export default function GanoCalculator() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-sm">
                   {currentCourses.map(course => (
-                    <tr key={course.id} className="hover:bg-slate-50/30 transition-colors">
+                    <tr key={course.id} className="hover:bg-[#0c3f79]/[0.04] transition-colors">
                       <td className="px-5 py-3">
                         <input 
                           type="text" 
@@ -768,7 +768,7 @@ export default function GanoCalculator() {
           </div>
 
           <div className="flex justify-end">
-            <div className="text-white px-3 py-1.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl shadow-sm flex items-center gap-3 sm:gap-5" style={{ backgroundColor: '#ac966e' }}>
+            <div className="text-white px-3 py-1.5 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl shadow-sm flex items-center gap-3 sm:gap-5" style={{ background: 'linear-gradient(135deg, #e7a240 0%, #d38e2c 100%)' }}>
               <div className="text-right border-r border-white/20 pr-3 sm:pr-5">
                 <div className="text-white/80 text-[10px] sm:text-xs font-medium uppercase tracking-wider mb-0.5">Toplam Krd.</div>
                 <div className="text-base sm:text-xl font-bold flex items-center justify-end gap-1">

@@ -4,6 +4,11 @@
   color-scheme: light !important;
   --background: #f8fafc;
   --foreground: #0f172a;
+  /* Tema renkleri — DevColorPanel ile dinamik olarak değiştirilir */
+  --navy: #0c3f79;
+  --navy-dark: #00306a;
+  --gold: #e7a240;
+  --gold-dark: #d38e2c;
 }
 
 html {

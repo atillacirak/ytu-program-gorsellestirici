@@ -521,12 +521,12 @@ export default function Home() {
             className="flex items-center space-x-3.5 text-left group cursor-pointer focus:outline-none"
             title="Yeni belge yükleme sayfasına dön"
           >
-            <div className="w-10 h-10 rounded-lg bg-[#002855] group-hover:bg-[#001f42] flex items-center justify-center text-white shadow-xs transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
               <GraduationCap className="w-5 h-5 text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#002855] tracking-tight transition-colors flex items-center gap-1.5">
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#0c3f79] tracking-tight transition-colors flex items-center gap-1.5">
                   <span>YTÜ Dostun</span>
                   <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
                     v2
@@ -546,7 +546,7 @@ export default function Home() {
                 onClick={() => setActiveTab('single')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'single'
-                    ? 'bg-[#002855] text-white shadow-2xs'
+                    ? 'bg-[#0c3f79] text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -557,7 +557,7 @@ export default function Home() {
                 onClick={() => setActiveTab('compare')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'compare'
-                    ? 'bg-[#002855] text-white shadow-2xs'
+                    ? 'bg-[#0c3f79] text-white shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -574,7 +574,7 @@ export default function Home() {
             </div>
 
             {visualizerData && activeTab === 'single' && (
-              <label className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer">
+              <label className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer">
                 <Upload className="w-3.5 h-3.5" />
                 <span>Yeni Belge Yükle</span>
                 <input
@@ -605,7 +605,7 @@ export default function Home() {
                       </div>
 
                       <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                        Öğrenci Haftalık Ders Programı <span className="text-[#002855]">Çizelgesi</span>
+                        Öğrenci Haftalık Ders Programı <span className="text-[#0c3f79]">Çizelgesi</span>
                       </h2>
 
                       <p className="text-sm text-slate-600 leading-relaxed">
@@ -616,7 +616,7 @@ export default function Home() {
                     <div className="flex-shrink-0 w-full md:w-auto hidden sm:flex">
                       <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center space-y-1 w-48 shadow-2xs">
                         <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Bugüne Kadar</div>
-                        <div className="text-3xl font-black text-[#002855] font-mono tracking-tighter">
+                        <div className="text-3xl font-black text-[#0c3f79] font-mono tracking-tighter">
                           {stats ? <AnimatedCounter value={stats.total_generated} /> : '...'}
                         </div>
                         <div className="text-xs font-medium text-slate-600">YTÜ'lü Program Çıkardı</div>
@@ -625,22 +625,22 @@ export default function Home() {
                   </div>
 
                   {/* OBS Belge Alma Talimatı */}
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 text-left">
+                  <div className="p-4 bg-[#e7a240]/[0.05] border border-[#e7a240]/30 rounded-xl space-y-2.5 text-left">
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-                      <FileText className="w-4 h-4 text-[#002855]" />
+                      <FileText className="w-4 h-4 text-[#d38e2c]" />
                       <span>OBS Üzerinden Ders Programı PDF'i Nasıl Alınır?</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-                      <div className="flex items-start gap-2.5 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
-                        <span className="w-5 h-5 rounded-full bg-[#002855] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">1</span>
+                      <div className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-lg border border-[#e7a240]/25 shadow-2xs">
+                        <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e7a240] to-[#d38e2c] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 shadow-2xs">1</span>
                         <span><strong>OBS</strong> sistemine giriş yapınız ve <strong>Ders Programı</strong> ekranını açınız.</span>
                       </div>
-                      <div className="flex items-start gap-2.5 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
-                        <span className="w-5 h-5 rounded-full bg-[#002855] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">2</span>
+                      <div className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-lg border border-[#e7a240]/25 shadow-2xs">
+                        <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e7a240] to-[#d38e2c] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 shadow-2xs">2</span>
                         <span>Sayfadaki <strong>"Yazdır"</strong> butonunu seçip açılan ekranda <strong>"Save / Kaydet"</strong> tuşuna basarak PDF belgesini indiriniz.</span>
                       </div>
-                      <div className="flex items-start gap-2.5 text-xs text-slate-600 bg-white p-3 rounded-lg border border-slate-200">
-                        <span className="w-5 h-5 rounded-full bg-[#002855] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5">3</span>
+                      <div className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-lg border border-[#e7a240]/25 shadow-2xs">
+                        <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e7a240] to-[#d38e2c] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 shadow-2xs">3</span>
                         <span>İndirdiğiniz bu <strong>Report.pdf</strong> dosyasını aşağıdaki alana yükleyiniz.</span>
                       </div>
                     </div>
@@ -661,8 +661,8 @@ export default function Home() {
 
                   <label className={`block border-2 border-dashed rounded-xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
                     visualizerPdfUploading
-                      ? 'border-[#002855] bg-blue-50/40'
-                      : 'border-slate-300 hover:border-[#002855] bg-slate-50/70 hover:bg-slate-100/70'
+                      ? 'border-[#0c3f79] bg-blue-50/40'
+                      : 'border-slate-300 hover:border-[#0c3f79] bg-slate-50/70 hover:bg-slate-100/70'
                   }`}>
                     <input
                       type="file"
@@ -674,7 +674,7 @@ export default function Home() {
 
                     {visualizerPdfUploading ? (
                       <div className="py-8 flex flex-col items-center justify-center space-y-3">
-                        <RefreshCw className="w-8 h-8 text-[#002855] animate-spin" />
+                        <RefreshCw className="w-8 h-8 text-[#0c3f79] animate-spin" />
                         <div className="space-y-1">
                           <p className="text-sm font-bold text-slate-800">Belge Analiz Ediliyor...</p>
                           <p className="text-xs text-slate-500">Ders kayıtları, derslikler ve öğretim üyeleri eşleştirilmektedir</p>
@@ -682,7 +682,7 @@ export default function Home() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="w-14 h-14 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center mx-auto text-[#002855] shadow-xs">
+                        <div className="w-14 h-14 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center mx-auto text-[#0c3f79] shadow-xs">
                           <FileText className="w-7 h-7" />
                         </div>
                         <div className="space-y-1">
@@ -694,7 +694,7 @@ export default function Home() {
                           </p>
                         </div>
                         <div className="pt-2">
-                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-xs transition-all">
+                          <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-semibold rounded-lg shadow-xs transition-all">
                             <Upload className="w-4 h-4" />
                             <span>PDF Belgesi Yükle</span>
                           </span>
@@ -718,7 +718,7 @@ export default function Home() {
                             setSelectedPrepLevel(e.target.value);
                             setSelectedPrepClass('');
                           }}
-                          className="w-full text-sm font-medium text-slate-900 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-[#002855] focus:border-[#002855] outline-none transition-all cursor-pointer"
+                          className="w-full text-sm font-medium text-slate-900 bg-slate-50 border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-[#0c3f79] focus:border-[#0c3f79] outline-none transition-all cursor-pointer"
                         >
                           <option value="">Seçiniz...</option>
                           {prepLevels.map(lvl => (
@@ -733,7 +733,7 @@ export default function Home() {
                             value={selectedPrepClass}
                             onChange={(e) => setSelectedPrepClass(e.target.value)}
                             disabled={!selectedPrepLevel}
-                            className="flex-1 text-sm font-medium text-slate-900 bg-slate-50 border border-slate-300 rounded-lg px-2 py-2.5 focus:ring-2 focus:ring-[#002855] focus:border-[#002855] outline-none disabled:opacity-50 transition-all cursor-pointer"
+                            className="flex-1 text-sm font-medium text-slate-900 bg-slate-50 border border-slate-300 rounded-lg px-2 py-2.5 focus:ring-2 focus:ring-[#0c3f79] focus:border-[#0c3f79] outline-none disabled:opacity-50 transition-all cursor-pointer"
                           >
                             <option value="">Sınıf Seçin</option>
                             {prepClassesForLevel.map(cls => {
@@ -747,7 +747,7 @@ export default function Home() {
                           <button
                             onClick={handlePrepClassSelect}
                             disabled={!selectedPrepClass}
-                            className="px-5 py-2.5 bg-[#002855] hover:bg-[#001f42] disabled:bg-slate-300 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-xs disabled:cursor-not-allowed"
+                            className="px-5 py-2.5 bg-[#0c3f79] hover:bg-[#00306a] disabled:bg-slate-300 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-xs disabled:cursor-not-allowed"
                           >
                             Getir
                           </button>
@@ -760,7 +760,7 @@ export default function Home() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
-                        <Calendar className="w-4 h-4 text-[#002855]" />
+                        <Calendar className="w-4 h-4 text-[#0c3f79]" />
                         Haftalık Akademik Çizelge
                       </div>
                       <p className="text-[11px] text-slate-500">Ders saatleri bloklar halinde haftalık resmi şablona yerleştirilir.</p>
@@ -768,7 +768,7 @@ export default function Home() {
 
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
-                        <Building2 className="w-4 h-4 text-[#002855]" />
+                        <Building2 className="w-4 h-4 text-[#0c3f79]" />
                         Derslik ve Laboratuvarlar
                       </div>
                       <p className="text-[11px] text-slate-500">Teorik derslikler ve LAB ortamları açık ve net şekilde belirtilir.</p>
@@ -776,7 +776,7 @@ export default function Home() {
 
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-left space-y-1">
                       <div className="text-slate-800 font-bold text-xs flex items-center gap-1.5">
-                        <Layers className="w-4 h-4 text-[#002855]" />
+                        <Layers className="w-4 h-4 text-[#0c3f79]" />
                         Ders ve Şube Bilgileri
                       </div>
                       <p className="text-[11px] text-slate-500">Belgedeki tüm ders kodları ve şubeler çizelgeye eksiksiz yerleştirilir.</p>
@@ -792,8 +792,8 @@ export default function Home() {
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     {/* Program Başlık Alanı */}
                     <div className="flex items-center space-x-3.5">
-                      <div className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center text-[#002855] font-bold text-base shadow-2xs">
-                        <Calendar className="w-5 h-5 text-[#002855]" />
+                      <div className="w-10 h-10 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center text-[#0c3f79] font-bold text-base shadow-2xs">
+                        <Calendar className="w-5 h-5 text-[#0c3f79]" />
                       </div>
                       <div>
                         <h2 className="text-sm sm:text-base font-bold text-slate-900">
@@ -813,7 +813,7 @@ export default function Home() {
                           onClick={() => setVisualizerViewMode('table')}
                           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                             visualizerViewMode === 'table'
-                              ? 'bg-[#002855] text-white shadow-2xs'
+                              ? 'bg-[#0c3f79] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
@@ -824,7 +824,7 @@ export default function Home() {
                           onClick={() => setVisualizerViewMode('cards')}
                           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                             visualizerViewMode === 'cards'
-                              ? 'bg-[#002855] text-white shadow-2xs'
+                              ? 'bg-[#0c3f79] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
@@ -835,7 +835,7 @@ export default function Home() {
                           onClick={() => setVisualizerViewMode('summary')}
                           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                             visualizerViewMode === 'summary'
-                              ? 'bg-[#002855] text-white shadow-2xs'
+                              ? 'bg-[#0c3f79] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                         >
@@ -850,7 +850,7 @@ export default function Home() {
                           onClick={() => setVisualizerColorMode('colored')}
                           className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                             visualizerColorMode === 'colored'
-                              ? 'bg-[#002855] text-white shadow-2xs'
+                              ? 'bg-[#0c3f79] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                           title="Renkli Görünüm"
@@ -862,7 +862,7 @@ export default function Home() {
                           onClick={() => setVisualizerColorMode('monochrome')}
                           className={`px-2.5 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                             visualizerColorMode === 'monochrome'
-                              ? 'bg-[#002855] text-white shadow-2xs'
+                              ? 'bg-[#0c3f79] text-white shadow-2xs'
                               : 'text-slate-600 hover:text-slate-900'
                           }`}
                           title="Standart Renksiz / Sade Görünüm"
@@ -879,9 +879,9 @@ export default function Home() {
                             type="checkbox"
                             checked={showInstructor}
                             onChange={(e) => handleToggleShowInstructor(e.target.checked)}
-                            className="w-3.5 h-3.5 rounded text-[#002855] focus:ring-0 cursor-pointer accent-[#002855]"
+                            className="w-3.5 h-3.5 rounded text-[#0c3f79] focus:ring-0 cursor-pointer accent-[#0c3f79]"
                           />
-                          <GraduationCap className="w-3.5 h-3.5 text-[#002855]" />
+                          <GraduationCap className="w-3.5 h-3.5 text-[#0c3f79]" />
                           <span>Hoca</span>
                         </label>
 
@@ -890,7 +890,7 @@ export default function Home() {
                             type="checkbox"
                             checked={showSection}
                             onChange={(e) => handleToggleShowSection(e.target.checked)}
-                            className="w-3.5 h-3.5 rounded text-[#002855] focus:ring-0 cursor-pointer accent-[#002855]"
+                            className="w-3.5 h-3.5 rounded text-[#0c3f79] focus:ring-0 cursor-pointer accent-[#0c3f79]"
                           />
                           <Layers className="w-3.5 h-3.5 text-blue-600" />
                           <span>Şube</span>
@@ -901,7 +901,7 @@ export default function Home() {
                             type="checkbox"
                             checked={showNotes}
                             onChange={(e) => handleToggleShowNotes(e.target.checked)}
-                            className="w-3.5 h-3.5 rounded text-[#002855] focus:ring-0 cursor-pointer accent-[#002855]"
+                            className="w-3.5 h-3.5 rounded text-[#0c3f79] focus:ring-0 cursor-pointer accent-[#0c3f79]"
                           />
                           <StickyNote className="w-3.5 h-3.5 text-amber-500" />
                           <span>Notlar</span>
@@ -924,7 +924,7 @@ export default function Home() {
 
                       <button
                         onClick={handleExportVisualizerPNG}
-                        className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer"
+                        className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-semibold rounded-lg shadow-2xs transition-all cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>PNG Kaydet</span>
@@ -956,7 +956,7 @@ export default function Home() {
                   {isEditMode && (
                     <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs text-amber-950 shadow-2xs animate-fade-in no-print">
                       <div className="flex items-center gap-2 font-medium">
-                        <Pencil className="w-4 h-4 text-amber-600 shrink-0" />
+                        <Pencil className="w-4 h-4 text-[#d38e2c] shrink-0" />
                         <span><strong>Düzenle Modu Aktif:</strong> Bilgileri veya notu değiştirmek için tablodaki derse tıklayın.</span>
                       </div>
 
@@ -968,7 +968,7 @@ export default function Home() {
                             type="button"
                             onClick={() => handleChangeFontFamily('default')}
                             className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                              scheduleFontFamily === 'default' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                              scheduleFontFamily === 'default' ? 'bg-[#0c3f79] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
                             }`}
                             title="Default (Orijinal düzen - Başlıklar sans, kod/saat mono)"
                           >
@@ -978,7 +978,7 @@ export default function Home() {
                             type="button"
                             onClick={() => handleChangeFontFamily('inter')}
                             className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-all cursor-pointer ${
-                              scheduleFontFamily === 'inter' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                              scheduleFontFamily === 'inter' ? 'bg-[#0c3f79] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
                             }`}
                             title="Modern (Inter Sans - Temiz ve kurumsal)"
                           >
@@ -988,7 +988,7 @@ export default function Home() {
                             type="button"
                             onClick={() => handleChangeFontFamily('lora')}
                             className={`px-2.5 py-0.5 rounded text-[11px] font-serif font-semibold transition-all cursor-pointer ${
-                              scheduleFontFamily === 'lora' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                              scheduleFontFamily === 'lora' ? 'bg-[#0c3f79] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
                             }`}
                             title="Zarif (Lora Serif - Prestijli akademik tırnaklı)"
                           >
@@ -998,7 +998,7 @@ export default function Home() {
                             type="button"
                             onClick={() => handleChangeFontFamily('mono')}
                             className={`px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold transition-all cursor-pointer ${
-                              scheduleFontFamily === 'mono' ? 'bg-[#002855] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
+                              scheduleFontFamily === 'mono' ? 'bg-[#0c3f79] text-white shadow-2xs' : 'text-slate-700 hover:bg-slate-100'
                             }`}
                             title="Kod (JetBrains Mono - Temiz teknik mono)"
                           >
@@ -1105,7 +1105,7 @@ export default function Home() {
                             <span className="text-[9px] font-bold tracking-[0.25em] text-slate-500 uppercase mb-0.5">
                               İNGİLİZCE HAZIRLIK
                             </span>
-                            <span className="font-black text-xl text-[#002855] tracking-tight leading-none">
+                            <span className="font-black text-xl text-[#0c3f79] tracking-tight leading-none">
                               {selectedPrepClass.replace('/', ' / ')}
                             </span>
                           </div>
@@ -1595,7 +1595,7 @@ export default function Home() {
                   <div className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 text-slate-900 ${getDocFontClass()}`}>
                     <div className="border-b border-slate-100 pb-3">
                       <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-[#002855]" />
+                        <Building2 className="w-4 h-4 text-[#0c3f79]" />
                         Kayıtlı Dersler, Öğretim Üyeleri ve Derslik Dağılımı Dökümü
                       </h3>
                       <p className="text-xs text-slate-500 mt-0.5">Ders kodları, hocalar, şubeler, derslik ortamları ve özel notlar listesi</p>
@@ -1705,7 +1705,7 @@ export default function Home() {
 
             {/* Modal Başlık */}
             <div className="border-b border-slate-100 pb-3 flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-blue-50 text-[#002855]">
+              <div className="p-2 rounded-lg bg-blue-50 text-[#0c3f79]">
                 <Edit3 className="w-5 h-5" />
               </div>
               <div>
@@ -1730,7 +1730,7 @@ export default function Home() {
                     value={editingCourseForm.code}
                     onChange={(e) => setEditingCourseForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
                     placeholder="Örn: BLM1011"
-                    className="w-full text-xs font-mono font-semibold text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none uppercase"
+                    className="w-full text-xs font-mono font-semibold text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#0c3f79] focus:ring-1 focus:ring-[#0c3f79] focus:outline-none uppercase"
                   />
                 </div>
                 <div className="col-span-3">
@@ -1742,7 +1742,7 @@ export default function Home() {
                     value={editingCourseForm.section}
                     onChange={(e) => setEditingCourseForm(prev => ({ ...prev, section: e.target.value }))}
                     placeholder="Örn: 1 veya A"
-                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#0c3f79] focus:ring-1 focus:ring-[#0c3f79] focus:outline-none"
                   />
                 </div>
                 <div className="col-span-5">
@@ -1755,7 +1755,7 @@ export default function Home() {
                     value={editingCourseForm.instructor}
                     onChange={(e) => setEditingCourseForm(prev => ({ ...prev, instructor: e.target.value }))}
                     placeholder="Örn: ACK, MEK"
-                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#0c3f79] focus:ring-1 focus:ring-[#0c3f79] focus:outline-none"
                   />
                 </div>
               </div>
@@ -1770,7 +1770,7 @@ export default function Home() {
                     value={editingCourseForm.name}
                     onChange={(e) => setEditingCourseForm(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Dersin tam veya kısa adı"
-                    className="w-full text-xs font-medium text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                    className="w-full text-xs font-medium text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#0c3f79] focus:ring-1 focus:ring-[#0c3f79] focus:outline-none"
                   />
                 </div>
                 <div className="col-span-4">
@@ -1782,7 +1782,7 @@ export default function Home() {
                     value={editingCourseForm.classroom}
                     onChange={(e) => setEditingCourseForm(prev => ({ ...prev, classroom: e.target.value }))}
                     placeholder="Örn: D-201, Lab 3"
-                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none"
+                    className="w-full text-xs font-mono text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:border-[#0c3f79] focus:ring-1 focus:ring-[#0c3f79] focus:outline-none"
                   />
                 </div>
               </div>
@@ -1799,7 +1799,7 @@ export default function Home() {
                 value={editingCourseForm.note}
                 onChange={(e) => setEditingCourseForm(prev => ({ ...prev, note: e.target.value }))}
                 placeholder="Örn: Vize %40, Proje %30 | Yoklama zorunlu | Teams kodu: abc123"
-                className="w-full text-xs text-slate-900 p-2.5 rounded-xl border border-slate-300 focus:border-[#002855] focus:ring-1 focus:ring-[#002855] focus:outline-none transition-all placeholder:text-slate-400"
+                className="w-full text-xs text-slate-900 p-2.5 rounded-xl border border-slate-300 focus:border-[#0c3f79] focus:ring-1 focus:ring-[#0c3f79] focus:outline-none transition-all placeholder:text-slate-400"
               />
 
               {/* Hızlı Not Şablonları */}
@@ -1856,7 +1856,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleSaveCourseForm}
-                  className="px-4 py-2 bg-[#002855] hover:bg-[#001f42] text-white text-xs font-semibold rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-semibold rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>Değişiklikleri Kaydet</span>
