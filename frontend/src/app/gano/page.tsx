@@ -59,6 +59,7 @@ export default function GanoCalculator() {
   const [isUploadingSchedule, setIsUploadingSchedule] = useState(false);
   const transcriptInputRef = useRef<HTMLInputElement>(null);
   const scheduleInputRef = useRef<HTMLInputElement>(null);
+  const hasTrackedScenarioRef = useRef(false);
 
   useEffect(() => {
     const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
@@ -66,6 +67,17 @@ export default function GanoCalculator() {
       fetch(`${API_BASE}/api/stats/gano-visit`, { method: 'POST' }).catch(() => {});
     }
   }, []);
+
+  useEffect(() => {
+    const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
+    if (isDev) return;
+
+    const hasContent = pastCourses.length > 0 || currentCourses.some(c => (c.code && c.code.trim()) || (c.expectedGrade && c.credits));
+    if (hasContent && !hasTrackedScenarioRef.current) {
+      hasTrackedScenarioRef.current = true;
+      fetch(`${API_BASE}/api/stats/gano-scenario`, { method: 'POST' }).catch(() => {});
+    }
+  }, [pastCourses, currentCourses]);
 
   const handleTranscriptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
