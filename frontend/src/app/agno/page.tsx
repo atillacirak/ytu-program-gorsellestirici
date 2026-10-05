@@ -207,7 +207,9 @@ export default function GanoCalculator() {
              }
           });
           
-          const newCourses = Array.from(uniqueCoursesMap.values());
+          let newCourses = Array.from(uniqueCoursesMap.values());
+          newCourses = await resolveMissingCreditsForCourses(newCourses);
+
           if (newCourses.length > 0) {
             setCurrentCourses(prev => {
               const hasOnlyEmpties = prev.length === 0 || (prev.length === 1 && !prev[0].code && !prev[0].name && !prev[0].credits);
@@ -269,6 +271,8 @@ export default function GanoCalculator() {
         });
         newCourses = Array.from(uniqueCoursesMap.values());
       }
+
+      newCourses = await resolveMissingCreditsForCourses(newCourses);
 
       if (newCourses.length > 0) {
         setCurrentCourses(prev => {
@@ -390,11 +394,20 @@ export default function GanoCalculator() {
     setCurrentCourses(currentCourses.filter(c => c.id !== id));
   };
 
-  const lookupCourseData = async (codeStr: string) => {
-    const cleanCode = codeStr.trim().replace(/\s+/g, '').toUpperCase();
-    if (!cleanCode || cleanCode.length < 4) return null;
+  const lookupCourseData = async (codeStr?: string, nameStr?: string) => {
+    const cleanCode = (codeStr || '').trim().replace(/\s+/g, '').toUpperCase();
+    const cleanName = (nameStr || '').trim();
+    if (!cleanCode && !cleanName) return null;
+
+    if (cleanCode && cleanCode.length < 4 && !cleanName) return null;
+    if (cleanName && cleanName.length < 3 && !cleanCode) return null;
+
     try {
-      const res = await fetch(`${API_BASE}/api/course-lookup?code=${encodeURIComponent(cleanCode)}`);
+      const params = new URLSearchParams();
+      if (cleanCode) params.append('code', cleanCode);
+      if (cleanName) params.append('name', cleanName);
+
+      const res = await fetch(`${API_BASE}/api/course-lookup?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (data.status === 'success' && data.found && data.course) {
@@ -407,20 +420,42 @@ export default function GanoCalculator() {
     return null;
   };
 
+  const resolveMissingCreditsForCourses = async (courses: ScenarioCourse[]): Promise<ScenarioCourse[]> => {
+    return Promise.all(courses.map(async (c) => {
+      let cr = parseFloat(c.credits?.toString() || '0');
+      if (!cr || isNaN(cr) || cr <= 0) {
+        const found = await lookupCourseData(c.code, c.name);
+        if (found && found.credits) {
+          return {
+            ...c,
+            code: c.code || found.code,
+            name: c.name || found.name,
+            credits: found.credits
+          };
+        }
+      }
+      return c;
+    }));
+  };
+
   const updateCourse = (id: string, field: keyof ScenarioCourse, value: any) => {
     setCurrentCourses(prev => prev.map(c => 
       c.id === id ? { ...c, [field]: value } : c
     ));
 
-    if (field === 'code' && value && value.trim().length >= 4) {
-      lookupCourseData(value).then(found => {
+    if ((field === 'code' || field === 'name') && value && value.trim().length >= 3) {
+      const currentItem = currentCourses.find(c => c.id === id);
+      const codeVal = field === 'code' ? value : currentItem?.code;
+      const nameVal = field === 'name' ? value : currentItem?.name;
+
+      lookupCourseData(codeVal, nameVal).then(found => {
         if (found) {
           setCurrentCourses(prev => prev.map(c => {
             if (c.id !== id) return c;
             return {
               ...c,
-              name: found.name,
-              credits: found.credits
+              name: (field === 'code' && found.name) ? found.name : c.name,
+              credits: found.credits || c.credits
             };
           }));
         }
@@ -450,15 +485,19 @@ export default function GanoCalculator() {
       c.id === id ? { ...c, [field]: value } : c
     ));
 
-    if (field === 'code' && value && value.trim().length >= 4) {
-      lookupCourseData(value).then(found => {
+    if ((field === 'code' || field === 'name') && value && value.trim().length >= 3) {
+      const currentItem = pastCourses.find(c => c.id === id);
+      const codeVal = field === 'code' ? value : currentItem?.code;
+      const nameVal = field === 'name' ? value : currentItem?.name;
+
+      lookupCourseData(codeVal, nameVal).then(found => {
         if (found) {
           setPastCourses(prev => prev.map(c => {
             if (c.id !== id) return c;
             return {
               ...c,
-              name: found.name,
-              credits: found.credits
+              name: (field === 'code' && found.name) ? found.name : c.name,
+              credits: found.credits || c.credits
             };
           }));
         }

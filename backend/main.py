@@ -64,10 +64,9 @@ def root():
     return {'status': 'active', 'service': 'YTÜ Program Görselleştirici API'}
 
 @app.get('/api/course-lookup')
-def course_lookup_endpoint(code: str):
-    code_clean = code.strip().upper().replace(' ', '')
-    if not code_clean:
-        return {'status': 'success', 'found': False, 'message': 'Ders kodu boş.'}
+def course_lookup_endpoint(code: Optional[str] = None, name: Optional[str] = None):
+    if not code and not name:
+        return {'status': 'success', 'found': False, 'message': 'Ders kodu veya ismi belirtilmedi.'}
     
     if not os.path.exists(DB_PATH):
         return {'status': 'error', 'detail': 'Veritabanı bulunamadı.'}
@@ -75,10 +74,22 @@ def course_lookup_endpoint(code: str):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) = ? LIMIT 1', (code_clean,))
-    row = cursor.fetchone()
-    
+    row = None
+
+    if code and code.strip():
+        code_clean = code.strip().upper().replace(' ', '')
+        cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) = ? LIMIT 1', (code_clean,))
+        row = cursor.fetchone()
+
+    if not row and name and name.strip():
+        name_clean = name.strip()
+        if len(name_clean) >= 3:
+            cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(name, " ", "")) = UPPER(REPLACE(?, " ", "")) LIMIT 1', (name_clean,))
+            row = cursor.fetchone()
+            if not row:
+                cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(name) LIKE UPPER(?) LIMIT 1', (f"%{name_clean}%",))
+                row = cursor.fetchone()
+                
     conn.close()
     
     if row:
