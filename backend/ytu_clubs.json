@@ -1,0 +1,485 @@
+[
+  {
+    "name": "Patent Kulübü",
+    "president": "HÜSNA NUR YÜKSEL",
+    "advisor": "Doç.Dr. HASAN CANKURT  Dr.Öğretim Üyesi MUHAMMED ÖZGÖLET",
+    "email": "mespatent@gmail.com",
+    "phone": "5313608061"
+  },
+  {
+    "name": "AHENK KULÜBÜ",
+    "president": "ZEHRA DOĞAN",
+    "advisor": "Prof.Dr. Vefa TAŞDELEN",
+    "email": "merve.yucetas@std.yildiz.edu.tr",
+    "phone": "5535114412"
+  },
+  {
+    "name": "MİMAR VE MÜHENDİS GELİŞİM KULÜBÜ",
+    "president": "ABDULKADİR BOZDEMİR",
+    "advisor": "Doç.Dr. Mustafa Sinan YARDIM",
+    "email": "ytummgk@gmail.com",
+    "phone": "5525529544"
+  },
+  {
+    "name": "Yüksek Teknoloji Kulübü",
+    "president": "BERK EMRE ÇAKIR",
+    "advisor": "Dr.Öğretim Üyesi BAHADIR ÇATALBAŞ",
+    "email": "b.emrecakir7@gmail.com",
+    "phone": "5415340539"
+  },
+  {
+    "name": "Konservasyon ve Restorasyon Kulübü",
+    "president": "GÜLCE DURU İLHAN",
+    "advisor": "Arş.Gör. MUSA ÜNSAL",
+    "email": "duru.ilhan@std.yildiz.edu.tr",
+    "phone": "5416969146"
+  },
+  {
+    "name": "Sanat Kulübü",
+    "president": "ZEYNEP ADAR",
+    "advisor": "Prof.Dr. MEHMET EMİN KAHRAMAN",
+    "email": "zeynep.adar@std.yildiz.edu.tr",
+    "phone": "5353297953"
+  },
+  {
+    "name": "Veri Bilimi Kulübü",
+    "president": "SERMİN ÇAYLAK",
+    "advisor": "Dr.Öğretim Üyesi TUGAY KARADAĞ  Dr.Öğretim Üyesi COŞKUN PARİM",
+    "email": "ytuveribilimi@gmail.com",
+    "phone": "5445317961"
+  },
+  {
+    "name": "Türk Dünyası",
+    "president": "İBRAHİM ETEM ALTIN",
+    "advisor": "Öğr.Gör.Dr. NURULLAH ARVAS",
+    "email": "ytuturkdunyasi@gmail.com",
+    "phone": "5444628371"
+  },
+  {
+    "name": "İYİLİĞİN GELECEĞİ KULÜBÜ",
+    "president": "ASAF KAYRA ÖZDOĞAN",
+    "advisor": "Prof.Dr. Yusuf ZEREN",
+    "email": "ytu.iyiligingelecegi@hotmail.com",
+    "phone": "5511332397"
+  },
+  {
+    "name": "Teknofest Kulübü",
+    "president": "MUHAMMET BERAT UYAROĞLU",
+    "advisor": "Prof.Dr. Gamze VARANK",
+    "email": "melek.fidan@std.yildiz.edu.tr",
+    "phone": "5550340254"
+  },
+  {
+    "name": "Dijital Medya Kulübü",
+    "president": "ALİ BOZKURT",
+    "advisor": "Arş.Gör.Dr. BÜŞRA ERTÜRK",
+    "email": "yildizdek@gmail.com",
+    "phone": "5303732610"
+  },
+  {
+    "name": "CANSAĞLIĞI KULÜBÜ",
+    "president": "MERYEM BEYZA UTKULU",
+    "advisor": "Arş.Gör. BEYZA GÜL",
+    "email": "35meryembeyza2004@gmail.com",
+    "phone": "5392152500"
+  },
+  {
+    "name": "Hidrojen Teknolojileri kulübü",
+    "president": "ESMA NUR YÖNEY",
+    "advisor": "Prof.Dr. Aysel KANTÜRK FİGEN  Dr.Öğretim Üyesi MUHAMMED İBERİA AYDIN",
+    "email": "",
+    "phone": "5459445352"
+  },
+  {
+    "name": "Modern Akıllı Teknolojiler ve Enformasyon Kulübü",
+    "president": "BEGÜM AYNACI",
+    "advisor": "Prof.Dr. Mehmet Fatih AMASYALI  Dr.Öğretim Üyesi Mert BAL",
+    "email": "yildizteknik.ai@gmail.com",
+    "phone": "5323060062"
+  },
+  {
+    "name": "Ekstrem Sporlar Kulübü",
+    "president": "OĞULCAN GÜLER",
+    "advisor": "Arş.Gör. Tolga ÜNALDI  Arş.Gör. Tolga ÜNALDI",
+    "email": "ytuekstremsporlar@gmail.com",
+    "phone": "5333483899"
+  },
+  {
+    "name": "Savunma Sanayi Teknolojileri Kulübü",
+    "president": "BUSE SERTTÜRK",
+    "advisor": "Doç.Dr. Buğra ÇİÇEK",
+    "email": "yildizsst@gmail.com",
+    "phone": "5441945882"
+  },
+  {
+    "name": "Alternatif Enerjili Sistemler Kulübü",
+    "president": "ALP KAAN ERKALKAN",
+    "advisor": "Prof.Dr. BİNNUR SAĞBAŞ  Doç.Dr. AHMET YİĞİT ARABUL",
+    "email": "aesk.iletisim@gmail.com",
+    "phone": "5556759534"
+  },
+  {
+    "name": "Uluslararası Staj Değişim Kulübü",
+    "president": "ECE KAYRA İRİCAN",
+    "advisor": "Prof.Dr. Mine Elif KARSLIGİL",
+    "email": "iaeste.yildiztu@gmail.com",
+    "phone": "5536151134"
+  },
+  {
+    "name": "Uzay ve Aviyonik Sistemler Kulübü",
+    "president": "SELİM KELEŞOĞLU",
+    "advisor": "Dr.Öğretim Üyesi BİLAL EROL  Prof.Dr. PEYMAN MAHOUTİ",
+    "email": "yildizuask@gmail.com",
+    "phone": "5301350784"
+  },
+  {
+    "name": "Girişimcilik Kulübü",
+    "president": "NİSA UYSAL",
+    "advisor": "Doç.Dr. Pınar BÜYÜKBALCI  Dr.Öğretim Üyesi Mehmet ÇAĞLAR",
+    "email": "ytugirisim@gmail.com",
+    "phone": "5445920403"
+  },
+  {
+    "name": "İşletme Kulübü",
+    "president": "TUNAHAN ÖZKUTLU",
+    "advisor": "Doç.Dr. Turhan ERKMEN",
+    "email": "ytu.isletmekulubu@gmail.com",
+    "phone": "5303244234"
+  },
+  {
+    "name": "Uluslararası Öğrenci Kulübü",
+    "president": "MUHAMMAD ASHAD HUSSAIN",
+    "advisor": "Arş.Gör. Abdurrahman NUR",
+    "email": "iscytu@gmail.com",
+    "phone": "5347355889"
+  },
+  {
+    "name": "Yelken Kulübü",
+    "president": "",
+    "advisor": "Öğr.Gör. GÜLSÜM SONAL  Öğr.Gör. ÇETİN ERDEM SONAL",
+    "email": "yildizyelken@gmail.com",
+    "phone": "5323537869"
+  },
+  {
+    "name": "Sosyal Sorumluluk Kulübü",
+    "president": "ZEHRA ŞİMŞEK",
+    "advisor": "Doç.Dr. SERKAN ONAR",
+    "email": "ytutog@gmail.com",
+    "phone": "5346361612"
+  },
+  {
+    "name": "Dağcılık Kulübü",
+    "president": "GÜZ BAŞARSLAN",
+    "advisor": "Arş.Gör. SENA NUR KARABEKİROĞLU  Öğr.Gör. İsmail COŞKUN",
+    "email": "halit.tekinyer@std.yildiz.edu.tr",
+    "phone": "5344903934"
+  },
+  {
+    "name": "Eğitim ve Bilişim Teknolojileri Kulübü",
+    "president": "HÜSEYİN ŞAMİL ÇEŞME",
+    "advisor": "Prof.Dr. Yusuf ZEREN",
+    "email": "yildizebiltek@gmail.com",
+    "phone": "5511034701"
+  },
+  {
+    "name": "Çevre ve Sürdürülebilirlik Kulübü",
+    "president": "SAMİ AYDIN",
+    "advisor": "Prof.Dr. Gamze VARANK  Arş.Gör. ALİ DOĞANCAN DOĞAN",
+    "email": "info@ytucev.org.tr",
+    "phone": "5380528761"
+  },
+  {
+    "name": "Sanal Kulübü",
+    "president": "",
+    "advisor": "Prof.Dr. BEDRİ ONUR KÜÇÜKYILDIRIM",
+    "email": "kultur@yildiz.edu.tr",
+    "phone": ""
+  },
+  {
+    "name": "Kalite ve Verimlilik Kulübü",
+    "president": "NİL AY",
+    "advisor": "Prof.Dr. ALEV TAŞKIN  Prof.Dr. Nezir AYDIN",
+    "email": "info@ytukvk.org.tr",
+    "phone": "5531081026"
+  },
+  {
+    "name": "Motosiklet Kulübü",
+    "president": "UTKU EMRE TÜTÜNCÜOĞLU",
+    "advisor": "Dr.Öğretim Üyesi OSMAN HALİL İMİK",
+    "email": "ytumotoclub@gmail.com",
+    "phone": "5423948827"
+  },
+  {
+    "name": "Rüzgar Enerjisi Kulübü",
+    "president": "YUSUF HAKAN ESEN",
+    "advisor": "Prof.Dr. ZEHRA YUMURTACI  Prof.Dr. ŞABAN PUSAT",
+    "email": "ruzgarkulubu@gmail.com",
+    "phone": "5050712605"
+  },
+  {
+    "name": "Jeoenformatik Kulübü",
+    "president": "BURCU NUR TUNALI",
+    "advisor": "Doç.Dr. ANİME MELİS UZAR",
+    "email": "iletisimjekytu@gmail.com",
+    "phone": "5078895770"
+  },
+  {
+    "name": "Gezi ve Kampçılık Kulübü",
+    "president": "FURKAN CAN KAYNAR",
+    "advisor": "Doç. BURAK BOYRAZ",
+    "email": "ytugeka@gmal.com",
+    "phone": "5316200784"
+  },
+  {
+    "name": "1002 Şiir ve Masal Kulübü",
+    "president": "YÜSRA ÇELEBİ",
+    "advisor": "Öğr.Gör. YUSUF ÇERİBAŞ",
+    "email": "1002ytu@gmail.com",
+    "phone": "5448331615"
+  },
+  {
+    "name": "Multidisipliner İnovasyon Teknolojileri Kulübü",
+    "president": "ZEYNEP CEMRE ÇEBİTÜRK",
+    "advisor": "Doç.Dr. Atıf Ahmet EVREN",
+    "email": "mintunity@gmail.com",
+    "phone": "5438307992"
+  },
+  {
+    "name": "Su Altı Sporları Kulübü",
+    "president": "ŞÜKRÜ ALİ GÜLDEN",
+    "advisor": "Arş.Gör. UMUTCAN İNAL",
+    "email": "ytusasfotograf@gmail.com",
+    "phone": "5413943081"
+  },
+  {
+    "name": "Kent Araştırmaları Kulübü",
+    "president": "TUĞBERK AHADPOURSAGHEZCHI",
+    "advisor": "Doç.Dr. ERHAN KURTARIR  Arş.Gör. RÜYA ERKAN ÖCEK",
+    "email": "ytukentarastirmalari2@gmail.com",
+    "phone": "5536638598"
+  },
+  {
+    "name": "Ekonomi Kulübü",
+    "president": "MUSTAFA ALPEREN ERİM",
+    "advisor": "Doç.Dr. Tolga AKSOY  Prof.Dr. Burak ÜNVEREN",
+    "email": "ytuekon1@gmail.com",
+    "phone": "5515543894"
+  },
+  {
+    "name": "Mentorluk Kulübü",
+    "president": "RASİM GÜNEŞ",
+    "advisor": "Doç.Dr. VİLDAN ÖZKIR",
+    "email": "ytumentorlukkulubuyk@gmail.com",
+    "phone": "5312593060"
+  },
+  {
+    "name": "Psikolojik Danışmanlık Kulübü",
+    "president": "GÖRKEM HIZAL",
+    "advisor": "Arş.Gör. YAĞMUR KAYA",
+    "email": "ytupdk@gmail.com",
+    "phone": "5385873057"
+  },
+  {
+    "name": "Robotik ve Otomasyon Kulübü",
+    "president": "SAİD DELİOĞLU",
+    "advisor": "Arş.Gör. AMMAR URGAN  Arş.Gör. YUNUS TEZEL",
+    "email": "info@yturok.com",
+    "phone": "5459429033"
+  },
+  {
+    "name": "Gıda Kulübü",
+    "president": "VOLKAN KOSVALI",
+    "advisor": "Doç.Dr. ÖMER SAİD TOKER",
+    "email": "oztoprakzeynep3@gmail.com",
+    "phone": "5331448619"
+  },
+  {
+    "name": "Satranç Kulübü",
+    "president": "RÜZGAR KEMAL VAYİÇ",
+    "advisor": "Arş.Gör. METEHAN TURAN  Öğr.Gör. ÇETİN ERDEM SONAL",
+    "email": "yildizsatranckulubu@gmail.com",
+    "phone": "5309904371"
+  },
+  {
+    "name": "İş Sağlığı ve Güvenliği Kulübü",
+    "president": "AHMET TUNA BAYRAM",
+    "advisor": "Prof.Dr. AZMİ SEYHUN KIPÇAK",
+    "email": "ytuisgkulubu@gmail.com",
+    "phone": "5418749305"
+  },
+  {
+    "name": "Lagari İnsansız Hava Aracı Kulübü",
+    "president": "HÜSEYİN TUYSUZ",
+    "advisor": "Prof.Dr. CENK ULU",
+    "email": "lagariuavteam@gmail.com",
+    "phone": "5078517490"
+  },
+  {
+    "name": "Teknik Elemanlar Kulübü",
+    "president": "EYYUB TAŞDEMİR",
+    "advisor": "Prof.Dr. Yusuf ZEREN",
+    "email": "iletisim@yiltek.org",
+    "phone": "5546248840"
+  },
+  {
+    "name": "Malzeme Bilimleri Kulübü",
+    "president": "EMRE YAĞIZ TANRIVERDİ",
+    "advisor": "Doç.Dr. Buğra ÇİÇEK",
+    "email": "ytumbk@gmail.com",
+    "phone": "5382634738"
+  },
+  {
+    "name": "Havacılık Kulübü",
+    "president": "ONUR DAĞDELEN",
+    "advisor": "Arş.Gör. AMMAR URGAN  Arş.Gör. CELAL TAYFUR KOÇ",
+    "email": "ytuhavk@gmail.com",
+    "phone": "5524986244"
+  },
+  {
+    "name": "Erasmus Kulübü",
+    "president": "FURKAN GÜLER",
+    "advisor": "Arş.Gör. İBRAHİM MURAT TURHAN",
+    "email": "yildizerasmuskulubu@gmail.com",
+    "phone": "5414210123"
+  },
+  {
+    "name": "Geleneksel Sanatlar Kulübü",
+    "president": "NURSEZA TARTIK",
+    "advisor": "Prof.Dr. Talat AYTAN  Doç.Dr. ERKAN ÇİÇEK",
+    "email": "ytugelenekselsanatlarkulubu@gmail.com",
+    "phone": "5068528708"
+  },
+  {
+    "name": "Cigre Kulübü",
+    "president": "MERYEM SUDE BOZKURT",
+    "advisor": "Doç.Dr. AHMET YİĞİT ARABUL  Prof.Dr. KAMURAN NUR BEKİROĞLU",
+    "email": "cigreytu@gmail.com",
+    "phone": "5523169504"
+  },
+  {
+    "name": "Değerleri Koruma ve Yaşatma Kulübü",
+    "president": "",
+    "advisor": "Prof.Dr. Yasin ŞEHİTOĞLU",
+    "email": "degerlerikorumaveyasatmakulubu@gmail.com",
+    "phone": "5052256236"
+  },
+  {
+    "name": "Tarih ve Medeniyet Kulübü",
+    "president": "HÜSEYİN MUHAMMED GAZİ",
+    "advisor": "Dr.Öğretim Üyesi Cevdet ŞANLI  Arş.Gör. Mehmet Umut AKBAKLA",
+    "email": "ytutarihvemedeniyetkulubu@gmail.com",
+    "phone": "5550929985"
+  },
+  {
+    "name": "Okçuluk Kulübü",
+    "president": "ATİLLA BORA ŞAKAR",
+    "advisor": "Prof. Şahin ORUÇ  Prof.Dr. GENÇ OSMAN İLHAN",
+    "email": "ytuokculuk1911@gmail.com",
+    "phone": "5319831394"
+  },
+  {
+    "name": "Avrupa Teknoloji Öğrencileri Topluluğu Kulübü",
+    "president": "EREN KUZU",
+    "advisor": "Doç.Dr. Murat HÜDAVERDİ",
+    "email": "mert.karapinar@best-eu.org",
+    "phone": "5050443880"
+  },
+  {
+    "name": "Yeşilay Kulübü",
+    "president": "MELEK KALEMKUŞ",
+    "advisor": "Prof.Dr. Orhan CANPOLAT",
+    "email": "aysegullaran@gmail.com",
+    "phone": "5378478629"
+  },
+  {
+    "name": "Yapı Kulübü",
+    "president": "MEHMET MÜMTAZ GÖZAN",
+    "advisor": "Doç.Dr. Zafer KÜTÜĞ",
+    "email": "infoyapikulubu@gmail.com",
+    "phone": "5373373270"
+  },
+  {
+    "name": "Space and Art Kitchen Kulübü",
+    "president": "AZRA ILGIN PULETİN",
+    "advisor": "Arş.Gör.Dr. Özlem EMANET",
+    "email": "info@ytuspark.com",
+    "phone": "5062748004"
+  },
+  {
+    "name": "Medikal Teknolojiler Kulübü",
+    "president": "SEVDE GÜL DOĞAN",
+    "advisor": "Prof.Dr. OSMAN GÜNAY",
+    "email": "ytumeditek@gmail.com",
+    "phone": "5061622311"
+  },
+  {
+    "name": "Kimya Teknolojileri Kulübü",
+    "president": "ALİ EREN AKSOY",
+    "advisor": "Prof.Dr. HALE OCAK GÜMRÜKÇÜ  Arş.Gör.Dr. İBRAHİM ETHEM ÖZYİĞİT",
+    "email": "ytukimtek@gmail.com",
+    "phone": "5520128388"
+  },
+  {
+    "name": "Hayvan Dostları Kulübü",
+    "president": "SELİNAY KUMAŞ",
+    "advisor": "Arş.Gör. ÖZNUR ÖZTÜRK",
+    "email": "ytuhayhak@gmail.com",
+    "phone": "5453538396"
+  },
+  {
+    "name": "Gemi ve Denizcilik Kulübü",
+    "president": "PINAR TUNCER",
+    "advisor": "Arş.Gör. BERNA KANBEROĞLU ARSLAN  Arş.Gör. KAĞAN ESAT ÖZLÜ",
+    "email": "gemdek@yildiz.edu.tr",
+    "phone": "5379915925"
+  },
+  {
+    "name": "Gelişim ve İnovasyon Kulübü",
+    "president": "ELİF ARSLAN",
+    "advisor": "Dr.Öğretim Üyesi COŞKUN PARİM  Doç.Dr. Turhan ERKMEN",
+    "email": "ytugeik@gmail.com",
+    "phone": "5462067636"
+  },
+  {
+    "name": "Fotoğraf Kulübü",
+    "president": "SILA DÖNMEZ",
+    "advisor": "Doç.Dr. Burcu BÖCEKLER",
+    "email": "ytufokonline@gmail.com",
+    "phone": "5061260243"
+  },
+  {
+    "name": "Fikrî Araştırmalar Kulübü",
+    "president": "MÜCAHİD MUTLU",
+    "advisor": "Dr.Öğretim Üyesi Muhammed Fazıl BAŞ",
+    "email": "ytufikriarastirmalarkulubu@gmail.com",
+    "phone": "5541544794"
+  },
+  {
+    "name": "Biyoteknoloji Ve Genetik Kulübü",
+    "president": "HASAN ÇINAR UYAR",
+    "advisor": "Prof.Dr. SEMİHA ERİŞEN  Prof.Dr. Nehir ÖZDEMİR ÖZGENTÜRK",
+    "email": "ytubiyogen@gmail.com",
+    "phone": "5388438603"
+  },
+  {
+    "name": "Dil Atölyesi Kulübü",
+    "president": "FATMA BETÜL CELEP",
+    "advisor": "Dr.Öğretim Üyesi TALHA GÖKTENTÜRK",
+    "email": "talhagoktenturk@gmail.com",
+    "phone": "5532391033"
+  },
+  {
+    "name": "Çocuk ve Eğitim Kulübü",
+    "president": "ŞÜHEDA BALCI",
+    "advisor": "Prof. Şahin ORUÇ",
+    "email": "ytucocuk@gmail.com",
+    "phone": "5388818341"
+  },
+  {
+    "name": "Bilim ve Matematik Kulübü",
+    "president": "NEHİR SARIŞIN",
+    "advisor": "Prof.Dr. Salim YÜCE  Doç.Dr. GÜLSÜM YELİZ SAÇLI",
+    "email": "ytubmk2017@gmail.com",
+    "phone": "5321306892"
+  }
+]

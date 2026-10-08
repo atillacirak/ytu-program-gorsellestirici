@@ -422,7 +422,7 @@ export default function GanoCalculator() {
 
   const resolveMissingCreditsForCourses = async (courses: ScenarioCourse[]): Promise<ScenarioCourse[]> => {
     return Promise.all(courses.map(async (c) => {
-      let cr = parseFloat(c.credits?.toString() || '0');
+      const cr = parseFloat(c.credits?.toString() || '0');
       if (!cr || isNaN(cr) || cr <= 0) {
         const found = await lookupCourseData(c.code, c.name);
         if (found && found.credits) {
