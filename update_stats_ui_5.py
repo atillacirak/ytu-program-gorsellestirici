@@ -1,0 +1,18 @@
+import re
+
+file_path = 'frontend/src/app/stats/page.tsx'
+
+with open(file_path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+content = re.sub(r'\s*\{period !== \'all\' && renderPct\(stats\?\.pct_.*?\)\}\n?', '\n', content)
+
+content = re.sub(r'(<Users size=\{12\}.*?\n\s*<span>.*?</div\>)', r'\1\n            {period !== \'all\' && renderPct(stats?.pct_visits)}', content)
+content = re.sub(r'(<CheckCircle2 size=\{12\}.*?\n\s*<span>.*?</div\>)', r'\1\n            {period !== \'all\' && renderPct(stats?.pct_generated)}', content)
+content = re.sub(r'(<PieChart size=\{12\}.*?\n\s*<span>.*?</div\>)', r'\1\n            {period !== \'all\' && renderPct(stats?.pct_gano_visits)}', content)
+content = re.sub(r'(<TrendingUp size=\{12\}.*?\n\s*<span>.*?</div\>)', r'\1\n            {period !== \'all\' && renderPct(stats?.pct_gano_scenarios)}', content)
+
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print("updated page.tsx with regex replacement")

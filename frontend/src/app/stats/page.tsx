@@ -21,9 +21,27 @@ interface FullStats {
   total_visits: number;
   total_gano_visits: number;
   total_gano_scenarios: number;
+  pct_generated?: number;
+  pct_visits?: number;
+  pct_gano_visits?: number;
+  pct_gano_scenarios?: number;
+  chart_data?: { label: string; visits: number }[];
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+
+const renderPct = (pct?: number) => {
+  if (pct === undefined) return null;
+  const isUp = pct > 0;
+  const isZero = pct === 0;
+  return (
+    <div className={`flex items-center gap-1 text-[11px] font-bold mt-2 ${isZero ? 'text-slate-500' : isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+      <TrendingUp size={12} className={isUp && !isZero ? '' : isZero ? 'hidden' : 'rotate-180'} />
+      <span>{isUp ? '+' : ''}{pct}% (önceki döneme kıyasla)</span>
+    </div>
+  );
+};
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<FullStats | null>(null);
@@ -43,6 +61,11 @@ export default function AdminDashboard() {
           total_visits: data.total_visits || 0,
           total_gano_visits: data.total_gano_visits || 0,
           total_gano_scenarios: data.total_gano_scenarios || 0,
+          pct_generated: data.pct_generated,
+          pct_visits: data.pct_visits,
+          pct_gano_visits: data.pct_gano_visits,
+          pct_gano_scenarios: data.pct_gano_scenarios,
+          chart_data: data.chart_data,
         });
         setLastUpdated(new Date());
       }
@@ -264,6 +287,41 @@ export default function AdminDashboard() {
           </div>
 
         </div>
+
+        
+        {/* --- Activity Chart --- */}
+        {period !== 'all' && stats?.chart_data && stats.chart_data.length > 0 && (
+          <div className="bg-slate-800/60 border border-slate-800 rounded-3xl p-6 space-y-4">
+            <div className="flex items-center gap-2.5 mb-4">
+              <Activity size={20} className="text-[#e7a240]" />
+              <h2 className="text-base font-bold text-white">
+                Ziyaretçi Aktivite Grafiği (Son {period})
+              </h2>
+            </div>
+            
+            <div className="h-48 w-full flex items-end gap-1.5 sm:gap-3 overflow-x-auto hide-scrollbar pt-4">
+              {(() => {
+                const maxVal = Math.max(...stats.chart_data.map(d => d.visits), 1);
+                return stats.chart_data.map((d, i) => (
+                  <div key={i} className="flex flex-col items-center flex-1 min-w-[24px] group">
+                    <div className="w-full flex-1 flex items-end relative">
+                      <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-700 text-white text-[10px] py-0.5 px-1.5 rounded transition-opacity">
+                        {d.visits}
+                      </div>
+                      <div 
+                        className="w-full bg-blue-500/80 hover:bg-blue-400 rounded-t-sm transition-all" 
+                        style={{ height: `${(d.visits / maxVal) * 100}%`, minHeight: d.visits > 0 ? '4px' : '0px' }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-500 mt-2 font-mono whitespace-nowrap rotate-45 origin-top-left translate-x-2 sm:rotate-0 sm:translate-x-0">
+                      {d.label}
+                    </span>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
+        )}
 
         {/* --- Conversion Rates & Analytical Breakdown --- */}
         <div className="bg-slate-800/60 border border-slate-800 rounded-3xl p-6 space-y-6">
