@@ -438,6 +438,23 @@ export default function GanoCalculator() {
     }));
   };
 
+  useEffect(() => {
+    try {
+      const pendingStr = localStorage.getItem('ytu_pending_agno_courses');
+      if (pendingStr) {
+        const pendingCourses = JSON.parse(pendingStr);
+        if (Array.isArray(pendingCourses) && pendingCourses.length > 0) {
+          resolveMissingCreditsForCourses(pendingCourses).then((resolved) => {
+            setCurrentCourses(resolved);
+          });
+        }
+        localStorage.removeItem('ytu_pending_agno_courses');
+      }
+    } catch (e) {
+      console.error('Error loading pending agno courses:', e);
+    }
+  }, []);
+
   const updateCourse = (id: string, field: keyof ScenarioCourse, value: any) => {
     setCurrentCourses(prev => prev.map(c => 
       c.id === id ? { ...c, [field]: value } : c

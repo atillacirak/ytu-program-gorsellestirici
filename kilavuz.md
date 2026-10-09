@@ -1,86 +1,120 @@
-# YTÜ Görselleştirici - Geliştirici & Dağıtım Kılavuzu
+# YTÜ Dostun - Geliştirici & Dağıtım Kılavuzu
 
-Bu kılavuz, projenin güncel teknik durumunu, Git iş akışını ve Amazon (AWS) sunucusunda canlıya alma (deployment) süreçlerini özetler.
-
----
-
-## 1. Sitenin Güncel Hali (Mimari)
-
-Proje, gereksiz sosyal özelliklerden (WhatsApp grupları vb.) tamamen arındırılmış, "yalın ve amaca hizmet eden" (lean) bir Ders Programı Görselleştirici olarak çalışmaktadır.
-
-- **Frontend (Arayüz):** 
-  - `Next.js` (React) ve `Tailwind CSS` kullanılmıştır. 
-  - Ders programı dışa aktarımı için `html-to-image` kütüphanesi kullanılır.
-  - Ders tablosunda ders kodlarının yanına **YTÜ Hocalar (ytuhocalar.com.tr)** platformuna yönlendiren `MessageCircle` butonu eklenmiştir.
-  - Başlatma komutu: `npm run dev`
-
-- **Backend (Sunucu):** 
-  - `FastAPI` (Python) üzerine kuruludur.
-  - Öğrencilerin yüklediği USIS PDF'lerini ayrıştırır (parse eder).
-  - Hoca isimlerini kendi içindeki `courses.db` (SQLite) veritabanından çekerek programla eşleştirir.
-  - Başlatma komutu: `python -m uvicorn main:app --reload`
+Bu kılavuz, projenin güncel teknik durumunu, mimarisini, Git iş akışını ve AWS (Amazon EC2) sunucusunda canlıya alma (deployment) süreçlerini özetler.
 
 ---
 
-## 2. Versiyon Kontrolü ve Push İşlemleri (Git)
+## 1. Sitenin Güncel Hali ve Modülleri
 
-Geliştirme süreci Github üzerinden yönetilmektedir. Aktif ve kararlı kod **`main`** branch'inde (dalında) tutulur.
+YTÜ Dostun; YTÜ öğrencilerinin ders programlarını, notlarını, ortak boş saatlerini ve devamsızlıklarını güvenle yönettiği modern, modüler ve yüksek performanslı bir platformdur.
 
-**Yerelde (Local) yapılan bir değişikliği Github'a göndermek için:**
+### 📌 Modüller ve Sayfalar
+1. **Ders Programı Görselleştirici (`/`):**
+   - USIS PDF veya hazırlık programını A4 formatında modern bir haftalık çizelgeye dönüştürür.
+   - **Tembel Yükleme (Lazy Load):** Binlerce satırlık hazırlık JSON verisi (`prepSchedules.json`) sadece ihtiyaç duyulduğunda istemciye dinamik indirilir; ilk açılış hızı maksimize edilmiştir.
+   - **Modüler Mimari:** Devasa `page.tsx`, 4 bağımsız bileşene bölünmüştür (`UploadScreen`, `ScheduleTable`, `CourseSummaryTable`, `EditCourseModal`).
+   - **Kalıcı Yerel Hafıza (LocalStorage):** Kullanıcının yüklediği program, aldığı ders notları, hoca/şube/not filtreleri, yazı tipi boyutu ve görünüm modu `useLocalStorageState` kancasıyla tarayıcıda saklanır. Sayfa yenilendiğinde (F5) veya kapatılıp açıldığında her şey anında geri yüklenir.
+   - **Modüller Arası Tek Tıkla Aktarım:**
+     - 🟢 **Devamsızlığa Gönder:** Programdaki dersleri günleriyle ve Teori/Lab ayrımıyla tek tıkla `/devamsizlik` sayfasına aktarır (0 ms ağ gecikmesi).
+     - 🟣 **AGNO'ya Gönder:** Dersleri tek tıkla `/agno` sayfasına aktarır ve kredileri otomatik veritabanından eşler.
+   - PNG indirme (metadata gömülü) ve doğrudan yazdırma desteği.
+
+2. **Ortak Boş Saatler (`/ortak`):**
+   - Arkadaş gruplarının PDF veya fotoğraflarını yükleyerek ortak boş zamanlarını bulduğu sistem.
+   - **Yüksek Performans:** O(N³) hücre hesaplamaları tek bir `useMemo` ve O(1) erişimli `busyMap` hash haritasına optimize edilmiştir.
+   - Özel URL'i (`/ortak`) ile doğrudan erişilebilir.
+
+3. **Devamsızlık Takibi (`/devamsizlik`):**
+   - İnteraktif aylık takvim arayüzü ile gün bazlı yoklama kaydı (Gittim / Devamsız / Tatil).
+   - Laboratuvar ve uygulama dersleri için frekans desteği (2 haftada bir vb. dersler için otomatik hafta hesaplama).
+   - Çift yönlü senkronize limit & yüzde girdileri (Limit yazıldığında yüzde, yüzde yazıldığında limit anında hesaplanır).
+   - Teori ve Lab dersleri için çakışmasız benzersiz ID mimarisi.
+
+4. **AGNO Hesaplayıcı (`/agno`):**
+   - USIS transkriptinden veya ders programından dersleri çekip gelecek dönem not senaryoları üretme.
+   - Ders kodlarına göre SQLite tabanından otomatik kredi tamamlama.
+
+5. **İstatistikler (`/stats`):**
+   - Upstash Redis tabanlı anlık sayaçlar.
+   - Dönemsel yüzdelik değişim trendleri (+/- % oranları).
+   - Saf Tailwind CSS ile yazılmış, hafif ve gerçek zamanlı ziyaretçi aktivite bar grafiği.
+
+---
+
+## 2. Mimari ve Bileşen Düzeni
+
+```
+frontend/src/
+├── app/
+│   ├── page.tsx               # Ana Görselleştirici (Modüler & useLocalStorageState)
+│   ├── ortak/page.tsx         # Ortak Boş Saatler Sayfası
+│   ├── devamsizlik/page.tsx   # Devamsızlık Takibi ve Aylık Takvim
+│   ├── agno/page.tsx          # AGNO / Not Hesaplayıcı
+│   └── stats/page.tsx         # İstatistikler, Trend Yüzdeleri & Grafik
+├── components/
+│   ├── UploadScreen.tsx       # Belge yükleme ve Hazırlık sınıfı seçim ekranı
+│   ├── ScheduleToolbar.tsx    # Üst yönetim paneli, filtreler ve aktarım araçları
+│   ├── ScheduleTable.tsx      # A4 Çizelge tablosu ve ders hücreleri
+│   ├── CourseSummaryTable.tsx # Ders listesi ve derslik özet tablosu
+│   ├── EditCourseModal.tsx    # Ders düzenleme ve not ekleme modalı
+│   ├── CompareView.tsx        # Ortak boş saatler matrisi ve kartları
+│   └── Header.tsx             # Genel üst navigasyon çubuğu
+├── hooks/
+│   └── useLocalStorageState.ts# Tarayıcı hafızasını reaktif yöneten özel hook
+└── utils/
+    ├── pngMetadata.ts         # PNG görsellerine program JSON'u gömme/çıkarma
+    └── instructors.ts         # Hoca adları ve kısaltma eşleştiricisi
+```
+
+---
+
+## 3. Versiyon Kontrolü (Git)
+
+Kodlar GitHub üzerindeki `main` branch'inde toplanır.
 
 ```bash
-# 1. Yapılan tüm değişiklikleri ekle
+# Değişiklikleri ekle ve pushla
 git add .
-
-# 2. Değişiklikleri açıklayıcı bir mesajla kaydet
-git commit -m "YTU Hocalar butonu eklendi, 20:00 satiri kaldirildi"
-
-# 3. Değişiklikleri Github'daki main branch'ine yolla
+git commit -m "feat: Açıklayıcı commit mesajı"
 git push origin main
 ```
 
-*(Not: Deneysel veya büyük özellikler eklerken `git checkout -b feature/yeni-ozellik` ile yeni bir branch açılması tavsiye edilir.)*
-
 ---
 
-## 3. Amazon (AWS) Sunucusunda Aktif Etme (Deployment)
+## 4. Amazon (AWS) Sunucusunda Canlıya Alma (Deployment)
 
-Projenin Github'a pushlanan güncel kodlarının AWS (EC2) sunucusuna çekilip canlıya alınması için standart adımlar şunlardır:
+Sunucu Bilgileri:
+- **IP:** `63.186.15.196` (veya `ytudostun.com`)
+- **Kullanıcı:** `ubuntu`
+- **SSH Anahtarı:** `kiribot-key.pem`
+- **Proje Dizini:** `~/ytu-dostun`
+- **Servis Yöneticisi:** `PM2` (`ytu-frontend`, `ytu-backend`, `kiribot`)
 
-### Adım 3.1: Sunucuya Bağlanma
-Terminalinizden AWS sunucunuza (EC2 instance) SSH ile bağlanın:
-```bash
-ssh -i "sertifikaniz.pem" ubuntu@ec2-ip-adresiniz.compute.amazonaws.com
+### Hızlı Dağıtım Komutu (Tek Satır):
+Yerel terminalinizden doğrudan sunucuya göndermek için:
+
+```powershell
+ssh -o StrictHostKeyChecking=no -i "C:\Projeler\kiribot-key.pem" ubuntu@63.186.15.196 "cd ~/ytu-dostun && git pull origin main && rm -rf frontend/.next/cache && rm -rf ~/.npm/_cacache && cd frontend && npm install && npm run build && pm2 restart all && cd ../backend && source venv/bin/activate && pip install -r requirements.txt && pm2 restart ytu-backend"
 ```
 
-### Adım 3.2: Güncel Kodu Sunucuya Çekme
-Sunucudaki proje klasörüne gidin ve Github'daki en son kodları (main branch'ten) çekin:
+### Sunucu İçinden Manuel Dağıtım:
 ```bash
-cd /var/www/ytu-gorsellestirici  # Veya projeniz sunucuda hangi klasördeyse
+# 1. Sunucuya bağlan
+ssh -i "kiribot-key.pem" ubuntu@63.186.15.196
+
+# 2. Kodları çek
+cd ~/ytu-dostun
 git pull origin main
+
+# 3. Frontend derle ve PM2 restart
+cd frontend
+npm install
+npm run build
+pm2 restart ytu-frontend
+
+# 4. Backend güncelle ve yeniden başlat
+cd ../backend
+source venv/bin/activate
+pip install -r requirements.txt
+pm2 restart ytu-backend
 ```
-
-### Adım 3.3: Backend'i Güncelleme ve Yeniden Başlatma
-Eğer backend (Python) tarafında bir değişiklik yaptıysanız veya yeni kütüphane eklediyseniz:
-```bash
-cd backend
-source venv/bin/activate  # Sanal ortamı aktif edin (varsa)
-pip install -r requirements.txt  # Yeni kütüphane varsa kurun
-sudo systemctl restart fastapi-backend  # Veya Gunicorn/Uvicorn servisini yeniden başlatın
-```
-
-### Adım 3.4: Frontend'i Güncelleme ve Yeniden Başlatma
-Eğer frontend (Next.js) tarafında bir değişiklik yaptıysanız:
-```bash
-cd ../frontend
-npm install  # Yeni bir paket (örn: lucide-react) eklendiyse
-npm run build  # Next.js projesini production için derle
-pm2 restart frontend  # Veya frontend uygulamanızı yöneten servis (PM2 vb.) ile yeniden başlatın
-```
-
-### Özet Canlıya Alma Akışı
-Her şeyi tek bir satırda hızlıca güncellemek için sunucuda şu komut zincirini kullanabilirsiniz:
-`git pull && cd frontend && npm run build && pm2 restart all && sudo systemctl restart fastapi-backend`
-
----
-*Bu doküman, sistemin en son "yalın" (Görselleştirici Odaklı) vizyonuna göre oluşturulmuştur.*

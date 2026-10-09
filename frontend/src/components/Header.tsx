@@ -7,6 +7,7 @@ import { Calendar, Users, Calculator, ShieldCheck, GraduationCap } from 'lucide-
 
 export default function Header() {
   const pathname = usePathname();
+  if (pathname === '/stats') return null;
   const isOrtak = pathname === '/ortak';
   const isSingle = pathname === '/' && !isOrtak;
   const isAgno = pathname === '/agno';

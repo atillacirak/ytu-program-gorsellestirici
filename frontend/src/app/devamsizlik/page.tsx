@@ -271,15 +271,26 @@ export default function AbsencePage() {
       const savedCourses = localStorage.getItem('ytu_absence_courses');
       if (savedCourses) {
         const parsed = JSON.parse(savedCourses);
-        const migrated = parsed.map((c: any) => ({
-          ...c,
-          calcMode: c.calcMode || 'weekly',
-          weeklyDays: c.weeklyDays !== undefined ? c.weeklyDays : (c.weeklyHours || 1),
-          courseWeeks: c.courseWeeks !== undefined ? c.courseWeeks : (c.totalWeeks || 13),
-          totalDays: c.totalDays !== undefined ? c.totalDays : ((c.weeklyDays || 1) * 13),
-          frequency: c.frequency || 1,
-          frequencyOffset: c.frequencyOffset || 0
-        }));
+        const seenIds = new Set<string>();
+        const migrated = parsed.map((c: any) => {
+          let uniqueId = c.id;
+          if (!uniqueId || seenIds.has(uniqueId)) {
+            uniqueId = typeof crypto !== 'undefined' && crypto.randomUUID 
+              ? crypto.randomUUID() 
+              : Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+          }
+          seenIds.add(uniqueId);
+          return {
+            ...c,
+            id: uniqueId,
+            calcMode: c.calcMode || 'weekly',
+            weeklyDays: c.weeklyDays !== undefined ? c.weeklyDays : (c.weeklyHours || 1),
+            courseWeeks: c.courseWeeks !== undefined ? c.courseWeeks : (c.totalWeeks || 13),
+            totalDays: c.totalDays !== undefined ? c.totalDays : ((c.weeklyDays || 1) * 13),
+            frequency: c.frequency || 1,
+            frequencyOffset: c.frequencyOffset || 0
+          };
+        });
         setCourses(migrated);
       }
       

@@ -47,7 +47,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<FullStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [period, setPeriod] = useState<'24h' | '7d' | '30d' | 'all'>('all');
+  const [period, setPeriod] = useState<'24h' | '7d' | '30d' | 'all'>('24h');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchStats = useCallback(async () => {
@@ -223,6 +223,7 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_visits.toLocaleString() : '...'}
             </div>
+            {renderPct(stats?.pct_visits)}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <Users size={12} className="text-blue-400" />
               <span>Siteye giriş yapan kullanıcı sayısı</span>
@@ -242,6 +243,7 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_generated.toLocaleString() : '...'}
             </div>
+            {renderPct(stats?.pct_generated)}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <CheckCircle2 size={12} className="text-[#e7a240]" />
               <span>PDF yüklenip çizelge üretilme sayısı</span>
@@ -261,6 +263,7 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_gano_visits.toLocaleString() : '...'}
             </div>
+            {renderPct(stats?.pct_gano_visits)}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <PieChart size={12} className="text-indigo-400" />
               <span>/agno sayfasını açan kullanıcı sayısı</span>
@@ -280,6 +283,7 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_gano_scenarios.toLocaleString() : '...'}
             </div>
+            {renderPct(stats?.pct_gano_scenarios)}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <TrendingUp size={12} className="text-emerald-400" />
               <span>AGNO için yüklenen transkript/program</span>
