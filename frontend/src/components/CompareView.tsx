@@ -10,7 +10,8 @@ import { toPng } from 'html-to-image';
 import { extractMetadataFromPngArrayBuffer } from '../utils/pngMetadata';
 import { parseScheduleImageWithOcr } from '../utils/pngOcrParser';
 
-
+const normalizeDay = (d: string) =>
+  d.toLowerCase().replace(/ü/g, 'u').replace(/ö/g, 'o').replace(/ı/g, 'i').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ç/g, 'c').trim();
 
 export interface StudentSchedule {
   id: string;
