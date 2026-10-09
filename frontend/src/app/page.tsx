@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+
 import {
   Calendar, Building2, Upload, RefreshCw, FileText,
   AlertCircle, Download, Printer, LayoutGrid, BookOpen, Clock,
@@ -9,13 +10,26 @@ import {
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { getFullInstructorName, getInstructorAbbreviation } from '../utils/instructors';
-import CompareView from '../components/CompareView';
+
 import AnimatedCounter from '../components/AnimatedCounter';
 import PrivacyModal from '../components/PrivacyModal';
 import { injectMetadataToPngDataUrl } from '../utils/pngMetadata';
 import prepDataRaw from '../data/prepSchedules.json';
 
 const prepData: Record<string, any> = prepDataRaw;
+
+const CLEAN_OFFICE_PALETTES = [
+                              { bg: 'bg-blue-50/90', border: 'border-blue-200/90', text: 'text-blue-950', accent: 'text-blue-700', badge: 'bg-white text-blue-800 border-blue-200' },
+                              { bg: 'bg-emerald-50/90', border: 'border-emerald-200/90', text: 'text-emerald-950', accent: 'text-emerald-800', badge: 'bg-white text-emerald-800 border-emerald-200' },
+                              { bg: 'bg-rose-50/90', border: 'border-rose-200/90', text: 'text-rose-950', accent: 'text-rose-800', badge: 'bg-white text-rose-800 border-rose-200' },
+                              { bg: 'bg-amber-50/90', border: 'border-amber-200/90', text: 'text-amber-950', accent: 'text-amber-800', badge: 'bg-white text-amber-800 border-amber-200' },
+                              { bg: 'bg-purple-50/90', border: 'border-purple-200/90', text: 'text-purple-950', accent: 'text-purple-800', badge: 'bg-white text-purple-800 border-purple-200' },
+                              { bg: 'bg-teal-50/90', border: 'border-teal-200/90', text: 'text-teal-950', accent: 'text-teal-800', badge: 'bg-white text-teal-800 border-teal-200' },
+                              { bg: 'bg-orange-50/90', border: 'border-orange-200/90', text: 'text-orange-950', accent: 'text-orange-800', badge: 'bg-white text-orange-800 border-orange-200' },
+                              { bg: 'bg-cyan-50/90', border: 'border-cyan-200/90', text: 'text-cyan-950', accent: 'text-cyan-800', badge: 'bg-white text-cyan-800 border-cyan-200' },
+                              { bg: 'bg-fuchsia-50/90', border: 'border-fuchsia-200/90', text: 'text-fuchsia-950', accent: 'text-fuchsia-800', badge: 'bg-white text-fuchsia-800 border-fuchsia-200' },
+                              { bg: 'bg-lime-50/90', border: 'border-lime-200/90', text: 'text-lime-950', accent: 'text-lime-800', badge: 'bg-white text-lime-800 border-lime-200' },
+                            ];
 
 // Bir ders slotunun süresini saat cinsinden hesaplar (örn: 09:00 - 10:50 -> 2 saat, 09:00 - 11:50 -> 3 saat, 09:00 - 09:50 -> 1 saat)
 const getSlotDurationHours = (startTime?: string, endTime?: string): number => {
@@ -43,10 +57,12 @@ const getTotalWeeklyHours = (coursesSummary?: any[]): number => {
   }, 0);
 };
 
+
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'single' | 'compare'>('single');
+
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
   const [visualizerData, setVisualizerData] = useState<{
@@ -110,6 +126,7 @@ export default function Home() {
   const [editingCourse, setEditingCourse] = useState<any | null>(null);
   const [editingCourseForm, setEditingCourseForm] = useState<{
     originalCode: string;
+    originalName: string;
     originalSection: string;
     code: string;
     name: string;
@@ -119,6 +136,7 @@ export default function Home() {
     note: string;
   }>({
     originalCode: '',
+    originalName: '',
     originalSection: '',
     code: '',
     name: '',
@@ -300,7 +318,8 @@ export default function Home() {
     setEditingCourse(course);
     setEditingCourseForm({
       originalCode: course.code,
-      originalSection: course.section || '',
+      originalName: course.name || '',
+        originalSection: course.section || '',
       code: course.code,
       name: course.name || '',
       section: course.section || '',
@@ -319,7 +338,7 @@ export default function Home() {
     const updatedSchedule: Record<string, any[]> = {};
     Object.keys(visualizerData.schedule).forEach(day => {
       updatedSchedule[day] = (visualizerData.schedule[day] || []).map((it: any) => {
-        if (it.code === originalCode) {
+        if (it.code === originalCode && it.name === editingCourseForm.originalName) {
           return {
             ...it,
             code: cleanCode,
@@ -336,7 +355,7 @@ export default function Home() {
 
     // 2. Update courses_summary
     const updatedSummary = (visualizerData.courses_summary || []).map((c: any) => {
-      if (c.code === originalCode) {
+      if (c.code === originalCode && c.name === editingCourseForm.originalName) {
         return {
           ...c,
           code: cleanCode,
@@ -510,92 +529,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-[#f8fafc] text-slate-900 transition-colors duration-200">
-      <header className="border-b border-slate-200 bg-white sticky top-0 z-50 no-print shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={() => {
-              setVisualizerData(null);
-              setActiveTab('single');
-              setIsEditMode(false);
-              setVisualizerError(null);
-            }}
-            className="flex items-center space-x-3.5 text-left group cursor-pointer focus:outline-none"
-            title="Yeni belge yükleme sayfasına dön"
-          >
-            <div className="w-9 h-9 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
-              <GraduationCap className="w-5 h-5 text-[#e7a240]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-[#0c3f79] tracking-tight transition-colors flex items-center gap-1.5">
-                  <span>YTÜ Dostun</span>
-                  <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                    v2
-                  </span>
-                </h1>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">
-                YTÜ&apos;lülerin yeni nesil ders ve not yönetim portalı.
-              </p>
-            </div>
-          </button>
-
-          <div className="flex items-center gap-3">
-            {/* Sekme Değiştirici */}
-            <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
-              <button
-                onClick={() => setActiveTab('single')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'single'
-                    ? 'bg-[#0c3f79] text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Tekli Program</span>
-              </button>
-              <button
-                onClick={() => setActiveTab('compare')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  activeTab === 'compare'
-                    ? 'bg-[#0c3f79] text-white shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Users className="w-3.5 h-3.5 text-amber-400" />
-                <span>Ortak Boş Saatler (Karşılaştır)</span>
-              </button>
-              <a
-                href="/agno"
-                className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
-              >
-                <Calculator className="w-3.5 h-3.5 text-blue-500" />
-                <span>AGNO Hesapla</span>
-              </a>
-            </div>
-
-            {visualizerData && activeTab === 'single' && (
-              <label className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer">
-                <Upload className="w-3.5 h-3.5" />
-                <span>Yeni Belge Yükle</span>
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleVisualizerPdfUpload}
-                  className="hidden"
-                />
-              </label>
-            )}
-          </div>
-        </div>
-      </header>
+      
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
-            {activeTab === 'compare' ? (
-              <CompareView />
-            ) : !visualizerData ? (
+            {!visualizerData ? (
               /* Henüz Belge Yüklenmedi -> Resmi Doküman Yükleme Alanı */
               <div className="space-y-6">
                 <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-xs relative overflow-hidden space-y-5">
@@ -808,9 +746,21 @@ export default function Home() {
                     </div>
 
                     {/* Eylem Butonları */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {/* Görünüm Seçici */}
-                      <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
+
+                        {/* Yeni Belge Yükle */}
+                        <label className="flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-semibold rounded-lg shadow-xs transition-all cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Yeni Belge Yükle</span>
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={handleVisualizerPdfUpload}
+                            className="hidden"
+                          />
+                        </label>
+
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                            <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
                         <button
                           onClick={() => setVisualizerViewMode('table')}
                           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
@@ -874,8 +824,7 @@ export default function Home() {
                         </button>
                       </div>
 
-                      {/* Görünüm Tikleri (Hoca Kısaltması, Şube, Notlar) */}
-                      <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
+                                            <div className="bg-slate-100 p-1 rounded-lg border border-slate-200 flex items-center gap-1">
                         <label className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-50 rounded-md border border-slate-200 text-xs font-semibold text-slate-700 cursor-pointer transition-all select-none shadow-2xs" title="Hoca kısaltmalarını göster/gizle">
                           <input
                             type="checkbox"
@@ -1079,8 +1028,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* GÖRÜNÜM 1: HAFTALIK AKADEMİK ÇİZELGE (A4 & PNG ÇIKTISI) */}
-                {visualizerViewMode === 'table' && (
+                                {visualizerViewMode === 'table' && (
                   <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4 overflow-x-auto">
                     <div
                       id="visualizer-a4-document"
@@ -1181,18 +1129,7 @@ export default function Home() {
 
                             // Sade, Kurumsal ve Baskıya Uygun Ofis Renk Paletleri (Açık Kağıt Üzerinde, Canlı ve Ayırt Edici)
                             // Birbirine benzeyen tonlar (indigo, sky, violet) çıkarılarak net 10 renk bırakılmıştır.
-                            const CLEAN_OFFICE_PALETTES = [
-                              { bg: 'bg-blue-50/90', border: 'border-blue-200/90', text: 'text-blue-950', accent: 'text-blue-700', badge: 'bg-white text-blue-800 border-blue-200' },
-                              { bg: 'bg-emerald-50/90', border: 'border-emerald-200/90', text: 'text-emerald-950', accent: 'text-emerald-800', badge: 'bg-white text-emerald-800 border-emerald-200' },
-                              { bg: 'bg-rose-50/90', border: 'border-rose-200/90', text: 'text-rose-950', accent: 'text-rose-800', badge: 'bg-white text-rose-800 border-rose-200' },
-                              { bg: 'bg-amber-50/90', border: 'border-amber-200/90', text: 'text-amber-950', accent: 'text-amber-800', badge: 'bg-white text-amber-800 border-amber-200' },
-                              { bg: 'bg-purple-50/90', border: 'border-purple-200/90', text: 'text-purple-950', accent: 'text-purple-800', badge: 'bg-white text-purple-800 border-purple-200' },
-                              { bg: 'bg-teal-50/90', border: 'border-teal-200/90', text: 'text-teal-950', accent: 'text-teal-800', badge: 'bg-white text-teal-800 border-teal-200' },
-                              { bg: 'bg-orange-50/90', border: 'border-orange-200/90', text: 'text-orange-950', accent: 'text-orange-800', badge: 'bg-white text-orange-800 border-orange-200' },
-                              { bg: 'bg-cyan-50/90', border: 'border-cyan-200/90', text: 'text-cyan-950', accent: 'text-cyan-800', badge: 'bg-white text-cyan-800 border-cyan-200' },
-                              { bg: 'bg-fuchsia-50/90', border: 'border-fuchsia-200/90', text: 'text-fuchsia-950', accent: 'text-fuchsia-800', badge: 'bg-white text-fuchsia-800 border-fuchsia-200' },
-                              { bg: 'bg-lime-50/90', border: 'border-lime-200/90', text: 'text-lime-950', accent: 'text-lime-800', badge: 'bg-white text-lime-800 border-lime-200' },
-                            ];
+                            
 
                             const MONOCHROME_PALETTE = {
                               bg: 'bg-slate-100',
@@ -1493,8 +1430,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* GÖRÜNÜM 2: GÜNLÜK DERS DAĞILIMI */}
-                {visualizerViewMode === 'cards' && (
+                                {visualizerViewMode === 'cards' && (
                   <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${getDocFontClass()}`}>
                     {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map(day => {
                       const dayItems = visualizerData.schedule[day] || [];
@@ -1592,8 +1528,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* GÖRÜNÜM 3: DERSLİK VE DERS LİSTESİ */}
-                {visualizerViewMode === 'summary' && (
+                                {visualizerViewMode === 'summary' && (
                   <div className={`bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4 text-slate-900 ${getDocFontClass()}`}>
                     <div className="border-b border-slate-100 pb-3">
                       <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -1835,7 +1770,7 @@ export default function Home() {
             {/* Alt Butonlar */}
             <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
               <div>
-                {(courseNotes[editingCourseForm.originalCode] || editingCourseForm.note) && (
+                {(courseNotes[`${editingCourseForm.originalCode}_${editingCourseForm.originalName}`] || editingCourseForm.note) && (
                   <button
                     type="button"
                     onClick={handleDeleteNoteFromForm}

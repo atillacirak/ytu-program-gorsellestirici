@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Lora, Outfit } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import DevColorPanel from "../components/DevColorPanel";
+import Header from "../components/Header";
 import "./globals.css";
 
 const inter = Inter({
@@ -88,6 +89,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-[#f8fafc] text-slate-900 font-sans"
         style={{ colorScheme: "light" }}
       >
+        <Header />
         {children}
         <Analytics />
         <DevColorPanel />

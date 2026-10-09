@@ -10,6 +10,8 @@ import { toPng } from 'html-to-image';
 import { extractMetadataFromPngArrayBuffer } from '../utils/pngMetadata';
 import { parseScheduleImageWithOcr } from '../utils/pngOcrParser';
 
+
+
 export interface StudentSchedule {
   id: string;
   name: string;
@@ -218,25 +220,41 @@ export default function CompareView() {
   // Bir saat diliminde öğrencinin derste olup olmadığını döndürür
   const getStudentBusySlot = (studentData: any, day: string, hourStr: string) => {
     if (!studentData || !studentData.schedule) return null;
-
-    const normalizeDay = (d: string) =>
-      d.toLowerCase().replace(/ı/g, 'i').replace(/ç/g, 'c').replace(/ş/g, 's').replace(/ğ/g, 'g').replace(/ö/g, 'o').replace(/ü/g, 'u').trim();
-
     const targetDay = normalizeDay(day);
     const dayKey = Object.keys(studentData.schedule).find(k => normalizeDay(k) === targetDay);
     if (!dayKey || !Array.isArray(studentData.schedule[dayKey])) return null;
 
     const hrM = toMinutes(hourStr);
-
-    for (const item of studentData.schedule[dayKey]) {
-      const startM = toMinutes(item.start_time);
-      const endM = toMinutes(item.end_time);
-      if (hrM >= startM && hrM < endM) {
-        return item;
+    for (const c of studentData.schedule[dayKey]) {
+      const parts = c.time.split('-');
+      if (parts.length === 2) {
+        const startM = toMinutes(parts[0]);
+        const endM = toMinutes(parts[1]);
+        if (hrM >= startM && hrM < endM) {
+          return c;
+        }
       }
     }
     return null;
   };
+
+  const loadedStudents = students.filter(s => s.data && s.data.schedule);
+  const isComparisonReady = loadedStudents.length >= 2;
+
+  const busyMap = React.useMemo(() => {
+    const map: Record<string, Record<string, Record<string, any>>> = {};
+    loadedStudents.forEach(st => {
+      map[st.id] = {};
+      DAYS.forEach(day => {
+        map[st.id][day] = {};
+        HOURS.forEach(hour => {
+          const c = getStudentBusySlot(st.data, day, hour);
+          if (c) map[st.id][day][hour] = c;
+        });
+      });
+    });
+    return map;
+  }, [loadedStudents]);
 
   // Görseli PNG olarak kaydetme
   const handleExportPNG = async () => {
@@ -256,12 +274,10 @@ export default function CompareView() {
     }
   };
 
-  const loadedStudents = students.filter(s => s.data && s.data.schedule);
-  const isComparisonReady = loadedStudents.length >= 2;
 
   // Ortak boş saat aralıklarını hesaplama (En az 1 veya 2 saat kesintisiz)
-  const getCommonFreeBlocks = () => {
-    if (!isComparisonReady) return [];
+  const commonFreeBlocks = React.useMemo(() => {
+    if (loadedStudents.length < 2) return [];
     const blocks: { day: string; startHour: string; endHour: string; duration: number }[] = [];
 
     DAYS.forEach(day => {
@@ -269,15 +285,19 @@ export default function CompareView() {
       let count = 0;
 
       HOURS.forEach((hour, idx) => {
-        const busyStudentsCount = loadedStudents.filter(s => getStudentBusySlot(s.data, day, hour) !== null).length;
-        const isEveryoneFree = busyStudentsCount === 0;
+        let busyCount = 0;
+        loadedStudents.forEach(st => {
+          if (busyMap[st.id]?.[day]?.[hour]) busyCount++;
+        });
+
+        const isEveryoneFree = busyCount === 0;
 
         if (isEveryoneFree) {
           if (!currentStart) currentStart = hour;
           count++;
         } else {
           if (currentStart && count >= 1) {
-            const endH = `${parseInt(HOURS[idx - 1].split(':')[0], 10)}:50`;
+            const endH = `${String(parseInt(HOURS[idx - 1].split(':')[0], 10)).padStart(2, '0')}:50`;
             blocks.push({ day, startHour: currentStart, endHour: endH, duration: count });
           }
           currentStart = null;
@@ -286,15 +306,13 @@ export default function CompareView() {
       });
 
       if (currentStart && count >= 1) {
-        const lastH = `${parseInt(HOURS[HOURS.length - 1].split(':')[0], 10)}:50`;
+        const lastH = `${String(parseInt(HOURS[HOURS.length - 1].split(':')[0], 10)).padStart(2, '0')}:50`;
         blocks.push({ day, startHour: currentStart, endHour: lastH, duration: count });
       }
     });
 
     return blocks;
-  };
-
-  const commonFreeBlocks = getCommonFreeBlocks();
+  }, [loadedStudents, busyMap]);
 
   return (
     <div className="space-y-6">
@@ -327,6 +345,7 @@ export default function CompareView() {
                 onChange={(e) => {
                   if (e.target.files && e.target.files.length > 0) {
                     handleBatchFilesUpload(e.target.files);
+                    e.target.value = '';
                   }
                 }}
                 className="hidden"
@@ -362,6 +381,7 @@ export default function CompareView() {
             onChange={(e) => {
               if (e.target.files && e.target.files.length > 0) {
                 handleBatchFilesUpload(e.target.files);
+                    e.target.value = '';
               }
             }}
             className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
@@ -419,10 +439,11 @@ export default function CompareView() {
                     Değiştir
                     <input
                       type="file"
-                      accept=".pdf,.png"
+                      accept=".pdf,.png,.jpg,.jpeg"
                       onChange={(e) => {
                         const f = e.target.files?.[0];
                         if (f) handleFileUpload(student.id, f);
+                      e.target.value = '';
                       }}
                       className="hidden"
                     />
@@ -441,10 +462,11 @@ export default function CompareView() {
               <label className="block p-5 border-2 border-dashed border-slate-200 hover:border-[#002855] bg-slate-50/50 hover:bg-slate-100/50 rounded-xl transition-all cursor-pointer text-center space-y-2">
                 <input
                   type="file"
-                  accept=".pdf,.png"
+                  accept=".pdf,.png,.jpg,.jpeg"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) handleFileUpload(student.id, f);
+                      e.target.value = '';
                   }}
                   className="hidden"
                 />
@@ -613,7 +635,7 @@ export default function CompareView() {
                         const freeList: { studentId: string; studentName: string; color: string }[] = [];
 
                         loadedStudents.forEach((st) => {
-                          const course = getStudentBusySlot(st.data, day, hour);
+                          const course = busyMap[st.id]?.[day]?.[hour];
                           if (course) {
                             busyList.push({ studentId: st.id, studentName: st.name, color: st.color, course });
                           } else {

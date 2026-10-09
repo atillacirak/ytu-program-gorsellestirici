@@ -528,42 +528,7 @@ export default function GanoCalculator() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 p-0 md:p-0 font-sans">
-      <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-xs mb-8">
-        <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <a href="/" className="flex items-center space-x-3.5 group transition-colors">
-            <div className="w-10 h-10 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
-              <GraduationCap className="w-6 h-6 text-[#e7a240]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-[#0c3f79] tracking-tight transition-colors flex items-center gap-1.5">
-                  <span>YTÜ Dostun</span>
-                  <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-                    v2
-                  </span>
-                </h1>
-              </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5 hidden sm:block">
-                YTÜ&apos;lülerin yeni nesil ders ve not yönetim portalı.
-              </p>
-            </div>
-          </a>
-          <div className="bg-slate-100 p-1 rounded-xl border border-slate-200 flex items-center gap-1">
-            <a href="/" className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Tekli Program</span>
-            </a>
-            <a href="/?tab=compare" className="px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-              <Users className="w-3.5 h-3.5 text-amber-400" />
-              <span>Ortak Boş Saatler (Karşılaştır)</span>
-            </a>
-            <div className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 bg-[#0c3f79] text-white shadow-2xs">
-              <Calculator className="w-3.5 h-3.5 text-blue-400" />
-              <span>AGNO Hesapla</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      
 
       <div className="max-w-4xl mx-auto space-y-4 pb-28 px-3 md:px-6">
         
