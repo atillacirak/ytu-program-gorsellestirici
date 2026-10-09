@@ -36,8 +36,8 @@ const renderPct = (pct?: number) => {
   const isUp = pct > 0;
   const isZero = pct === 0;
   return (
-    <div className={`flex items-center gap-1 text-[11px] font-bold mt-2 ${isZero ? 'text-slate-500' : isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-      <TrendingUp size={12} className={isUp && !isZero ? '' : isZero ? 'hidden' : 'rotate-180'} />
+    <div className={`flex items-center gap-1.5 text-xs sm:text-[13px] font-bold mt-2 ${isZero ? 'text-slate-500' : isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+      <TrendingUp size={14} className={isUp && !isZero ? '' : isZero ? 'hidden' : 'rotate-180'} />
       <span>{isUp ? '+' : ''}{pct}% (önceki döneme kıyasla)</span>
     </div>
   );
@@ -56,21 +56,72 @@ export default function AdminDashboard() {
       const res = await fetch(`${API_BASE}/api/stats?period=${period}`);
       if (res.ok) {
         const data = await res.json();
-        setStats({
-          total_generated: data.total_generated || 0,
-          total_visits: data.total_visits || 0,
-          total_gano_visits: data.total_gano_visits || 0,
-          total_gano_scenarios: data.total_gano_scenarios || 0,
-          pct_generated: data.pct_generated,
-          pct_visits: data.pct_visits,
-          pct_gano_visits: data.pct_gano_visits,
-          pct_gano_scenarios: data.pct_gano_scenarios,
-          chart_data: data.chart_data,
-        });
+        const isLocal = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+        const hasData = (data.chart_data && data.chart_data.length > 0) || data.total_visits > 0;
+
+        if (!hasData && isLocal) {
+          // Localhost mock veri üretimi (Test için)
+          const mockChart = period === '24h'
+            ? Array.from({ length: 24 }).map((_, i) => ({
+                label: `${(i + 2) % 24}:00`,
+                visits: [0, 1, 0, 3, 6, 2, 8, 4, 12, 18, 25, 42, 38, 21, 15, 9, 4, 2, 1, 0, 0, 1, 3, 5][i]
+              }))
+            : period === '7d'
+            ? ['10-04', '10-05', '10-06', '10-07', '10-08', '10-09', '10-10'].map((d, i) => ({
+                label: d,
+                visits: [85, 120, 94, 145, 182, 160, 210][i]
+              }))
+            : Array.from({ length: 30 }).map((_, i) => ({
+                label: `Gün ${i + 1}`,
+                visits: Math.floor(Math.random() * 80) + 20
+              }));
+
+          setStats({
+            total_generated: 142,
+            total_visits: 580,
+            total_gano_visits: 89,
+            total_gano_scenarios: 45,
+            pct_generated: 24.5,
+            pct_visits: 18.2,
+            pct_gano_visits: 42.0,
+            pct_gano_scenarios: 15.8,
+            chart_data: mockChart,
+          });
+        } else {
+          setStats({
+            total_generated: data.total_generated || 0,
+            total_visits: data.total_visits || 0,
+            total_gano_visits: data.total_gano_visits || 0,
+            total_gano_scenarios: data.total_gano_scenarios || 0,
+            pct_generated: data.pct_generated,
+            pct_visits: data.pct_visits,
+            pct_gano_visits: data.pct_gano_visits,
+            pct_gano_scenarios: data.pct_gano_scenarios,
+            chart_data: data.chart_data,
+          });
+        }
         setLastUpdated(new Date());
       }
     } catch (err) {
       console.error('Failed to fetch stats:', err);
+      // Localhost fallback on fetch error
+      if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        const mockChart = Array.from({ length: 24 }).map((_, i) => ({
+          label: `${i}:00`,
+          visits: [0, 1, 0, 2, 5, 1, 7, 3, 11, 15, 22, 35, 49, 18, 12, 7, 3, 2, 1, 0, 0, 1, 2, 4][i]
+        }));
+        setStats({
+          total_generated: 142,
+          total_visits: 580,
+          total_gano_visits: 89,
+          total_gano_scenarios: 45,
+          pct_generated: 24.5,
+          pct_visits: 18.2,
+          pct_gano_visits: 42.0,
+          pct_gano_scenarios: 15.8,
+          chart_data: mockChart,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -311,9 +362,9 @@ export default function AdminDashboard() {
                   return (
                     <div key={i} className="flex flex-col items-center flex-1 min-w-[12px] sm:min-w-[18px] h-full justify-end">
                       <div className="w-full flex-1 flex flex-col justify-end items-center">
-                        {/* Sayı: Çubuğun tam ucunun üstünde sürekli görünür (0 ise gizli veya soluk) */}
-                        <span className={`text-[10px] font-mono font-bold leading-none mb-1 select-none transition-all ${
-                          d.visits > 0 ? 'text-indigo-300' : 'text-transparent'
+                        {/* Sayı: Çubuğun tam ucunun üstünde belirgin ve büyük */}
+                        <span className={`text-xs sm:text-sm font-mono font-black leading-none mb-1 select-none transition-all ${
+                          d.visits > 0 ? 'text-indigo-100 drop-shadow-sm' : 'text-transparent'
                         }`}>
                           {d.visits > 0 ? d.visits : ''}
                         </span>
@@ -329,7 +380,7 @@ export default function AdminDashboard() {
                           title={`${d.label}: ${d.visits} ziyaret`}
                         />
                       </div>
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 mt-2 font-mono whitespace-nowrap truncate max-w-full text-center">
+                      <span className="text-[10px] text-slate-300 font-semibold mt-2 font-mono whitespace-nowrap truncate max-w-full text-center">
                         {d.label}
                       </span>
                     </div>
