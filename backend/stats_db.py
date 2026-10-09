@@ -123,9 +123,10 @@ def get_stats(period='all'):
                 now_dt = datetime.fromtimestamp(now_ts, tz=tz_tr)
 
                 if period == '24h':
-                    # Son 24 saatin her saat dilimini sırayla oluştur (örn: 24 saat öncesinden şu ana kadar veya 00:00 - 23:00)
-                    # Kullanıcı 00:00'dan 23:00'e kadar tüm 24 saati görmek istiyor
-                    chart_dict = {f"{h:02d}:00": 0 for h in range(24)}
+                    # Kayan 24 Saat (Rolling 24 Hours): Şu anki saatten 23 saat öncesinden başlayıp şu anki saate kadar
+                    # Örn: Saat 09:00 ise dünkü 10:00'dan bugünkü 09:00'a kadar sıralı
+                    hours_list = [(now_dt - timedelta(hours=i)).strftime('%H:00') for i in range(23, -1, -1)]
+                    chart_dict = {h: 0 for h in hours_list}
                     for item in chart_elements:
                         try:
                             ts = int(item.split(':')[0])
@@ -135,7 +136,7 @@ def get_stats(period='all'):
                                 chart_dict[label] += 1
                         except Exception:
                             pass
-                    chart_data = [{'label': k, 'visits': chart_dict[k]} for k in sorted(chart_dict.keys())]
+                    chart_data = [{'label': h, 'visits': chart_dict[h]} for h in hours_list]
 
                 elif period == '7d':
                     # Son 7 günün tamamını eksiksiz doldur
