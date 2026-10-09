@@ -303,29 +303,29 @@ export default function AdminDashboard() {
               </h2>
             </div>
             
-            <div className="h-56 w-full flex items-end gap-1.5 sm:gap-3 overflow-x-auto hide-scrollbar pt-6 pb-2">
+            <div className="h-56 w-full flex items-end gap-1 sm:gap-1.5 overflow-x-auto hide-scrollbar pt-6 pb-2">
               {(() => {
                 const maxVal = Math.max(...stats.chart_data.map(d => d.visits), 1);
                 return stats.chart_data.map((d, i) => {
                   const pctHeight = Math.max(Math.round((d.visits / maxVal) * 100), d.visits > 0 ? 6 : 2);
                   return (
-                    <div key={i} className="flex flex-col items-center flex-1 min-w-[28px] h-full justify-end group">
+                    <div key={i} className="flex flex-col items-center flex-1 min-w-[12px] sm:min-w-[18px] h-full justify-end group">
                       <div className="w-full flex-1 flex items-end justify-center relative">
                         {/* Tooltip / Visit Count */}
-                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 border border-slate-700 text-white text-[10px] py-0.5 px-1.5 rounded shadow-lg transition-opacity pointer-events-none whitespace-nowrap z-10 font-mono">
-                          {d.visits} ziyaret
+                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 border border-slate-700 text-white text-[10px] py-0.5 px-1.5 rounded shadow-lg transition-opacity pointer-events-none whitespace-nowrap z-20 font-mono">
+                          {d.label} - {d.visits} ziyaret
                         </div>
                         {/* Bar */}
                         <div 
-                          className={`w-full max-w-[24px] rounded-t-md transition-all duration-300 ${
+                          className={`w-full max-w-[20px] rounded-t-sm transition-all duration-300 ${
                             d.visits > 0
                               ? 'bg-gradient-to-t from-blue-600 to-indigo-400 group-hover:from-blue-500 group-hover:to-indigo-300 shadow-sm'
-                              : 'bg-slate-700/40'
+                              : 'bg-slate-700/30'
                           }`}
-                          style={{ height: `${pctHeight}%`, minHeight: '4px' }}
+                          style={{ height: `${pctHeight}%`, minHeight: '3px' }}
                         />
                       </div>
-                      <span className="text-[10px] text-slate-400 mt-2 font-mono whitespace-nowrap">
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 mt-2 font-mono whitespace-nowrap truncate max-w-full text-center">
                         {d.label}
                       </span>
                     </div>

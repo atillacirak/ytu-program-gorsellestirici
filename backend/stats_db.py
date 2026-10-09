@@ -116,23 +116,55 @@ def get_stats(period='all'):
                 chart_elements = data[8].get('result', [])
                 
                 from collections import defaultdict
-                from datetime import datetime
+                from datetime import datetime, timezone, timedelta
                 
-                chart_dict = defaultdict(int)
-                for item in chart_elements:
-                    # item format: "17231231:nonce"
-                    try:
-                        ts = int(item.split(':')[0])
-                        dt = datetime.fromtimestamp(ts)
-                        if period == '24h':
+                # Türkiye Saati (UTC+3)
+                tz_tr = timezone(timedelta(hours=3))
+                now_dt = datetime.fromtimestamp(now_ts, tz=tz_tr)
+
+                if period == '24h':
+                    # Son 24 saatin her saat dilimini sırayla oluştur (örn: 24 saat öncesinden şu ana kadar veya 00:00 - 23:00)
+                    # Kullanıcı 00:00'dan 23:00'e kadar tüm 24 saati görmek istiyor
+                    chart_dict = {f"{h:02d}:00": 0 for h in range(24)}
+                    for item in chart_elements:
+                        try:
+                            ts = int(item.split(':')[0])
+                            dt = datetime.fromtimestamp(ts, tz=tz_tr)
                             label = dt.strftime('%H:00')
-                        else:
+                            if label in chart_dict:
+                                chart_dict[label] += 1
+                        except Exception:
+                            pass
+                    chart_data = [{'label': k, 'visits': chart_dict[k]} for k in sorted(chart_dict.keys())]
+
+                elif period == '7d':
+                    # Son 7 günün tamamını eksiksiz doldur
+                    days_list = [(now_dt - timedelta(days=i)).strftime('%m-%d') for i in range(6, -1, -1)]
+                    chart_dict = {d: 0 for d in days_list}
+                    for item in chart_elements:
+                        try:
+                            ts = int(item.split(':')[0])
+                            dt = datetime.fromtimestamp(ts, tz=tz_tr)
                             label = dt.strftime('%m-%d')
-                        chart_dict[label] += 1
-                    except Exception:
-                        pass
-                
-                chart_data = [{'label': k, 'visits': v} for k, v in sorted(chart_dict.items(), key=lambda x: x[0])]
+                            if label in chart_dict:
+                                chart_dict[label] += 1
+                        except Exception:
+                            pass
+                    chart_data = [{'label': d, 'visits': chart_dict[d]} for d in days_list]
+
+                else: # 30d
+                    days_list = [(now_dt - timedelta(days=i)).strftime('%m-%d') for i in range(29, -1, -1)]
+                    chart_dict = {d: 0 for d in days_list}
+                    for item in chart_elements:
+                        try:
+                            ts = int(item.split(':')[0])
+                            dt = datetime.fromtimestamp(ts, tz=tz_tr)
+                            label = dt.strftime('%m-%d')
+                            if label in chart_dict:
+                                chart_dict[label] += 1
+                        except Exception:
+                            pass
+                    chart_data = [{'label': d, 'visits': chart_dict[d]} for d in days_list]
                 
                 def calc_pct(current, previous):
                     if previous == 0:
