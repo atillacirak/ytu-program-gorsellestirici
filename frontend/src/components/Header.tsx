@@ -2,14 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Calendar, Users, Calculator, ShieldCheck, GraduationCap } from 'lucide-react';
 
 export default function Header() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const tab = searchParams.get('tab');
-  
   const isOrtak = pathname === '/ortak';
   const isSingle = pathname === '/' && !isOrtak;
   const isAgno = pathname === '/agno';
