@@ -309,22 +309,25 @@ export default function AdminDashboard() {
                 return stats.chart_data.map((d, i) => {
                   const pctHeight = Math.max(Math.round((d.visits / maxVal) * 100), d.visits > 0 ? 6 : 2);
                   return (
-                    <div key={i} className="flex flex-col items-center flex-1 min-w-[12px] sm:min-w-[18px] h-full justify-end group">
-                      <div className="w-full flex-1 flex items-end justify-center">
-                        {/* Bar with relative tooltip on its tip */}
+                    <div key={i} className="flex flex-col items-center flex-1 min-w-[12px] sm:min-w-[18px] h-full justify-end">
+                      <div className="w-full flex-1 flex flex-col justify-end items-center">
+                        {/* Sayı: Çubuğun tam ucunun üstünde sürekli görünür (0 ise gizli veya soluk) */}
+                        <span className={`text-[10px] font-mono font-bold leading-none mb-1 select-none transition-all ${
+                          d.visits > 0 ? 'text-indigo-300' : 'text-transparent'
+                        }`}>
+                          {d.visits > 0 ? d.visits : ''}
+                        </span>
+
+                        {/* Bar */}
                         <div 
-                          className={`w-full max-w-[20px] rounded-t-sm transition-all duration-300 relative ${
+                          className={`w-full max-w-[20px] rounded-t-sm transition-all duration-300 ${
                             d.visits > 0
-                              ? 'bg-gradient-to-t from-blue-600 to-indigo-400 group-hover:from-blue-500 group-hover:to-indigo-300 shadow-sm'
+                              ? 'bg-gradient-to-t from-blue-600 to-indigo-400 hover:from-blue-500 hover:to-indigo-300 shadow-sm'
                               : 'bg-slate-700/30'
                           }`}
                           style={{ height: `${pctHeight}%`, minHeight: '3px' }}
-                        >
-                          {/* Tooltip / Visit Count - placed right above the bar's tip */}
-                          <div className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 border border-slate-700 text-white text-[10px] py-0.5 px-1.5 rounded shadow-lg transition-opacity pointer-events-none whitespace-nowrap z-20 font-mono">
-                            {d.label} - {d.visits} ziyaret
-                          </div>
-                        </div>
+                          title={`${d.label}: ${d.visits} ziyaret`}
+                        />
                       </div>
                       <span className="text-[9px] sm:text-[10px] text-slate-400 mt-2 font-mono whitespace-nowrap truncate max-w-full text-center">
                         {d.label}
