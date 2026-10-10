@@ -314,16 +314,16 @@ export default function AdminDashboard() {
               {stats ? stats.total_generated.toLocaleString() : '...'}
             </div>
             {renderPct(stats?.pct_generated, period)}
-            {((stats?.total_generated_pdf ?? 0) > 0 || (stats?.total_generated_prep ?? 0) > 0) && (
-              <div className="flex items-center justify-between text-[11px] font-mono bg-slate-900/60 rounded-xl px-2.5 py-1.5 border border-slate-700/50">
+            {stats && (
+              <div className="flex items-center justify-between text-xs font-mono bg-slate-900/70 rounded-xl px-3 py-2 border border-slate-700/60 shadow-inner">
                 <span className="flex items-center gap-1.5 text-blue-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                  PDF: <strong className="text-white">{stats?.total_generated_pdf?.toLocaleString()}</strong>
+                  <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                  PDF: <strong className="text-white text-xs sm:text-sm">{(stats.total_generated_pdf || 0).toLocaleString()}</strong>
                 </span>
                 <span className="text-slate-600">·</span>
                 <span className="flex items-center gap-1.5 text-amber-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                  Hazırlık: <strong className="text-white">{stats?.total_generated_prep?.toLocaleString()}</strong>
+                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                  Hazırlık: <strong className="text-white text-xs sm:text-sm">{(stats.total_generated_prep || 0).toLocaleString()}</strong>
                 </span>
               </div>
             )}
