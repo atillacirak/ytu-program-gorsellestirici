@@ -267,6 +267,13 @@ export default function AbsencePage() {
   const scheduleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
+    if (!isDev) {
+      fetch(`${API_BASE}/api/stats/devamsizlik-visit`, { method: 'POST' }).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
     try {
       const savedCourses = localStorage.getItem('ytu_absence_courses');
       if (savedCourses) {

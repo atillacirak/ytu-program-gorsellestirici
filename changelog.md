@@ -4,6 +4,16 @@ Bu belgede **YTÜ Dostun** projesine yapılan tüm sürüm güncellemeleri, mima
 
 ---
 
+## [v2.2.2] - 2026-10-10
+
+### ✨ Yeni Özellikler & Geliştirmeler
+- **Devamsızlık Modülü Ziyaret İstatistikleri:**
+  - `/devamsizlik` sayfası açıldığında `total_devamsizlik_visits` sayacı ve zaman damgalı olay kaydı tutulmaya başlandı (`/api/stats/devamsizlik-visit`).
+  - İstatistik paneline mor temalı **"Devamsızlık Takibi"** metrik kartı eklendi; responsive 5 kartlı ızgara tasarımı kuruldu (`xl:grid-cols-5`).
+  - Zaman aralıkları (24h / 7d / 30d / Tüm Zamanlar) bazında ziyaret sayıları ve önceki döneme kıyasla yüzdelik değişim trendleri entegre edildi.
+
+---
+
 ## [v2.2.1] - 2026-10-10
 
 ### 🐛 Hata Düzeltmeleri & İyileştirmeler

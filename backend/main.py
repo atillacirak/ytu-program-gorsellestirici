@@ -53,6 +53,14 @@ def increment_gano_scenario_endpoint():
     except Exception as e:
         return {'status': 'error', 'detail': str(e)}
 
+@app.post('/api/stats/devamsizlik-visit')
+def increment_devamsizlik_visit_endpoint():
+    try:
+        stats_db.increment_stat('total_devamsizlik_visits')
+        return {'status': 'success'}
+    except Exception as e:
+        return {'status': 'error', 'detail': str(e)}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],

@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   PieChart,
   ShieldAlert,
-  Users
+  Users,
+  CalendarDays
 } from 'lucide-react';
 
 interface FullStats {
@@ -23,10 +24,12 @@ interface FullStats {
   total_gano_scenarios: number;
   total_generated_pdf?: number;
   total_generated_prep?: number;
+  total_devamsizlik_visits?: number;
   pct_generated?: number;
   pct_visits?: number;
   pct_gano_visits?: number;
   pct_gano_scenarios?: number;
+  pct_devamsizlik_visits?: number;
   chart_data?: { label: string; visits: number }[];
 }
 
@@ -96,10 +99,12 @@ export default function AdminDashboard() {
             total_gano_scenarios: 45,
             total_generated_pdf: 95,
             total_generated_prep: 47,
+            total_devamsizlik_visits: 111,
             pct_generated: 24.5,
             pct_visits: 18.2,
             pct_gano_visits: 42.0,
             pct_gano_scenarios: 15.8,
+            pct_devamsizlik_visits: 28.5,
             chart_data: mockChart,
           });
         } else {
@@ -110,10 +115,12 @@ export default function AdminDashboard() {
             total_gano_scenarios: data.total_gano_scenarios || 0,
             total_generated_pdf: data.total_generated_pdf ?? 0,
             total_generated_prep: data.total_generated_prep ?? 0,
+            total_devamsizlik_visits: data.total_devamsizlik_visits || 0,
             pct_generated: data.pct_generated,
             pct_visits: data.pct_visits,
             pct_gano_visits: data.pct_gano_visits,
             pct_gano_scenarios: data.pct_gano_scenarios,
+            pct_devamsizlik_visits: data.pct_devamsizlik_visits,
             chart_data: data.chart_data,
           });
         }
@@ -134,10 +141,12 @@ export default function AdminDashboard() {
           total_gano_scenarios: 45,
           total_generated_pdf: 95,
           total_generated_prep: 47,
+          total_devamsizlik_visits: 111,
           pct_generated: 24.5,
           pct_visits: 18.2,
           pct_gano_visits: 42.0,
           pct_gano_scenarios: 15.8,
+          pct_devamsizlik_visits: 28.5,
           chart_data: mockChart,
         });
       }
@@ -278,7 +287,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* --- Primary Metrics Cards Grid --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
 
           {/* 1. Total Visits */}
           <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-blue-500/50 transition-all">
@@ -330,6 +339,26 @@ export default function AdminDashboard() {
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <CheckCircle2 size={12} className="text-[#e7a240]" />
               <span>PDF yükleme ve hazırlık sınıfı üretimleri</span>
+            </div>
+          </div>
+
+          {/* 3. Devamsızlık Modülü Ziyareti */}
+          <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-purple-500/50 transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Devamsızlık Takibi
+              </span>
+              <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <CalendarDays size={18} />
+              </div>
+            </div>
+            <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
+              {stats ? (stats.total_devamsizlik_visits ?? 0).toLocaleString() : '...'}
+            </div>
+            {renderPct(stats?.pct_devamsizlik_visits, period)}
+            <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
+              <CalendarDays size={12} className="text-purple-400" />
+              <span>/devamsizlik sayfasını açan kullanıcı sayısı</span>
             </div>
           </div>
 
