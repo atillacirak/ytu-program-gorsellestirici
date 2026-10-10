@@ -21,6 +21,8 @@ interface FullStats {
   total_visits: number;
   total_gano_visits: number;
   total_gano_scenarios: number;
+  total_generated_pdf?: number;
+  total_generated_prep?: number;
   pct_generated?: number;
   pct_visits?: number;
   pct_gano_visits?: number;
@@ -29,16 +31,27 @@ interface FullStats {
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const AGNO_LAUNCH_BASELINE_VISITS = 3450;
 
-
-const renderPct = (pct?: number) => {
+const renderPct = (pct?: number, period?: string) => {
+  if (period === 'all') {
+    return (
+      <div className="text-xs sm:text-[13px] text-slate-500 mt-2 font-medium">
+        Tüm zamanlar toplamı
+      </div>
+    );
+  }
   if (pct === undefined) return null;
   const isUp = pct > 0;
   const isZero = pct === 0;
   return (
-    <div className={`flex items-center gap-1.5 text-xs sm:text-[13px] font-bold mt-2 ${isZero ? 'text-slate-500' : isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
-      <TrendingUp size={14} className={isUp && !isZero ? '' : isZero ? 'hidden' : 'rotate-180'} />
-      <span>{isUp ? '+' : ''}{pct}% (önceki döneme kıyasla)</span>
+    <div className={`flex items-center gap-1.5 text-xs sm:text-[13px] font-bold mt-2 ${isZero ? 'text-slate-400' : isUp ? 'text-emerald-400' : 'text-rose-400'}`}>
+      {!isZero ? (
+        <TrendingUp size={14} className={isUp ? '' : 'rotate-180'} />
+      ) : (
+        <span className="text-slate-500 font-normal select-none">—</span>
+      )}
+      <span>{isZero ? 'Değişim yok (%0)' : `${isUp ? '+' : ''}${pct}% (önceki döneme kıyasla)`}</span>
     </div>
   );
 };
@@ -71,9 +84,9 @@ export default function AdminDashboard() {
                 label: d,
                 visits: [85, 120, 94, 145, 182, 160, 210][i]
               }))
-            : Array.from({ length: 30 }).map((_, i) => ({
+            : [35, 42, 28, 55, 63, 48, 72, 80, 65, 50, 45, 60, 75, 88, 92, 70, 64, 58, 82, 95, 110, 85, 78, 90, 105, 115, 98, 120, 135, 142].map((visits, i) => ({
                 label: `Gün ${i + 1}`,
-                visits: Math.floor(Math.random() * 80) + 20
+                visits
               }));
 
           setStats({
@@ -81,6 +94,8 @@ export default function AdminDashboard() {
             total_visits: 580,
             total_gano_visits: 89,
             total_gano_scenarios: 45,
+            total_generated_pdf: 95,
+            total_generated_prep: 47,
             pct_generated: 24.5,
             pct_visits: 18.2,
             pct_gano_visits: 42.0,
@@ -93,6 +108,8 @@ export default function AdminDashboard() {
             total_visits: data.total_visits || 0,
             total_gano_visits: data.total_gano_visits || 0,
             total_gano_scenarios: data.total_gano_scenarios || 0,
+            total_generated_pdf: data.total_generated_pdf ?? 0,
+            total_generated_prep: data.total_generated_prep ?? 0,
             pct_generated: data.pct_generated,
             pct_visits: data.pct_visits,
             pct_gano_visits: data.pct_gano_visits,
@@ -115,6 +132,8 @@ export default function AdminDashboard() {
           total_visits: 580,
           total_gano_visits: 89,
           total_gano_scenarios: 45,
+          total_generated_pdf: 95,
+          total_generated_prep: 47,
           pct_generated: 24.5,
           pct_visits: 18.2,
           pct_gano_visits: 42.0,
@@ -135,7 +154,7 @@ export default function AdminDashboard() {
     if (!autoRefresh) return;
     const interval = setInterval(() => {
       fetchStats();
-    }, 5000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [autoRefresh, fetchStats]);
 
@@ -146,7 +165,7 @@ export default function AdminDashboard() {
 
   // AGNO Interest Rate (For 'all' time, baseline starts at 3450 so 3500+ visits count fairly for new AGNO feature)
   const effectiveVisitsForAgno = period === 'all'
-    ? Math.max(1, (stats?.total_visits || 0) - 3450)
+    ? Math.max(1, (stats?.total_visits || 0) - AGNO_LAUNCH_BASELINE_VISITS)
     : (stats?.total_visits || 1);
 
   const ganoVisitRate = stats && effectiveVisitsForAgno > 0
@@ -194,7 +213,7 @@ export default function AdminDashboard() {
               }`}
             >
               <Activity size={14} />
-              <span>{autoRefresh ? 'Otomatik Yenileme (5s) Açık' : 'Otomatik Yenilemeyi Aç'}</span>
+              <span>{autoRefresh ? 'Otomatik Yenileme (30s) Açık' : 'Otomatik Yenilemeyi Aç'}</span>
             </button>
 
             <button
@@ -274,7 +293,7 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_visits.toLocaleString() : '...'}
             </div>
-            {renderPct(stats?.pct_visits)}
+            {renderPct(stats?.pct_visits, period)}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <Users size={12} className="text-blue-400" />
               <span>Siteye giriş yapan kullanıcı sayısı</span>
@@ -294,10 +313,23 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_generated.toLocaleString() : '...'}
             </div>
-            {renderPct(stats?.pct_generated)}
+            {renderPct(stats?.pct_generated, period)}
+            {((stats?.total_generated_pdf ?? 0) > 0 || (stats?.total_generated_prep ?? 0) > 0) && (
+              <div className="flex items-center justify-between text-[11px] font-mono bg-slate-900/60 rounded-xl px-2.5 py-1.5 border border-slate-700/50">
+                <span className="flex items-center gap-1.5 text-blue-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                  PDF: <strong className="text-white">{stats?.total_generated_pdf?.toLocaleString()}</strong>
+                </span>
+                <span className="text-slate-600">·</span>
+                <span className="flex items-center gap-1.5 text-amber-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  Hazırlık: <strong className="text-white">{stats?.total_generated_prep?.toLocaleString()}</strong>
+                </span>
+              </div>
+            )}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <CheckCircle2 size={12} className="text-[#e7a240]" />
-              <span>PDF yüklenip çizelge üretilme sayısı</span>
+              <span>PDF yükleme ve hazırlık sınıfı üretimleri</span>
             </div>
           </div>
 
@@ -314,7 +346,7 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_gano_visits.toLocaleString() : '...'}
             </div>
-            {renderPct(stats?.pct_gano_visits)}
+            {renderPct(stats?.pct_gano_visits, period)}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <PieChart size={12} className="text-indigo-400" />
               <span>/agno sayfasını açan kullanıcı sayısı</span>
@@ -334,7 +366,7 @@ export default function AdminDashboard() {
             <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
               {stats ? stats.total_gano_scenarios.toLocaleString() : '...'}
             </div>
-            {renderPct(stats?.pct_gano_scenarios)}
+            {renderPct(stats?.pct_gano_scenarios, period)}
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <TrendingUp size={12} className="text-emerald-400" />
               <span>AGNO için yüklenen transkript/program</span>

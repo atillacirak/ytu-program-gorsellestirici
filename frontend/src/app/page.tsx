@@ -107,10 +107,10 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  const incrementGenerateStat = () => {
+  const incrementGenerateStat = (source: 'pdf' | 'prep' = 'pdf') => {
     const isDev = typeof window !== 'undefined' && localStorage.getItem('ytu_ignore_stats') === 'true';
     if (!isDev) {
-      fetch(`${API_BASE}/api/stats/generate`, { method: 'POST' }).catch(() => {});
+      fetch(`${API_BASE}/api/stats/generate?source=${source}`, { method: 'POST' }).catch(() => {});
       setStats(prev => prev ? { ...prev, total_generated: prev.total_generated + 1 } : null);
     }
   };
@@ -226,7 +226,7 @@ export default function Home() {
     setVisualizerData(mockData);
     setOriginalVisualizerData(JSON.parse(JSON.stringify(mockData)));
     setVisualizerError(null);
-    incrementGenerateStat();
+    incrementGenerateStat('prep');
     
     // Hazırlık programında hocalar çok kritik olduğu için varsayılan olarak aç
     setShowInstructor(true);
@@ -408,7 +408,7 @@ export default function Home() {
       if (data && data.schedule) {
         setVisualizerData(data);
         setOriginalVisualizerData(JSON.parse(JSON.stringify(data)));
-        incrementGenerateStat();
+        incrementGenerateStat('pdf');
       } else {
         throw new Error('PDF dosyasında ders programı bilgisi bulunamadı.');
       }

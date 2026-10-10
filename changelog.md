@@ -4,6 +4,23 @@ Bu belgede **YTÜ Dostun** projesine yapılan tüm sürüm güncellemeleri, mima
 
 ---
 
+## [v2.2.1] - 2026-10-10
+
+### 🐛 Hata Düzeltmeleri & İyileştirmeler
+- **PDF vs Hazırlık Program Üretim Ayrımı:**
+  - Ders programı üretimleri `total_generated_pdf` (lisans PDF yüklemeleri) ve `total_generated_prep` (hazırlık sınıfı seçimleri) olarak iki ayrı sayaçla izlenmeye başlandı.
+  - İstatistik paneli kartında toplam sayının altında `PDF: X · Hazırlık: Y` dağılım rozeti eklendi.
+- **İstatistik Grafiği Gece Yarısı Çakışma Düzeltmesi (24h/7d/30d):**
+  - Kayan 24 saat penceresinde ve gün geçişlerinde aynı saat etiketlerinin birbirinin ziyaret verisini ezmesi engellendi (`%Y-%m-%d-%H` formatında tekil anahtarlama yapıldı).
+- **İstatistik Paneli UX & Kota Optimizasyonu:**
+  - Auto-refresh sıklığı Upstash Redis kota tasarrufu için 5 saniyeden 30 saniyeye çıkarıldı.
+  - "Tüm Zamanlar" seçildiğinde trend verisi yerine "Tüm zamanlar toplamı" bilgilendirmesi eklendi.
+  - Yüzdelik değişim %0 olduğunda nötr ve anlaşılır "Değişim yok (%0)" gösterimi sağlandı.
+  - Localhost 30 günlük test grafiğindeki titremeyi önlemek için deterministik mock veri dizisi oluşturuldu.
+  - Kod temizliği: Kullanılmayan `defaultdict` importu kaldırıldı, AGNO referans ziyaret sayısı (`3450`) sabit değişkene bağlandı.
+
+---
+
 ## [v2.2.0] - 2026-10-10
 
 ### ✨ Yeni Özellikler & Geliştirmeler

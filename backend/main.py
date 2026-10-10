@@ -26,9 +26,13 @@ def increment_visit_endpoint():
         return {'status': 'error', 'detail': str(e)}
 
 @app.post('/api/stats/generate')
-def increment_generate_endpoint():
+def increment_generate_endpoint(source: str = 'pdf'):
     try:
         stats_db.increment_stat('total_generated')
+        if source == 'prep':
+            stats_db.increment_stat('total_generated_prep')
+        else:
+            stats_db.increment_stat('total_generated_pdf')
         return {'status': 'success'}
     except Exception as e:
         return {'status': 'error', 'detail': str(e)}
