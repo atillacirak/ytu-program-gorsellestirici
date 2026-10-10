@@ -15,8 +15,8 @@ FALLBACK_GENERATED = int(os.environ.get('STATS_BASE_GENERATED', '0'))
 FALLBACK_VISITS = int(os.environ.get('STATS_BASE_VISITS', '0'))
 FALLBACK_GANO_VISITS = int(os.environ.get('STATS_BASE_GANO_VISITS', '0'))
 FALLBACK_GANO_SCENARIOS = int(os.environ.get('STATS_BASE_GANO_SCENARIOS', '0'))
-FALLBACK_GENERATED_PDF = int(os.environ.get('STATS_BASE_GENERATED_PDF', '0'))
-FALLBACK_GENERATED_PREP = int(os.environ.get('STATS_BASE_GENERATED_PREP', '0'))
+FALLBACK_GENERATED_PDF = int(os.environ.get('STATS_BASE_GENERATED_PDF', '783'))
+FALLBACK_GENERATED_PREP = int(os.environ.get('STATS_BASE_GENERATED_PREP', '131'))
 
 def increment_stat(field='total_generated'):
     url = os.environ.get('UPSTASH_REDIS_REST_URL') or UPSTASH_REDIS_REST_URL
