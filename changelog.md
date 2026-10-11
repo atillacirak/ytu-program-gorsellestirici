@@ -4,15 +4,20 @@ Bu belgede **YTÜ Dostun** projesine yapılan tüm sürüm güncellemeleri, mima
 
 ---
 
-## [v2.3.0] - 2026-10-11
+## [v2.3.0] - 2026-10-12
 
 ### ✨ Yeni Özellikler & Geliştirmeler
 - **Akademik Planlama & Mezuniyet Simülatörü (`/planlama`):**
-  - **YTÜ Bologna Tam Müfredat Veritabanı:** 11 Fakülte ve 63 Lisans Programının 8 yarıyıllık zorunlu/seçmeli dersleri ve seçmeli ders havuzları (`backend/data/bologna_curricula.json`) çevrimdışı çalışacak şekilde sisteme entegre edildi (`/api/curricula/programs`, `/api/curricula/program/{id}`).
-  - **Güz / Bahar / Yaz Okulu Kural Motoru:** Zorunlu Güz derslerinin sadece Güz dönemlerine (veya Yaz Okulu'na), Bahar derslerinin sadece Bahar dönemlerine (veya Yaz Okulu'na) konulabilmesi sağlandı. Ortak servis dersleri (`ATA`, `TDB`, `MDB`, `İSG`, `Staj`) ve seçmeli dersler (`MES`, `USS`, `UMS`, `SOS`) her iki döneme de esnek atanabilir yapıldı.
-  - **AKTS & Yerel Kredi Sınır Kontrolü:** Dönemlik maksimum AKTS (varsayılan 42 AKTS) veya Yerel Kredi (varsayılan 24 Kredi) geçiş anahtarı ve Yaz Okulu ders/kredi sınırı (varsayılan maks 3 ders / 20 AKTS) kontrolü eklendi.
-  - **Yaz Okulu & 3.5 Yılda Erken Mezuniyet Simülasyonu:** Her akademik yılın sonuna dinamik **Yaz Okulu** veya **5. Sınıf (Uzatma Yılı)** ekleyebilme, sürükle-bırak ve tıkla-taşı menüsüyle dersleri öne çekerek **3.5 yılda (7 yarıyıl) mezuniyet** senaryolarını canlı hesaplama özelliği kuruldu.
-  - **Bologna Seçmeli Ders Seçici:** Müfredattaki seçmeli ders yuvalarına tıklayarak bölümün gerçek Bologna seçmeli ders havuzundan ders atayabilme özelliği eklendi.
+  - **YTÜ Bologna Tam Müfredat Veritabanı:** 11 Fakülte ve 63 Lisans Programının 8 yarıyıllık zorunlu/seçmeli dersleri ve seçmeli ders havuzları (`backend/data/bologna_curricula.json`) entegre edildi (`/api/curricula/programs`, `/api/curricula/program/{id}`).
+  - **Güz / Bahar / Yaz Okulu Kural Motoru:** Zorunlu Güz derslerinin sadece Güz dönemlerine, Bahar derslerinin sadece Bahar dönemlerine konulabilmesi kuralı bağlandı. Ortak servis dersleri ve seçmeli dersler her iki döneme de esnek atanabilir yapıldı.
+  - **AKTS & Yerel Kredi Sınır Kontrolü:** Dönemlik maksimum AKTS (42) veya Yerel Kredi (24/28) geçiş anahtarı ve Yaz Okulu ders/kredi sınırları kontrol edildi.
+  - **Vektörel & Seçilebilir PDF Dışa Aktarımı:** `pdfmake` ile yüksek çözünürlüklü, metinleri seçilebilir ve kopyalanabilir A4 yatay akademik plan PDF'i (2 ve 3 sütunlu kompakt düzen, Bologna ön koşul rozetleri, UTF-8 Türkçe karakter ve onay işaretleri desteği).
+  - **Transkriptten Otomatik Muafiyet & Bölüm Algılama:** OBS veya E-Devlet transkript PDF'i yüklendiğinde bölüm otomatik seçilir; geçilen ve muaf olunan dersler müfredattan otomatik düşülür.
+- **Kullanıcı Karşılama & Sayfalar Arası Akıllı Entegrasyon (Onboarding & Cross-Promotion):**
+  - **Tek Seferlik "Neler Yeni?" Modalı:** Siteye ilk girişte açılan, Akademik Planlama, AGNO ve Devamsızlık modüllerini tanıtan kompakt, donanım dostu (GPU blur içermeyen) modal (`WhatsNewModal.tsx`).
+  - **Üst Menü "Yenilikler" Butonu & "Yeni" Rozeti:** Navbar'a parıltı ikonlu "Yenilikler" butonu ve Akademik Planlama sekmesine dikkat çekici yeşil rozet eklendi (`Header.tsx`).
+  - **AGNO'dan Planlama'ya 1-Tıkla Aktarım:** AGNO sayfasında transkript yüklendiğinde beliren karttan tek tıkla planlamaya geçiş ve tüm derslerin otomatik muafiyete işlenmesi sağlandı.
+  - **Ana Sayfa YTÜ Dostun Araç Vitrini:** Ders programı yükleme ekranının altına diğer öğrenci araçlarını tanıtan 3'lü bento ızgarası eklendi (`UploadScreen.tsx`).
 
 ---
 

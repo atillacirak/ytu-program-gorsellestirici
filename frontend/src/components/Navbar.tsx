@@ -89,6 +89,9 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
         >
           <Compass className={`w-3.5 h-3.5 ${activeRoute === 'planlama' ? 'text-amber-400' : 'text-emerald-600'}`} />
           <span>Akademik Planlama</span>
+          <span className={`text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full leading-tight ${activeRoute === 'planlama' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'}`}>
+            Yeni
+          </span>
         </Link>
         
       </div>

@@ -124,6 +124,9 @@ export default function GanoCalculator() {
 
       const data = await res.json();
       if (data.status === 'success') {
+        try {
+          localStorage.setItem('ytu_parsed_transcript_cache', JSON.stringify(data));
+        } catch {}
         if (data.cgpa > 0) setPastCgpa(data.cgpa.toString());
         if (data.total_credits > 0) setPastTotalCredits(data.total_credits.toString());
         
@@ -1003,6 +1006,54 @@ export default function GanoCalculator() {
             )}
           </div>
         </div>
+
+        {/* Cross-Promotion: Akademik Planlama */}
+        {pastCourses.length > 0 && (
+          <div className="bg-gradient-to-r from-emerald-50 via-white to-teal-50 border border-emerald-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Target size={18} />
+              </div>
+              <div className="space-y-0.5 min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-slate-900">
+                  Transkriptini zaten yükledin! Akademik Planlama ile mezuniyet sürecini simüle et
+                </p>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Verdiğin dersler otomatik algılanır, kalan müfredatını dönemlere yay, erken mezuniyet senaryosu oluştur ve PDF olarak indir.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                try {
+                  let payload = null;
+                  const cached = localStorage.getItem('ytu_parsed_transcript_cache');
+                  if (cached) {
+                    payload = JSON.parse(cached);
+                  } else {
+                    payload = {
+                      status: 'success',
+                      cgpa: parseFloat(pastCgpa) || 0,
+                      courses: pastCourses.map(c => ({
+                        code: c.code,
+                        name: c.name,
+                        expectedGrade: c.expectedGrade,
+                        credits: c.credits,
+                        term: c.term
+                      }))
+                    };
+                  }
+                  localStorage.setItem('ytu_pending_planlama_transcript', JSON.stringify(payload));
+                } catch {}
+                window.location.href = '/planlama';
+              }}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-2xs transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
+            >
+              <span>Planlamaya Aktar</span>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+            </button>
+          </div>
+        )}
 
         {/* Footer info */}
         <div className="text-center text-xs text-slate-400 pt-6 pb-4">

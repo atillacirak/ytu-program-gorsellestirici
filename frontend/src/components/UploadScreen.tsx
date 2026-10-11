@@ -1,5 +1,9 @@
 import React from 'react';
-import { FileText, Upload, RefreshCw, AlertCircle, GraduationCap, Calendar, Building2, Layers } from 'lucide-react';
+import Link from 'next/link';
+import {
+  FileText, Upload, RefreshCw, AlertCircle, GraduationCap, Calendar, Building2,
+  Layers, Compass, Calculator, ShieldCheck, Users, Sparkles, ArrowRight
+} from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 
 interface UploadScreenProps {
@@ -216,6 +220,98 @@ export default function UploadScreen({
             </div>
             <p className="text-[11px] text-slate-500">Belgedeki tüm ders kodları ve şubeler çizelgeye eksiksiz yerleştirilir.</p>
           </div>
+        </div>
+      </div>
+
+      {/* YTÜ Dostun Araç Vitrini (Cross-Promotion Grid) */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <h3 className="text-sm font-extrabold text-slate-900">YTÜ Dostun Araçları</h3>
+          </div>
+          <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
+            Ders programı haricinde kullanabileceğiniz diğer öğrenci araçları
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          {/* Araç 1: Akademik Planlama (YENİ & Öne Çıkan) */}
+          <Link
+            href="/planlama"
+            className="group relative rounded-xl border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/30 p-4 hover:border-emerald-500/60 hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-2xs">
+                  <Compass className="w-4 h-4" />
+                </div>
+                <span className="text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-emerald-600 text-white leading-tight">
+                  Yeni
+                </span>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                  Akademik Planlama &amp; Mezuniyet
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Bölüm müfredatını, Bologna ön koşullarını ve seçmeli ders havuzlarını gör. 3 veya 3.5 yılda erken mezuniyeti simüle et.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-emerald-700 group-hover:gap-1.5 transition-all">
+              <span>Planlamaya Başla</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </Link>
+
+          {/* Araç 2: AGNO Hesaplayıcı */}
+          <Link
+            href="/agno"
+            className="group rounded-xl border border-slate-200 bg-slate-50/60 p-4 hover:border-slate-300 hover:bg-white hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
+                <Calculator className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
+                  AGNO &amp; Hedef Simülatörü
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Transkript PDF'ini yükleyerek notlarını aktar, dönem sonu ortalamanı ve hedefin için gereken YANO'yu hesapla.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-indigo-700 group-hover:gap-1.5 transition-all">
+              <span>AGNO Hesapla</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </Link>
+
+          {/* Araç 3: Devamsızlık Takibi */}
+          <Link
+            href="/devamsizlik"
+            className="group rounded-xl border border-slate-200 bg-slate-50/60 p-4 hover:border-slate-300 hover:bg-white hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-2xs">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 group-hover:text-amber-700 transition-colors">
+                  Devamsızlık Takibi
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  14 haftalık çizelgede kaç ders kaçırdığını işaretle; sınırını aşmadan hangi derse girip girmeyeceğini bil.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-amber-700 group-hover:gap-1.5 transition-all">
+              <span>Devamsızlığa Bak</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </Link>
         </div>
       </div>
     </div>

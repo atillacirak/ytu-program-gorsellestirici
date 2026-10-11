@@ -34,7 +34,13 @@ YTÜ Dostun; YTÜ öğrencilerinin ders programlarını, notlarını, ortak boş
    - USIS transkriptinden veya ders programından dersleri çekip gelecek dönem not senaryoları üretme.
    - Ders kodlarına göre SQLite tabanından otomatik kredi tamamlama.
 
-5. **İstatistikler (`/stats`):**
+5. **Akademik Planlama & Mezuniyet Simülatörü (`/planlama`):**
+   - 11 Fakülte, 63 Program için YTÜ Bologna resmi müfredat ve seçmeli ders havuzları.
+   - Güz / Bahar / Yaz Okulu kural denetimi ve ön koşul kilitleri.
+   - `pdfmake` ile yüksek çözünürlüklü vektörel A4 yatay plan PDF çıktısı.
+   - Transkriptten otomatik bölüm ve ders muafiyeti düşümü.
+
+6. **İstatistikler (`/stats`):**
    - Upstash Redis tabanlı anlık sayaçlar.
    - Dönemsel yüzdelik değişim trendleri (+/- % oranları).
    - Saf Tailwind CSS ile yazılmış, hafif ve gerçek zamanlı ziyaretçi aktivite bar grafiği.
@@ -49,19 +55,23 @@ frontend/src/
 │   ├── page.tsx               # Ana Görselleştirici (Modüler & useLocalStorageState)
 │   ├── ortak/page.tsx         # Ortak Boş Saatler Sayfası
 │   ├── devamsizlik/page.tsx   # Devamsızlık Takibi ve Aylık Takvim
-│   ├── agno/page.tsx          # AGNO / Not Hesaplayıcı
+│   ├── agno/page.tsx          # AGNO / Not Hesaplayıcı & Planlama Yönlendirmesi
+│   ├── planlama/page.tsx      # Akademik Planlama & Mezuniyet Simülatörü
 │   └── stats/page.tsx         # İstatistikler, Trend Yüzdeleri & Grafik
 ├── components/
-│   ├── UploadScreen.tsx       # Belge yükleme ve Hazırlık sınıfı seçim ekranı
+│   ├── UploadScreen.tsx       # Belge yükleme ve Araç Vitrini
 │   ├── ScheduleToolbar.tsx    # Üst yönetim paneli, filtreler ve aktarım araçları
 │   ├── ScheduleTable.tsx      # A4 Çizelge tablosu ve ders hücreleri
 │   ├── CourseSummaryTable.tsx # Ders listesi ve derslik özet tablosu
 │   ├── EditCourseModal.tsx    # Ders düzenleme ve not ekleme modalı
 │   ├── CompareView.tsx        # Ortak boş saatler matrisi ve kartları
-│   └── Header.tsx             # Genel üst navigasyon çubuğu
+│   ├── WhatsNewModal.tsx      # Sürüm yenilikleri karşılama penceresi
+│   ├── Header.tsx             # Genel üst navigasyon çubuğu & Yenilikler butonu
+│   └── planlama/              # Planlama modül parçaları (Bucket, Ders Kartı, Modallar)
 ├── hooks/
 │   └── useLocalStorageState.ts# Tarayıcı hafızasını reaktif yöneten özel hook
 └── utils/
+    ├── planlamaPdfExport.ts   # pdfmake vektörel A4 PDF oluşturucu
     ├── pngMetadata.ts         # PNG görsellerine program JSON'u gömme/çıkarma
     └── instructors.ts         # Hoca adları ve kısaltma eşleştiricisi
 ```

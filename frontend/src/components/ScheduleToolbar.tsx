@@ -1,10 +1,11 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import {
   Calendar, Building2, Upload, Download, Printer, LayoutGrid, BookOpen, Clock,
   Palette, Pencil, X, Check, Trash2, StickyNote, GraduationCap, Layers,
-  RotateCcw, Calculator, FileText
+  RotateCcw, Calculator, FileText, Compass
 } from 'lucide-react';
 
 interface ScheduleToolbarProps {
@@ -100,6 +101,16 @@ export default function ScheduleToolbar({
             <Calculator className="w-3.5 h-3.5" />
             <span>AGNO'ya Gönder</span>
           </button>
+
+          <Link
+            href="/planlama"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-lg shadow-2xs transition-all cursor-pointer"
+            title="Bölüm müfredatını ve mezuniyet simülasyonunu açar"
+          >
+            <Compass className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Akademik Planlama</span>
+            <span className="text-[8.5px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-extrabold uppercase leading-tight">Yeni</span>
+          </Link>
 
           <button
             onClick={handleExportVisualizerPNG}

@@ -623,28 +623,9 @@ export default function AcademicPlanningPage() {
     showToast('Tüm muafiyetler kaldırıldı, dersler orijinal dönemlerine döndürüldü.', 'info');
   }, [exemptCourses, showToast]);
 
-  // Upload Transcript PDF to automatically detect passed and exempt courses
-  const handleTranscriptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingTranscript(true);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/parse-transcript`, {
-        method: 'POST',
-        body: formData
-      });
-      if (!res.ok) {
-        throw new Error('Transkript PDF okunamadı.');
-      }
-      const data = await res.json();
-      if (data.status !== 'success' || !Array.isArray(data.courses)) {
-        throw new Error('Transkript verisi ayrıştırılamadı.');
-      }
-
+  // Helper to apply parsed transcript data to the current plan
+  const applyTranscriptData = useCallback(
+    async (data: any) => {
       let targetSemesters = baseSemesters;
       let targetPools = electivePools;
       let deptSwitchedMsg = '';
@@ -767,15 +748,57 @@ export default function AcademicPlanningPage() {
       const totalMatched = passedCount + exemptCount;
       if (totalMatched > 0) {
         showToast(
-          `📄 Transkript okundu${deptSwitchedMsg}: ${passedCount} verilen ve ${exemptCount} muaf ders (toplam ${totalMatched} ders) otomatik algılanıp dönemlerinden düşüldü!`,
+          `📄 Transkript aktarıldı${deptSwitchedMsg}: ${passedCount} verilen ve ${exemptCount} muaf ders (toplam ${totalMatched} ders) otomatik algılanıp dönemlerinden düşüldü!`,
           'success'
         );
       } else {
         showToast(
-          'Transkript okundu ancak seçili bölüm müfredatıyla eşleşen geçilmiş/muaf ders bulunamadı.',
+          'Transkript aktarıldı ancak seçili bölüm müfredatıyla eşleşen geçilmiş/muaf ders bulunamadı.',
           'info'
         );
       }
+    },
+    [baseSemesters, electivePools, selectedProgramId, showToast]
+  );
+
+  // Check for pending transcript transfer from AGNO or other modules
+  useEffect(() => {
+    if (!selectedProgramId || Object.keys(baseSemesters).length === 0 || loadingCurriculum) return;
+    try {
+      const pendingRaw = localStorage.getItem('ytu_pending_planlama_transcript');
+      if (pendingRaw) {
+        localStorage.removeItem('ytu_pending_planlama_transcript');
+        const data = JSON.parse(pendingRaw);
+        if (data && Array.isArray(data.courses) && data.courses.length > 0) {
+          applyTranscriptData(data);
+        }
+      }
+    } catch {}
+  }, [selectedProgramId, baseSemesters, loadingCurriculum, applyTranscriptData]);
+
+  // Upload Transcript PDF to automatically detect passed and exempt courses
+  const handleTranscriptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingTranscript(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/parse-transcript`, {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) {
+        throw new Error('Transkript PDF okunamadı.');
+      }
+      const data = await res.json();
+      if (data.status !== 'success' || !Array.isArray(data.courses)) {
+        throw new Error('Transkript verisi ayrıştırılamadı.');
+      }
+
+      await applyTranscriptData(data);
     } catch (err: any) {
       showToast(err?.message || 'Transkript yüklenirken bir hata oluştu.', 'error');
     } finally {
