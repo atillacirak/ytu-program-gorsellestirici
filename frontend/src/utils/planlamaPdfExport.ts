@@ -57,6 +57,87 @@ export function exportAcademicPlanPdf({
     year: 'numeric'
   });
 
+  // Prepare structured data for vector pdfmake generator
+  const vectorYearsData = yearsList
+    .map(({ year, buckets: yearBuckets }) => {
+      const totalYearCourses = yearBuckets.reduce((sum, b) => sum + b.courses.length, 0);
+      if (totalYearCourses === 0) return null;
+
+      const activeBuckets = yearBuckets.filter(
+        (b) => b.season !== 'Yaz' || b.courses.length > 0
+      );
+      if (activeBuckets.length === 0) return null;
+
+      return {
+        yearTitle: `${year}. Akademik Yıl ${year === 5 ? '(Uzatma Yılı)' : ''}`.trim(),
+        buckets: activeBuckets.map((b) => {
+          const isSum = b.season === 'Yaz';
+          const useEcts = !isSum && limitMetric === 'ects';
+          const totEcts = b.courses.reduce((s, c) => s + c.ects, 0);
+          const totCred = b.courses.reduce((s, c) => s + c.credits, 0);
+          const maxLim = b.customLimit ?? (isSum ? summerMaxLimit : regularMaxLimit);
+          const curVal = useEcts ? totEcts : totCred;
+          const bUnit = useEcts ? 'AKTS' : 'Kredi';
+
+          const emptyText =
+            b.semesterNumber && b.semesterNumber > summary.maxSem && summary.isEarlyGraduation
+              ? `${b.semesterNumber}. Yarıyıl boşaltıldı (${summary.gradYears} Yılda Mezuniyet)`
+              : 'Bu dönemde ders bulunmuyor.';
+
+          return {
+            title: b.title,
+            isSummer: isSum,
+            meta: `${b.courses.length} Ders · ${totCred} Kr · ${totEcts} AKTS (${curVal}/${maxLim} ${bUnit})`,
+            emptyText,
+            courses: b.courses.map((c) => {
+              const code = c.selectedElectiveCode || c.code;
+              const name = c.selectedElectiveName
+                ? `${c.selectedElectiveName} (${c.name})`
+                : c.name;
+              const isMoved =
+                b.season === 'Yaz' ||
+                Boolean(b.semesterNumber && b.semesterNumber !== c.defaultSemester);
+              return {
+                code,
+                name,
+                movedText: isMoved ? ` (${c.defaultSemester}. YY dersi)` : '',
+                credits: String(c.credits),
+                ects: String(c.ects),
+                completed: Boolean(c.completed),
+                status: c.completed ? '✓' : 'Plan'
+              };
+            })
+          };
+        })
+      };
+    })
+    .filter(Boolean);
+
+  const vectorPayload = {
+    docTitle,
+    activeScenarioName,
+    selectedFaculty,
+    programName,
+    dateStr,
+    summary,
+    unitLabel,
+    regularMaxLimit,
+    summerMaxLimit,
+    summerMaxCourses,
+    isHighGpa,
+    years: vectorYearsData,
+    exemptCourses: exemptCourses.map((c) => ({
+      code: c.selectedElectiveCode || c.code,
+      name: c.selectedElectiveName ? `${c.selectedElectiveName} (${c.name})` : c.name,
+      defaultSem: `${c.defaultSemester}. Yarıyıl`,
+      credits: String(c.credits),
+      ects: String(c.ects),
+      grade: c.grade || 'Muaf'
+    }))
+  };
+
+  const safeJsonPayload = JSON.stringify(vectorPayload).replace(/</g, '\\u003c');
+
   const yearsHtml = yearsList
     .map(({ year, buckets: yearBuckets }) => {
       const totalYearCourses = yearBuckets.reduce((sum, b) => sum + b.courses.length, 0);
@@ -97,11 +178,11 @@ export function exportAcademicPlanPdf({
                       b.season === 'Yaz' ||
                       (b.semesterNumber && b.semesterNumber !== c.defaultSemester);
                     const movedTag = isMoved
-                      ? `<span class="tag-moved">Normali: ${c.defaultSemester}. YY</span>`
+                      ? `<span class="tag-moved">${c.defaultSemester}. YY dersi</span>`
                       : '';
                     const statusBadge = c.completed
-                      ? `<span class="tag-done">✓ Verildi</span>`
-                      : `<span class="tag-plan">Planlanan</span>`;
+                      ? `<span class="tag-done">✓</span>`
+                      : `<span class="tag-plan">Plan</span>`;
 
                     return `
                       <tr class="${c.completed ? 'row-done' : ''}">
@@ -125,10 +206,10 @@ export function exportAcademicPlanPdf({
                 <thead>
                   <tr>
                     <th style="width:18%">Kod</th>
-                    <th style="width:50%">Ders Adı</th>
-                    <th style="width:10%;text-align:center">Kr</th>
+                    <th style="width:55%">Ders Adı</th>
+                    <th style="width:9%;text-align:center">Kr</th>
                     <th style="width:10%;text-align:center">AKTS</th>
-                    <th style="width:12%;text-align:right">Durum</th>
+                    <th style="width:8%;text-align:right">Durum</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -443,7 +524,8 @@ export function exportAcademicPlanPdf({
       color: #64748b;
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script>
 </head>
 <body>
   <div class="toolbar">
@@ -453,11 +535,11 @@ export function exportAcademicPlanPdf({
       </div>
       <div>
         <div style="font-size:12.5px;font-weight:800;letter-spacing:-0.01em">YTÜ Akademik Plan PDF Önizleme (${esc(activeScenarioName)})</div>
-        <div style="color:#94a3b8;font-size:10.5px">Planınızı inceleyip doğrudan PDF olarak indirebilir veya yazdırabilirsiniz.</div>
+        <div style="color:#94a3b8;font-size:10.5px">Planınızı inceleyip vektörel (metin seçilebilir) PDF olarak indirebilir veya yazdırabilirsiniz.</div>
       </div>
     </div>
     <div class="toolbar-actions">
-      <button id="download-pdf-btn" class="toolbar-btn-download" onclick="downloadDirectPdf()">
+      <button id="download-pdf-btn" class="toolbar-btn-download" onclick="downloadVectorPdf()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span>PDF İndir</span>
       </button>
@@ -515,43 +597,452 @@ export function exportAcademicPlanPdf({
     </div>
   </div>
   <script>
-    function downloadDirectPdf() {
-      var btn = document.getElementById('download-pdf-btn');
-      var element = document.getElementById('pdf-sheet');
-      if (!element) return;
-      if (typeof window.html2pdf === 'undefined') {
+    var PLAN_DATA = ${safeJsonPayload};
+
+    function buildBucketTable(bucket, numCols) {
+      var headerFill = bucket.isSummer ? '#fef3c7' : '#f1f5f9';
+      var borderColor = bucket.isSummer ? '#f59e0b' : '#cbd5e1';
+      var isThreeCol = numCols === 3;
+      var padX = isThreeCol ? 2.5 : numCols === 1 ? 4 : 3.5;
+      var padY = isThreeCol ? 2 : 2.5;
+      var fontSizeBase = isThreeCol ? 6.5 : 7.2;
+
+      // Exact point widths so nested tables inside pdfmake columns never overflow A4 width (539pt)
+      // 2 cols: colWidth = 265pt, total horizontal padding = 5 * 7 = 35pt -> sum(widths) = 230pt
+      // 3 cols: colWidth = 175pt, total horizontal padding = 5 * 5 = 25pt -> sum(widths) = 150pt
+      var tableWidths = isThreeCol
+        ? [35, 59, 12, 20, 24]
+        : numCols === 1
+        ? [50, 371, 20, 28, 30]
+        : [40, 127, 14, 22, 27];
+      var statusColW = tableWidths[4];
+
+      var topHeaderCell = isThreeCol
+        ? {
+            colSpan: 5,
+            stack: [
+              { text: bucket.title, bold: true, fontSize: 7.5, color: '#0f172a' },
+              { text: bucket.meta, bold: true, fontSize: 6.2, color: '#475569', margin: [0, 1, 0, 0] }
+            ],
+            fillColor: headerFill
+          }
+        : {
+            colSpan: 5,
+            columns: [
+              {
+                width: numCols === 1 ? 260 : 118,
+                text: bucket.title,
+                bold: true,
+                fontSize: 8,
+                color: '#0f172a',
+                noWrap: true
+              },
+              {
+                width: numCols === 1 ? 271 : 140,
+                text: bucket.meta,
+                bold: true,
+                fontSize: 6.5,
+                color: '#475569',
+                alignment: 'right',
+                margin: [0, 1, 0, 0],
+                noWrap: true
+              }
+            ],
+            columnGap: 0,
+            fillColor: headerFill
+          };
+
+      var body = [
+        [topHeaderCell, {}, {}, {}, {}],
+        [
+          { text: 'Kod', bold: true, fontSize: fontSizeBase, color: '#475569', fillColor: '#f8fafc', noWrap: true },
+          { text: 'Ders Adı', bold: true, fontSize: fontSizeBase, color: '#475569', fillColor: '#f8fafc' },
+          { text: 'Kr', bold: true, fontSize: fontSizeBase, alignment: 'center', color: '#475569', fillColor: '#f8fafc', noWrap: true },
+          { text: 'AKTS', bold: true, fontSize: fontSizeBase, alignment: 'center', color: '#475569', fillColor: '#f8fafc', noWrap: true },
+          { text: 'Durum', bold: true, fontSize: fontSizeBase, alignment: 'right', color: '#475569', fillColor: '#f8fafc', noWrap: true }
+        ]
+      ];
+
+      if (!bucket.courses || bucket.courses.length === 0) {
+        body.push([
+          {
+            colSpan: 5,
+            text: bucket.emptyText,
+            italics: true,
+            alignment: 'center',
+            fontSize: fontSizeBase,
+            color: '#64748b',
+            margin: [0, 6, 0, 6]
+          },
+          {}, {}, {}, {}
+        ]);
+      } else {
+        for (var i = 0; i < bucket.courses.length; i++) {
+          var c = bucket.courses[i];
+          var rowBg = c.completed ? '#f0fdf4' : '#ffffff';
+          var nameCell = c.movedText
+            ? {
+                text: [
+                  { text: c.name, color: c.completed ? '#475569' : '#1e293b', bold: true },
+                  { text: c.movedText, color: '#b45309', fontSize: fontSizeBase - 0.6, bold: true }
+                ],
+                fontSize: fontSizeBase,
+                fillColor: rowBg
+              }
+            : {
+                text: c.name,
+                fontSize: fontSizeBase,
+                bold: true,
+                color: c.completed ? '#475569' : '#1e293b',
+                fillColor: rowBg
+              };
+
+          var tickX = Math.max(0, statusColW - 8);
+          var statusCell = c.completed
+            ? {
+                canvas: [
+                  {
+                    type: 'polyline',
+                    lineWidth: 1.5,
+                    lineColor: '#166534',
+                    points: [
+                      { x: tickX, y: 4.5 },
+                      { x: tickX + 2.4, y: 7 },
+                      { x: tickX + 7, y: 1.5 }
+                    ]
+                  }
+                ],
+                fillColor: rowBg
+              }
+            : {
+                text: c.status,
+                alignment: 'right',
+                bold: true,
+                fontSize: fontSizeBase - 0.3,
+                color: '#475569',
+                fillColor: rowBg,
+                noWrap: true
+              };
+
+          body.push([
+            { text: c.code, bold: true, fontSize: fontSizeBase, color: '#0f172a', fillColor: rowBg, noWrap: true },
+            nameCell,
+            { text: c.credits, alignment: 'center', bold: true, fontSize: fontSizeBase, color: '#334155', fillColor: rowBg, noWrap: true },
+            { text: c.ects, alignment: 'center', bold: true, fontSize: fontSizeBase, color: '#334155', fillColor: rowBg, noWrap: true },
+            statusCell
+          ]);
+        }
+      }
+
+      return {
+        table: {
+          headerRows: 2,
+          widths: tableWidths,
+          body: body
+        },
+        layout: {
+          paddingLeft: function () { return padX; },
+          paddingRight: function () { return padX; },
+          paddingTop: function () { return padY; },
+          paddingBottom: function () { return padY; },
+          hLineWidth: function (i, node) {
+            return i === 0 || i === node.table.body.length || i === 1 || i === 2 ? 0.7 : 0.4;
+          },
+          vLineWidth: function (i, node) {
+            return i === 0 || i === node.table.widths.length ? 0.7 : 0;
+          },
+          hLineColor: function (i, node) {
+            if (i === 0 || i === node.table.body.length || i === 1) return borderColor;
+            return '#e2e8f0';
+          },
+          vLineColor: function () {
+            return borderColor;
+          }
+        }
+      };
+    }
+
+    function downloadVectorPdf() {
+      if (typeof window.pdfMake === 'undefined') {
         window.print();
         return;
       }
+      var btn = document.getElementById('download-pdf-btn');
       var origHtml = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<svg class="spin-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg><span>İndiriliyor...</span>';
 
-      var origMargin = element.style.margin;
-      var origShadow = element.style.boxShadow;
-      element.style.margin = '0 auto';
-      element.style.boxShadow = 'none';
+      try {
+        var d = PLAN_DATA;
+        var s = d.summary;
+        var content = [];
 
-      var opt = {
-        margin: [6, 6, 6, 6],
-        filename: '${esc(docTitle)}.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
+        // 1. Top Header Banner (Full printable width = 539pt)
+        content.push({
+          table: {
+            widths: ['*', 'auto'],
+            body: [
+              [
+                {
+                  stack: [
+                    {
+                      text: 'YTÜ Akademik Planlama & Mezuniyet Simülasyonu (' + d.activeScenarioName + ')',
+                      fontSize: 11.5,
+                      bold: true,
+                      color: '#ffffff'
+                    },
+                    {
+                      text: d.selectedFaculty + ' — ' + d.programName,
+                      fontSize: 8.5,
+                      color: '#bfdbfe',
+                      margin: [0, 2, 0, 0]
+                    }
+                  ],
+                  fillColor: '#0c3f79'
+                },
+                {
+                  stack: [
+                    {
+                      text: s.gradYears + ' Yıl (' + s.maxSem + '. Yarıyıl)',
+                      fontSize: 10,
+                      bold: true,
+                      color: '#fcd34d',
+                      alignment: 'right'
+                    },
+                    {
+                      text: d.activeScenarioName + ' · ' + d.dateStr,
+                      fontSize: 7.5,
+                      color: '#bfdbfe',
+                      alignment: 'right',
+                      margin: [0, 2, 0, 0]
+                    }
+                  ],
+                  fillColor: '#0c3f79'
+                }
+              ]
+            ]
+          },
+          layout: {
+            paddingLeft: function () { return 10; },
+            paddingRight: function () { return 10; },
+            paddingTop: function () { return 7; },
+            paddingBottom: function () { return 7; },
+            hLineWidth: function () { return 0; },
+            vLineWidth: function () { return 0; }
+          },
+          margin: [0, 0, 0, 8]
+        });
 
-      window.html2pdf().set(opt).from(element).save().then(function() {
-        element.style.margin = origMargin;
-        element.style.boxShadow = origShadow;
+        // 2. 4 Summary Boxes (4 x 130.25pt + 3 x 6pt gap = 539pt)
+        var summaryBoxes = [
+          {
+            label: 'MEZUNİYET SÜRESİ',
+            val: s.gradYears + ' Yıl (' + s.maxSem + ' Yarıyıl)',
+            sub: s.isEarlyGraduation ? 'Erken Mezuniyet Senaryosu' : 'Standart Akademik Plan'
+          },
+          {
+            label: 'TOPLAM PLANLANAN YÜK',
+            val: s.totalPlacedCredits + ' Kredi · ' + s.totalPlacedEcts + ' AKTS',
+            sub: 'Toplam ' + s.totalPlacedCount + ' Ders (' + s.activeSummers + ' Yaz Okulu)'
+          },
+          {
+            label: 'MUAFİYET & VERİLEN',
+            val: s.exemptCount + ' Ders (' + s.exemptEcts + ' AKTS)',
+            sub: 'Toplam Tamamlanan: ' + s.completedEcts + ' AKTS'
+          },
+          {
+            label: 'DÖNEM & YAZ SINIRLARI',
+            val: 'Dönem: ' + d.regularMaxLimit + ' ' + d.unitLabel,
+            sub: (d.isHighGpa ? 'AGNO >= 3.00 (28 Kr)' : 'Standart Sınır') + ' · Yaz: ' + d.summerMaxCourses + ' Ders/' + d.summerMaxLimit + ' Kr'
+          }
+        ];
+
+        content.push({
+          columns: summaryBoxes.map(function (box) {
+            return {
+              width: 130,
+              table: {
+                widths: [118],
+                body: [
+                  [
+                    {
+                      stack: [
+                        { text: box.label, fontSize: 6.5, bold: true, color: '#64748b' },
+                        { text: box.val, fontSize: 9, bold: true, color: '#0c3f79', margin: [0, 1.5, 0, 1] },
+                        { text: box.sub, fontSize: 6.8, color: '#475569' }
+                      ],
+                      fillColor: '#f8fafc'
+                    }
+                  ]
+                ]
+              },
+              layout: {
+                paddingLeft: function () { return 6; },
+                paddingRight: function () { return 6; },
+                paddingTop: function () { return 5; },
+                paddingBottom: function () { return 5; },
+                hLineWidth: function () { return 0.7; },
+                vLineWidth: function () { return 0.7; },
+                hLineColor: function () { return '#cbd5e1'; },
+                vLineColor: function () { return '#cbd5e1'; }
+              }
+            };
+          }),
+          columnGap: 6,
+          margin: [0, 0, 0, 10]
+        });
+
+        // 3. Academic Years
+        for (var y = 0; y < d.years.length; y++) {
+          var yr = d.years[y];
+          var numCols = yr.buckets.length;
+          var colW = numCols === 3 ? 175 : numCols === 1 ? 539 : 265;
+          var gapW = numCols === 3 ? 7 : 9;
+
+          var cols = yr.buckets.map(function (b) {
+            return {
+              width: colW,
+              stack: [buildBucketTable(b, numCols)]
+            };
+          });
+
+          content.push({
+            unbreakable: true,
+            stack: [
+              {
+                text: yr.yearTitle,
+                fontSize: 9.5,
+                bold: true,
+                color: '#0c3f79',
+                margin: [0, 0, 0, 2]
+              },
+              {
+                canvas: [
+                  { type: 'line', x1: 0, y1: 0, x2: 539, y2: 0, lineWidth: 1.2, lineColor: '#0c3f79' }
+                ],
+                margin: [0, 0, 0, 5]
+              },
+              {
+                columns: cols,
+                columnGap: gapW
+              }
+            ],
+            margin: [0, 0, 0, 10]
+          });
+        }
+
+        // 4. Exemption Pool Table (Full width = 539pt)
+        if (d.exemptCourses && d.exemptCourses.length > 0) {
+          var exBody = [
+            [
+              { text: 'Kod', bold: true, fontSize: 7.5, color: '#475569', fillColor: '#f1f5f9' },
+              { text: 'Ders Adı', bold: true, fontSize: 7.5, color: '#475569', fillColor: '#f1f5f9' },
+              { text: 'Normal Dönemi', bold: true, fontSize: 7.5, alignment: 'center', color: '#475569', fillColor: '#f1f5f9' },
+              { text: 'Kredi', bold: true, fontSize: 7.5, alignment: 'center', color: '#475569', fillColor: '#f1f5f9' },
+              { text: 'AKTS', bold: true, fontSize: 7.5, alignment: 'center', color: '#475569', fillColor: '#f1f5f9' },
+              { text: 'Not/Durum', bold: true, fontSize: 7.5, alignment: 'right', color: '#475569', fillColor: '#f1f5f9' }
+            ]
+          ];
+
+          for (var e = 0; e < d.exemptCourses.length; e++) {
+            var ec = d.exemptCourses[e];
+            exBody.push([
+              { text: ec.code, bold: true, fontSize: 7.5, color: '#0f172a' },
+              { text: ec.name, bold: true, fontSize: 7.5, color: '#1e293b' },
+              { text: ec.defaultSem, alignment: 'center', fontSize: 7.5, color: '#334155' },
+              { text: ec.credits, alignment: 'center', bold: true, fontSize: 7.5, color: '#334155' },
+              { text: ec.ects, alignment: 'center', bold: true, fontSize: 7.5, color: '#334155' },
+              { text: ec.grade, alignment: 'right', bold: true, fontSize: 7.5, color: '#166534' }
+            ]);
+          }
+
+          content.push({
+            unbreakable: true,
+            stack: [
+              {
+                text: 'Muafiyet Havuzu & Transkriptten Verilen Dersler (' + d.exemptCourses.length + ' Ders · ' + s.exemptCredits + ' Kredi · ' + s.exemptEcts + ' AKTS)',
+                fontSize: 9.5,
+                bold: true,
+                color: '#0c3f79',
+                margin: [0, 0, 0, 2]
+              },
+              {
+                canvas: [
+                  { type: 'line', x1: 0, y1: 0, x2: 539, y2: 0, lineWidth: 1.2, lineColor: '#0c3f79' }
+                ],
+                margin: [0, 0, 0, 5]
+              },
+              {
+                table: {
+                  headerRows: 1,
+                  widths: [58, '*', 64, 34, 34, 48],
+                  body: exBody
+                },
+                layout: {
+                  paddingLeft: function () { return 5; },
+                  paddingRight: function () { return 5; },
+                  paddingTop: function () { return 2.5; },
+                  paddingBottom: function () { return 2.5; },
+                  hLineWidth: function (i, node) {
+                    return i === 0 || i === node.table.body.length || i === 1 ? 0.7 : 0.4;
+                  },
+                  vLineWidth: function (i, node) {
+                    return i === 0 || i === node.table.widths.length ? 0.7 : 0;
+                  },
+                  hLineColor: function (i, node) {
+                    return i === 0 || i === node.table.body.length || i === 1 ? '#cbd5e1' : '#e2e8f0';
+                  },
+                  vLineColor: function () {
+                    return '#cbd5e1';
+                  }
+                }
+              }
+            ],
+            margin: [0, 0, 0, 8]
+          });
+        }
+
+        var docDefinition = {
+          pageSize: 'A4',
+          pageOrientation: 'portrait',
+          pageMargins: [28, 24, 28, 26],
+          info: {
+            title: d.docTitle,
+            author: 'YTÜ Dostun - Akademik Planlama Simülatörü'
+          },
+          footer: function (currentPage, pageCount) {
+            return {
+              columns: [
+                {
+                  text: 'YTÜ Ders Programı Görselleştirici & Akademik Planlama Simülatörü',
+                  fontSize: 7,
+                  color: '#64748b'
+                },
+                {
+                  text: d.programName + ' · Sayfa ' + currentPage + '/' + pageCount,
+                  alignment: 'right',
+                  fontSize: 7,
+                  color: '#64748b'
+                }
+              ],
+              margin: [28, 6, 28, 0]
+            };
+          },
+          content: content,
+          defaultStyle: {
+            font: 'Roboto'
+          }
+        };
+
+        window.pdfMake.createPdf(docDefinition).download(d.docTitle + '.pdf', function () {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        });
+      } catch (err) {
+        console.error(err);
         btn.disabled = false;
         btn.innerHTML = origHtml;
-      }).catch(function() {
-        element.style.margin = origMargin;
-        element.style.boxShadow = origShadow;
-        btn.disabled = false;
-        btn.innerHTML = origHtml;
-      });
+      }
     }
   </script>
 </body>

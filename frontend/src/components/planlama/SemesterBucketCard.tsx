@@ -319,7 +319,7 @@ export const SemesterBucketCard = React.memo(function SemesterBucketCard({
                       {/* Original Semester Tag if moved */}
                       {isMovedFromDefault && (
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-semibold">
-                          Normali: {course.defaultSemester}. Yarıyıl
+                          {course.defaultSemester}. YY dersi
                         </span>
                       )}
                     </div>
