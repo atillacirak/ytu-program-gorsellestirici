@@ -1,9 +1,9 @@
 import React from 'react';
-import { Calendar, Users, Calculator, ShieldCheck, GraduationCap } from 'lucide-react';
+import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass } from 'lucide-react';
 import Link from 'next/link';
 
 interface NavbarProps {
-  activeRoute: 'single' | 'compare' | 'agno' | 'devamsizlik';
+  activeRoute: 'single' | 'compare' | 'agno' | 'devamsizlik' | 'planlama';
   onTabChange?: (tab: 'single' | 'compare') => void;
 }
 
@@ -16,7 +16,7 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
         {activeRoute === 'single' || activeRoute === 'compare' ? (
           <button
             onClick={() => onTabChange?.('single')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeRoute === 'single'
                 ? 'bg-[#0c3f79] text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -26,7 +26,7 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
             <span>Tekli Program</span>
           </button>
         ) : (
-          <Link href="/" className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+          <Link href="/" className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-slate-900">
             <Calendar className="w-3.5 h-3.5" />
             <span>Tekli Program</span>
           </Link>
@@ -36,7 +36,7 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
         {activeRoute === 'single' || activeRoute === 'compare' ? (
           <button
             onClick={() => onTabChange?.('compare')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
               activeRoute === 'compare'
                 ? 'bg-[#0c3f79] text-white shadow-2xs'
                 : 'text-slate-600 hover:text-slate-900'
@@ -46,7 +46,7 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
             <span>Ortak Boş Saatler (Karşılaştır)</span>
           </button>
         ) : (
-          <Link href="/" className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
+          <Link href="/" className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap text-slate-600 hover:text-slate-900">
             <Users className="w-3.5 h-3.5 text-amber-400" />
             <span>Ortak Boş Saatler (Karşılaştır)</span>
           </Link>
@@ -55,7 +55,7 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
         {/* AGNO Hesapla */}
         <Link 
           href="/agno"
-          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeRoute === 'agno'
               ? 'bg-[#0c3f79] text-white shadow-2xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -68,7 +68,7 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
         {/* Devamsızlık Takibi */}
         <Link 
           href="/devamsizlik"
-          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
             activeRoute === 'devamsizlik'
               ? 'bg-[#0c3f79] text-white shadow-2xs'
               : 'text-slate-600 hover:text-slate-900'
@@ -76,6 +76,19 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
         >
           <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
           <span>Devamsızlık Takibi</span>
+        </Link>
+
+        {/* Akademik Planlama */}
+        <Link 
+          href="/planlama"
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            activeRoute === 'planlama'
+              ? 'bg-[#0c3f79] text-white shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Compass className={`w-3.5 h-3.5 ${activeRoute === 'planlama' ? 'text-amber-400' : 'text-emerald-600'}`} />
+          <span>Akademik Planlama</span>
         </Link>
         
       </div>

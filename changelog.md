@@ -4,6 +4,18 @@ Bu belgede **YTÜ Dostun** projesine yapılan tüm sürüm güncellemeleri, mima
 
 ---
 
+## [v2.3.0] - 2026-10-11
+
+### ✨ Yeni Özellikler & Geliştirmeler
+- **Akademik Planlama & Mezuniyet Simülatörü (`/planlama`):**
+  - **YTÜ Bologna Tam Müfredat Veritabanı:** 11 Fakülte ve 63 Lisans Programının 8 yarıyıllık zorunlu/seçmeli dersleri ve seçmeli ders havuzları (`backend/data/bologna_curricula.json`) çevrimdışı çalışacak şekilde sisteme entegre edildi (`/api/curricula/programs`, `/api/curricula/program/{id}`).
+  - **Güz / Bahar / Yaz Okulu Kural Motoru:** Zorunlu Güz derslerinin sadece Güz dönemlerine (veya Yaz Okulu'na), Bahar derslerinin sadece Bahar dönemlerine (veya Yaz Okulu'na) konulabilmesi sağlandı. Ortak servis dersleri (`ATA`, `TDB`, `MDB`, `İSG`, `Staj`) ve seçmeli dersler (`MES`, `USS`, `UMS`, `SOS`) her iki döneme de esnek atanabilir yapıldı.
+  - **AKTS & Yerel Kredi Sınır Kontrolü:** Dönemlik maksimum AKTS (varsayılan 42 AKTS) veya Yerel Kredi (varsayılan 24 Kredi) geçiş anahtarı ve Yaz Okulu ders/kredi sınırı (varsayılan maks 3 ders / 20 AKTS) kontrolü eklendi.
+  - **Yaz Okulu & 3.5 Yılda Erken Mezuniyet Simülasyonu:** Her akademik yılın sonuna dinamik **Yaz Okulu** veya **5. Sınıf (Uzatma Yılı)** ekleyebilme, sürükle-bırak ve tıkla-taşı menüsüyle dersleri öne çekerek **3.5 yılda (7 yarıyıl) mezuniyet** senaryolarını canlı hesaplama özelliği kuruldu.
+  - **Bologna Seçmeli Ders Seçici:** Müfredattaki seçmeli ders yuvalarına tıklayarak bölümün gerçek Bologna seçmeli ders havuzundan ders atayabilme özelliği eklendi.
+
+---
+
 ## [v2.2.2] - 2026-10-10
 
 ### ✨ Yeni Özellikler & Geliştirmeler

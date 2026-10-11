@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Calculator, ShieldCheck, GraduationCap } from 'lucide-react';
+import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass } from 'lucide-react';
 
 export default function Header() {
   const pathname = usePathname();
@@ -12,6 +12,7 @@ export default function Header() {
   const isSingle = pathname === '/' && !isOrtak;
   const isAgno = pathname === '/agno';
   const isDevamsizlik = pathname === '/devamsizlik';
+  const isPlanlama = pathname === '/planlama';
 
   return (
     <header className="border-b border-slate-200 bg-white sticky top-0 z-50 no-print shadow-xs">
@@ -39,7 +40,7 @@ export default function Header() {
             
             <Link 
               href="/"
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 isSingle
                   ? 'bg-[#0c3f79] text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -51,7 +52,7 @@ export default function Header() {
 
             <Link 
               href="/ortak"
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 isOrtak
                   ? 'bg-[#0c3f79] text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -63,7 +64,7 @@ export default function Header() {
 
             <Link 
               href="/agno"
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 isAgno
                   ? 'bg-[#0c3f79] text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -75,7 +76,7 @@ export default function Header() {
 
             <Link 
               href="/devamsizlik"
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                 isDevamsizlik
                   ? 'bg-[#0c3f79] text-white shadow-2xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -83,6 +84,18 @@ export default function Header() {
             >
               <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
               <span>Devamsızlık Takibi</span>
+            </Link>
+
+            <Link 
+              href="/planlama"
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                isPlanlama
+                  ? 'bg-[#0c3f79] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Compass className={`w-3.5 h-3.5 ${isPlanlama ? 'text-amber-400' : 'text-emerald-600'}`} />
+              <span>Akademik Planlama</span>
             </Link>
 
           </div>

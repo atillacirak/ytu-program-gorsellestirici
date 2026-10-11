@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import re
+import json
 import shutil
 import sqlite3
 import tempfile
@@ -61,6 +62,14 @@ def increment_devamsizlik_visit_endpoint():
     except Exception as e:
         return {'status': 'error', 'detail': str(e)}
 
+@app.post('/api/stats/planlama-visit')
+def increment_planlama_visit_endpoint():
+    try:
+        stats_db.increment_stat('total_planlama_visits')
+        return {'status': 'success'}
+    except Exception as e:
+        return {'status': 'error', 'detail': str(e)}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
@@ -70,6 +79,48 @@ app.add_middleware(
 )
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ytu_courses.db')
+CURRICULA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'bologna_curricula.json')
+_CURRICULA_CACHE: Optional[Dict[str, Any]] = None
+_CURRICULA_MTIME: float = 0.0
+
+def _load_curricula() -> Dict[str, Any]:
+    global _CURRICULA_CACHE, _CURRICULA_MTIME
+    if os.path.exists(CURRICULA_PATH):
+        mtime = os.path.getmtime(CURRICULA_PATH)
+        if _CURRICULA_CACHE is None or mtime != _CURRICULA_MTIME:
+            with open(CURRICULA_PATH, 'r', encoding='utf-8') as f:
+                _CURRICULA_CACHE = json.load(f)
+            _CURRICULA_MTIME = mtime
+    elif _CURRICULA_CACHE is None:
+        _CURRICULA_CACHE = {'faculties': []}
+    return _CURRICULA_CACHE
+
+@app.get('/api/curricula/programs')
+def get_curricula_programs():
+    data = _load_curricula()
+    faculties_out = []
+    for fac in data.get('faculties', []):
+        faculties_out.append({
+            'faculty': fac.get('faculty', ''),
+            'programs': [
+                {'id': p.get('id'), 'name': p.get('name')}
+                for p in fac.get('programs', [])
+            ]
+        })
+    return {'status': 'success', 'faculties': faculties_out}
+
+@app.get('/api/curricula/program/{program_id}')
+def get_curriculum_by_program(program_id: str):
+    data = _load_curricula()
+    for fac in data.get('faculties', []):
+        for prog in fac.get('programs', []):
+            if str(prog.get('id')) == str(program_id):
+                return {
+                    'status': 'success',
+                    'faculty': fac.get('faculty', ''),
+                    'program': prog
+                }
+    raise HTTPException(status_code=404, detail='Program müfredatı bulunamadı.')
 
 @app.api_route('/', methods=['GET', 'HEAD'])
 def root():
@@ -695,9 +746,9 @@ async def parse_transcript(file: UploadFile = File(...)):
         elif edev_credits:
             total_credits = edev_credits.group(1).replace(',', '.')
             
-        # Dersleri parse etme (Geçmiş durum tablosu için)
+        # Dersleri parse etme (Geçmiş durum tablosu ve Akademik Planlama için)
         courses = []
-        valid_grades = ['AA', 'BA', 'BB', 'CB', 'CC', 'DC', 'DD', 'FD', 'FF', 'F0', 'G', 'K', 'M', 'İ', '--']
+        valid_grades = ['AA', 'BA', 'BB', 'CB', 'CC', 'DC', 'DD', 'FD', 'FF', 'F0', 'G', 'K', 'M', 'MU', 'BL', 'EX', 'İ', '--']
         
         current_term = ""
         lines = text.split('\n')
@@ -705,18 +756,20 @@ async def parse_transcript(file: UploadFile = File(...)):
             line = line.strip()
             
             # Dönem başlığını yakala
-            term_match = re.match(r'^20\d{2}-20\d{2}\s+([Gg].z|[Bb]ahar|[Yy]az|[Mm]uaf)', line)
+            term_match = re.match(r'^20\d{2}-20\d{2}\s+([Gg].z|[Bb]ahar|[Yy]az|[Mm]uaf|[İiI]ntibak)', line)
             if term_match:
                 term_parts = line.split()
                 if len(term_parts) >= 2:
                     current_term = f"{term_parts[0]} {term_parts[1].capitalize()}"
+            elif re.search(r'(Muafiyet|İntibak)\s+Dönemi', line, re.IGNORECASE):
+                current_term = "Muafiyet"
             
-            # Örn: MAT1071 veya *TIB1000 ile başlayan satırlar
-            code_match = re.match(r'^(\*?[A-Z]{3,4}\d{3,4})\s+', line)
+            # Örn: MAT1071, İSG1811 veya *TIB1000 ile başlayan satırlar
+            code_match = re.match(r'^(\*?[A-ZÇĞİÖŞÜ]{2,5}\s?\d{3,4}[A-Z]?)\s+', line)
             if not code_match:
                 continue
                 
-            code = code_match.group(1).replace('*', '')
+            code = re.sub(r'\s+', '', code_match.group(1).replace('*', '')).upper()
             parts = line.split()
             
             best_grade = None
@@ -769,7 +822,7 @@ async def parse_transcript(file: UploadFile = File(...)):
             if len(name) < 3 and idx > 0:
                 prev_line = lines[idx-1].strip()
                 # Önceki satır bir başlık, kod veya boş değilse onu isim olarak al
-                if prev_line and not re.match(r'^(\*?[A-Z]{3,4}\d{3,4})', prev_line):
+                if prev_line and not re.match(r'^(\*?[A-ZÇĞİÖŞÜ]{2,5}\s?\d{3,4})', prev_line):
                     name = prev_line
                     
             # Eğer yine boşsa, en azından boş kalmasın
@@ -790,12 +843,55 @@ async def parse_transcript(file: UploadFile = File(...)):
             course_dict[c['code']] = c
             
         final_courses = list(course_dict.values())
+
+        # Transkriptteki ders kodları ve başlık metninden Fakülte & Bölüm tespiti
+        detected_faculty = None
+        detected_program_id = None
+        detected_program_name = None
+        try:
+            curricula_data = _load_curricula()
+            transcript_codes = {c['code'] for c in final_courses}
+            # Ortak YÖK dersleri hariç bölüm ders kodları
+            dept_codes = {
+                code for code in transcript_codes
+                if not code.startswith(('ATA', 'TDB', 'MDB', 'YDB', 'ISG', 'İSG'))
+            }
+            text_lower = text.lower()
+            best_score = 0
+            for fac in curricula_data.get('faculties', []):
+                for prog in fac.get('programs', []):
+                    p_name = prog.get('name', '')
+                    base_dept = p_name.split('Lisans Programı')[0].strip().lower()
+                    sem_courses = [
+                        c.get('code', '').upper()
+                        for s_list in (prog.get('semesters') or {}).values()
+                        for c in s_list
+                    ]
+                    comp_set = set(sem_courses)
+                    overlap = len(dept_codes & comp_set)
+                    score = overlap * 3
+                    if base_dept and len(base_dept) > 4 and base_dept in text_lower:
+                        score += 15
+                    if '%100' in p_name and ('%100' in text_lower or '(ingilizce)' in text_lower or '100% english' in text_lower):
+                        score += 2
+                    elif '%30' in p_name and ('%30' in text_lower or '30% english' in text_lower):
+                        score += 2
+                    if score > best_score and (overlap >= 2 or score >= 15):
+                        best_score = score
+                        detected_faculty = fac.get('faculty')
+                        detected_program_id = str(prog.get('id'))
+                        detected_program_name = p_name
+        except Exception:
+            pass
             
         return {
             "status": "success",
             "cgpa": float(cgpa) if cgpa else 0.0,
             "total_credits": float(total_credits) if total_credits else 0.0,
-            "courses": final_courses
+            "courses": final_courses,
+            "detected_faculty": detected_faculty,
+            "detected_program_id": detected_program_id,
+            "detected_program_name": detected_program_name
         }
         
     except Exception as e:
