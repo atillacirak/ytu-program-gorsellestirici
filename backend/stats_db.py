@@ -18,6 +18,7 @@ FALLBACK_GANO_SCENARIOS = int(os.environ.get('STATS_BASE_GANO_SCENARIOS', '0'))
 FALLBACK_GENERATED_PDF = int(os.environ.get('STATS_BASE_GENERATED_PDF', '783'))
 FALLBACK_GENERATED_PREP = int(os.environ.get('STATS_BASE_GENERATED_PREP', '131'))
 FALLBACK_DEVAMSIZLIK_VISITS = int(os.environ.get('STATS_BASE_DEVAMSIZLIK_VISITS', '0'))
+FALLBACK_PLANLAMA_VISITS = int(os.environ.get('STATS_BASE_PLANLAMA_VISITS', '0'))
 
 def increment_stat(field='total_generated'):
     url = os.environ.get('UPSTASH_REDIS_REST_URL') or UPSTASH_REDIS_REST_URL
@@ -56,7 +57,8 @@ def get_stats(period='all'):
             'total_gano_scenarios': FALLBACK_GANO_SCENARIOS,
             'total_generated_pdf': FALLBACK_GENERATED_PDF,
             'total_generated_prep': FALLBACK_GENERATED_PREP,
-            'total_devamsizlik_visits': FALLBACK_DEVAMSIZLIK_VISITS
+            'total_devamsizlik_visits': FALLBACK_DEVAMSIZLIK_VISITS,
+            'total_planlama_visits': FALLBACK_PLANLAMA_VISITS
         }
     
     headers = {"Authorization": f"Bearer {token}"}
@@ -65,7 +67,7 @@ def get_stats(period='all'):
     try:
         if period == 'all':
             res = requests.get(
-                f"{url}/mget/total_generated/total_visits/total_gano_visits/total_gano_scenarios/total_generated_pdf/total_generated_prep/total_devamsizlik_visits",
+                f"{url}/mget/total_generated/total_visits/total_gano_visits/total_gano_scenarios/total_generated_pdf/total_generated_prep/total_devamsizlik_visits/total_planlama_visits",
                 headers=headers,
                 timeout=5
             )
@@ -79,6 +81,7 @@ def get_stats(period='all'):
                 gen_pdf = int(result[4]) if (len(result) > 4 and result[4] is not None) else FALLBACK_GENERATED_PDF
                 gen_prep = int(result[5]) if (len(result) > 5 and result[5] is not None) else FALLBACK_GENERATED_PREP
                 dev_vis = int(result[6]) if (len(result) > 6 and result[6] is not None) else FALLBACK_DEVAMSIZLIK_VISITS
+                plan_vis = int(result[7]) if (len(result) > 7 and result[7] is not None) else FALLBACK_PLANLAMA_VISITS
                 return {
                     'period': 'all',
                     'total_generated': gen,
@@ -87,7 +90,8 @@ def get_stats(period='all'):
                     'total_gano_scenarios': gano_scen,
                     'total_generated_pdf': gen_pdf,
                     'total_generated_prep': gen_prep,
-                    'total_devamsizlik_visits': dev_vis
+                    'total_devamsizlik_visits': dev_vis,
+                    'total_planlama_visits': plan_vis
                 }
         else:
             seconds_map = {
@@ -116,11 +120,14 @@ def get_stats(period='all'):
                 ["ZCOUNT", "z:total_devamsizlik_visits", str(min_ts), "+inf"],
                 ["ZCOUNT", "z:total_devamsizlik_visits", str(prev_min_ts), str(min_ts)],
 
-                ["ZRANGEBYSCORE", "z:total_visits", str(min_ts), "+inf"]
+                ["ZRANGEBYSCORE", "z:total_visits", str(min_ts), "+inf"],
+
+                ["ZCOUNT", "z:total_planlama_visits", str(min_ts), "+inf"],
+                ["ZCOUNT", "z:total_planlama_visits", str(prev_min_ts), str(min_ts)]
             ]
             res = requests.post(f"{url}/pipeline", json=pipeline_body, headers=headers, timeout=5)
             data = res.json()
-            if isinstance(data, list) and len(data) >= 13:
+            if isinstance(data, list) and len(data) >= 15:
                 gen = int(data[0].get('result', 0) or 0)
                 vis = int(data[1].get('result', 0) or 0)
                 gano_vis = int(data[2].get('result', 0) or 0)
@@ -138,6 +145,9 @@ def get_stats(period='all'):
                 prev_dev_vis = int(data[11].get('result', 0) or 0)
 
                 chart_elements = data[12].get('result', [])
+
+                plan_vis = int(data[13].get('result', 0) or 0)
+                prev_plan_vis = int(data[14].get('result', 0) or 0)
                 
                 from datetime import datetime, timezone, timedelta
                 
@@ -204,16 +214,19 @@ def get_stats(period='all'):
                     'total_generated_pdf': gen_pdf,
                     'total_generated_prep': gen_prep,
                     'total_devamsizlik_visits': dev_vis,
+                    'total_planlama_visits': plan_vis,
                     'prev_total_generated': prev_gen,
                     'prev_total_visits': prev_vis,
                     'prev_total_gano_visits': prev_gano_vis,
                     'prev_total_gano_scenarios': prev_gano_scen,
                     'prev_total_devamsizlik_visits': prev_dev_vis,
+                    'prev_total_planlama_visits': prev_plan_vis,
                     'pct_generated': calc_pct(gen, prev_gen),
                     'pct_visits': calc_pct(vis, prev_vis),
                     'pct_gano_visits': calc_pct(gano_vis, prev_gano_vis),
                     'pct_gano_scenarios': calc_pct(gano_scen, prev_gano_scen),
                     'pct_devamsizlik_visits': calc_pct(dev_vis, prev_dev_vis),
+                    'pct_planlama_visits': calc_pct(plan_vis, prev_plan_vis),
                     'chart_data': chart_data
                 }
     except Exception as e:
@@ -227,5 +240,6 @@ def get_stats(period='all'):
         'total_gano_scenarios': FALLBACK_GANO_SCENARIOS,
         'total_generated_pdf': FALLBACK_GENERATED_PDF,
         'total_generated_prep': FALLBACK_GENERATED_PREP,
-        'total_devamsizlik_visits': FALLBACK_DEVAMSIZLIK_VISITS
+        'total_devamsizlik_visits': FALLBACK_DEVAMSIZLIK_VISITS,
+        'total_planlama_visits': FALLBACK_PLANLAMA_VISITS
     }

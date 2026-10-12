@@ -14,7 +14,8 @@ import {
   PieChart,
   ShieldAlert,
   Users,
-  CalendarDays
+  CalendarDays,
+  Compass
 } from 'lucide-react';
 
 interface FullStats {
@@ -25,11 +26,13 @@ interface FullStats {
   total_generated_pdf?: number;
   total_generated_prep?: number;
   total_devamsizlik_visits?: number;
+  total_planlama_visits?: number;
   pct_generated?: number;
   pct_visits?: number;
   pct_gano_visits?: number;
   pct_gano_scenarios?: number;
   pct_devamsizlik_visits?: number;
+  pct_planlama_visits?: number;
   chart_data?: { label: string; visits: number }[];
 }
 
@@ -100,11 +103,13 @@ export default function AdminDashboard() {
             total_generated_pdf: 95,
             total_generated_prep: 47,
             total_devamsizlik_visits: 111,
+            total_planlama_visits: 64,
             pct_generated: 24.5,
             pct_visits: 18.2,
             pct_gano_visits: 42.0,
             pct_gano_scenarios: 15.8,
             pct_devamsizlik_visits: 28.5,
+            pct_planlama_visits: 35.0,
             chart_data: mockChart,
           });
         } else {
@@ -116,11 +121,13 @@ export default function AdminDashboard() {
             total_generated_pdf: data.total_generated_pdf ?? 0,
             total_generated_prep: data.total_generated_prep ?? 0,
             total_devamsizlik_visits: data.total_devamsizlik_visits || 0,
+            total_planlama_visits: data.total_planlama_visits || 0,
             pct_generated: data.pct_generated,
             pct_visits: data.pct_visits,
             pct_gano_visits: data.pct_gano_visits,
             pct_gano_scenarios: data.pct_gano_scenarios,
             pct_devamsizlik_visits: data.pct_devamsizlik_visits,
+            pct_planlama_visits: data.pct_planlama_visits,
             chart_data: data.chart_data,
           });
         }
@@ -142,11 +149,13 @@ export default function AdminDashboard() {
           total_generated_pdf: 95,
           total_generated_prep: 47,
           total_devamsizlik_visits: 111,
+          total_planlama_visits: 64,
           pct_generated: 24.5,
           pct_visits: 18.2,
           pct_gano_visits: 42.0,
           pct_gano_scenarios: 15.8,
           pct_devamsizlik_visits: 28.5,
+          pct_planlama_visits: 35.0,
           chart_data: mockChart,
         });
       }
@@ -204,7 +213,7 @@ export default function AdminDashboard() {
                 <span className="px-2 py-0.5 rounded bg-[#e7a240]/20 text-[#e7a240] border border-[#e7a240]/30 text-[10px] font-mono font-bold uppercase tracking-wider">
                   Dev Panel
                 </span>
-                <span className="text-xs text-slate-400 font-mono">v2.0 Live Stats</span>
+                <span className="text-xs text-slate-400 font-mono">v2.3 Live Stats</span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-0.5">
                 YTÜ Dostun · Canlı İstatistik Analiz Paneli
@@ -287,7 +296,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* --- Primary Metrics Cards Grid --- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
           {/* 1. Total Visits */}
           <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-blue-500/50 transition-all">
@@ -362,7 +371,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* 3. GANO Visits */}
+          {/* 4. GANO Visits */}
           <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-indigo-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -382,7 +391,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* 4. GANO Scenarios Created / Documents Uploaded */}
+          {/* 5. GANO Scenarios Created / Documents Uploaded */}
           <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-emerald-500/50 transition-all">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -399,6 +408,26 @@ export default function AdminDashboard() {
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <TrendingUp size={12} className="text-emerald-400" />
               <span>AGNO için yüklenen transkript/program</span>
+            </div>
+          </div>
+
+          {/* 6. Akademik Planlama Visits */}
+          <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-cyan-500/50 transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Akademik Planlama
+              </span>
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Compass size={18} />
+              </div>
+            </div>
+            <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
+              {stats ? (stats.total_planlama_visits ?? 0).toLocaleString() : '...'}
+            </div>
+            {renderPct(stats?.pct_planlama_visits, period)}
+            <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
+              <Compass size={12} className="text-cyan-400" />
+              <span>/planlama sayfasını açan kullanıcı sayısı</span>
             </div>
           </div>
 

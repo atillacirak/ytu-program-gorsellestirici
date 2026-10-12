@@ -8,7 +8,8 @@ import {
   Calendar, Building2, Upload, RefreshCw, FileText,
   AlertCircle, Download, Printer, LayoutGrid, BookOpen, Clock,
   Sparkles, Layers, GraduationCap, Palette, Pencil, X, Check,
-  Trash2, StickyNote, Users, Edit3, RotateCcw, Calculator, ShieldCheck
+  Trash2, StickyNote, Users, Edit3, RotateCcw, Calculator, ShieldCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { getFullInstructorName, getInstructorAbbreviation } from '../utils/instructors';
@@ -62,6 +63,7 @@ export default function Home() {
   }, []);
 
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showInstructorWarningModal, setShowInstructorWarningModal] = useState(false);
   const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
   const router = useRouter();
   const [visualizerData, setVisualizerData, isDataMounted] = useLocalStorageState<{
@@ -237,7 +239,9 @@ export default function Home() {
 
   const handleToggleShowInstructor = (checked: boolean) => {
     setShowInstructor(checked);
-    
+    if (checked) {
+      setShowInstructorWarningModal(true);
+    }
   };
 
   const handleToggleShowSection = (checked: boolean) => {
@@ -714,6 +718,60 @@ export default function Home() {
         </div>
       </footer>
       <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+
+      {/* Hoca Bilgisi Güncellik Uyarısı Modal */}
+      {showInstructorWarningModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 no-print animate-fade-in"
+          onClick={() => setShowInstructorWarningModal(false)}
+        >
+          <div 
+            className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden relative space-y-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Başlığı */}
+            <div className="p-4 sm:p-5 bg-[#0c3f79] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5 font-bold text-sm sm:text-base">
+                <div className="p-1.5 bg-white/10 rounded-lg text-amber-400">
+                  <GraduationCap size={20} />
+                </div>
+                <span>Öğretim Görevlisi Bilgisi</span>
+              </div>
+              <button 
+                onClick={() => setShowInstructorWarningModal(false)}
+                className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                title="Kapat"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal İçeriği */}
+            <div className="p-5 space-y-3.5 text-slate-700 text-xs sm:text-sm">
+              <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3.5 rounded-xl flex items-start gap-3">
+                <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                <p className="font-semibold text-xs sm:text-sm leading-relaxed">
+                  Derslerin hocaları güncel olmayabilir, lütfen kontrol ediniz. Gerekirse ders kutusuna tıklayıp <span className="underline decoration-amber-500 font-bold">Düzenle</span> kısmından hoca adını değiştirebilirsiniz.
+                </p>
+              </div>
+
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Ders eşleşmeleri güncel olarak yüklenemediği için hoca bilgisi yanlış olabilir. Çizelgedeki herhangi bir derse tıklayarak hocasını, şubesini veya dersliğini dilediğiniz gibi güncelleyebilirsiniz.
+              </p>
+            </div>
+
+            {/* Modal Alt Buton */}
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setShowInstructorWarningModal(false)}
+                className="px-4 py-2 bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-bold rounded-xl shadow-2xs transition-colors cursor-pointer"
+              >
+                Anladım
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
