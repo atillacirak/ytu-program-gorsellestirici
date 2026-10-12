@@ -33,6 +33,37 @@ export default function UploadScreen({
   prepClassesForLevel,
   handlePrepClassSelect
 }: UploadScreenProps) {
+  const [isDragging, setIsDragging] = React.useState(false);
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!visualizerPdfUploading && !isDragging) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (visualizerPdfUploading) return;
+
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const syntheticEvent = {
+        target: { files, value: '' }
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      handleVisualizerPdfUpload(syntheticEvent);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-6 shadow-xs relative overflow-hidden space-y-5">
@@ -98,11 +129,17 @@ export default function UploadScreen({
           </div>
         )}
 
-        <label className={`block border-2 border-dashed rounded-xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
-          visualizerPdfUploading
-            ? 'border-[#0c3f79] bg-blue-50/40'
-            : 'border-slate-300 hover:border-[#0c3f79] bg-slate-50/70 hover:bg-slate-100/70'
-        }`}>
+        <label
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`block border-2 border-dashed rounded-xl p-10 transition-all cursor-pointer max-w-2xl mx-auto ${
+            visualizerPdfUploading || isDragging
+              ? 'border-[#0c3f79] bg-blue-50/60 scale-[1.01]'
+              : 'border-slate-300 hover:border-[#0c3f79] bg-slate-50/70 hover:bg-slate-100/70'
+          }`}
+        >
           <input
             type="file"
             accept=".pdf"

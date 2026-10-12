@@ -35,7 +35,7 @@ export default function EditCourseModal({
   if (!editingCourse) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in no-print">
+    <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 animate-fade-in no-print">
       <div className={`bg-white rounded-2xl max-w-xl w-full p-6 space-y-5 shadow-2xl border border-slate-200 relative ${getDocFontClass()}`}>
         <button
           onClick={() => setEditingCourse(null)}

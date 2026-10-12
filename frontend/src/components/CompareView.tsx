@@ -460,7 +460,15 @@ export default function CompareView() {
                 <p className="text-xs font-semibold text-slate-700">Analiz Ediliyor...</p>
               </div>
             ) : (
-              <label className="block p-5 border-2 border-dashed border-slate-200 hover:border-[#002855] bg-slate-50/50 hover:bg-slate-100/50 rounded-xl transition-all cursor-pointer text-center space-y-2">
+              <label
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) handleFileUpload(student.id, f);
+                }}
+                className="block p-5 border-2 border-dashed border-slate-200 hover:border-[#002855] bg-slate-50/50 hover:bg-slate-100/50 rounded-xl transition-all cursor-pointer text-center space-y-2"
+              >
                 <input
                   type="file"
                   accept=".pdf,.png,.jpg,.jpeg"
@@ -703,7 +711,7 @@ export default function CompareView() {
 
           {/* DETAY MODAL / POPOVER */}
           {selectedSlotDetails && (
-            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+            <div className="fixed inset-0 bg-slate-900/55 flex items-center justify-center p-4 z-50 animate-fade-in">
               <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-xl border border-slate-200 relative">
                 <button
                   onClick={() => setSelectedSlotDetails(null)}

@@ -182,7 +182,7 @@ const CalendarModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 animate-fade-in">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-sm max-h-[90vh] flex flex-col overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
           <div className="pr-2">

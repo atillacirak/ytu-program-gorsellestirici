@@ -13,7 +13,7 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 no-print animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 no-print animate-fade-in"
       onClick={onClose}
     >
       <div 

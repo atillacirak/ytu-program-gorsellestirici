@@ -658,7 +658,7 @@ export default function GanoCalculator() {
                </div>
                <div className="max-h-64 overflow-y-auto overflow-x-auto border border-slate-200 rounded-xl bg-[#0c3f79]/[0.02]">
                   <table className="w-full text-left border-collapse min-w-[600px] text-sm">
-                    <thead className="sticky top-0 bg-[#0c3f79]/5 backdrop-blur-sm border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider z-10">
+                    <thead className="sticky top-0 bg-slate-100 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider z-10">
                       <tr>
                         <th className="px-5 py-3 font-medium w-32">Ders Kodu</th>
                         <th className="px-5 py-3 font-medium">Ders Adı</th>
