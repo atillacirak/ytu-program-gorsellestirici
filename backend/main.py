@@ -192,9 +192,6 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
         else:
             cursor = None
 
-        student_title = ''
-        student_id = ''
-        student_name = ''
         term = ''
 
         schedule = {
@@ -214,17 +211,10 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                 text = page.extract_text() or ''
                 for line in text.split('\n'):
                     if 'Öğrenci Ders Programı' in line or 'renci Ders Program' in line:
-                        student_title = line.strip()
-                        m_hdr = re.search(r'/\s*([0-9]+)\s*/\s*(.*?)\s*-\s*([0-9]{4}\s*-\s*[0-9]{4}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+)', student_title)
+                        hdr_line = line.strip()
+                        m_hdr = re.search(r'-\s*([0-9]{4}\s*-\s*[0-9]{4}\s+[A-Za-zÇĞİÖŞÜçğıöşü]+)', hdr_line)
                         if m_hdr:
-                            student_id = m_hdr.group(1).strip()
-                            student_name = m_hdr.group(2).strip()
-                            term = m_hdr.group(3).strip()
-                        else:
-                            parts = student_title.split('/')
-                            if len(parts) >= 3:
-                                student_id = parts[1].strip()
-                                student_name = parts[2].split('-')[0].strip()
+                            term = m_hdr.group(1).strip()
                         break
 
                 words = page.extract_words()
@@ -357,10 +347,7 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
 
         return {
             'status': 'success',
-            'student_id': student_id,
-            'student_name': student_name,
             'term': term,
-            'title': student_title,
             'schedule': merged_schedule,
             'courses_summary': summary_list
         }
@@ -640,10 +627,7 @@ def parse_schedule_image_ytu(image) -> dict:
 
     return {
         'status': 'success',
-        'student_id': 'Görsel',
-        'student_name': 'Ders Programı',
         'term': 'Aktif Dönem',
-        'title': 'YTÜ Ders Programı Görseli',
         'schedule': schedule,
         'courses_summary': list(summary_map.values()),
     }
@@ -670,6 +654,9 @@ async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
                 try:
                     data = json.loads(raw_meta)
                     if data and data.get('schedule'):
+                        data.pop('student_id', None)
+                        data.pop('student_name', None)
+                        data.pop('title', None)
                         return data
                 except Exception:
                     pass

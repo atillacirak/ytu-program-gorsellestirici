@@ -453,9 +453,15 @@ export default function Home() {
         }
       });
 
-      // İndirilen PNG'ye ders programı JSON metadata'sını göm
+      // İndirilen PNG'ye yalnızca anonim ders programı JSON metadata'sını göm
       if (visualizerData) {
-        dataUrl = injectMetadataToPngDataUrl(dataUrl, visualizerData);
+        const cleanMetadata = {
+          status: 'success',
+          term: visualizerData.term || '',
+          schedule: visualizerData.schedule || {},
+          courses_summary: visualizerData.courses_summary || []
+        };
+        dataUrl = injectMetadataToPngDataUrl(dataUrl, cleanMetadata);
       }
 
       const link = document.createElement('a');
