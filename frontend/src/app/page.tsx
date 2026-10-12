@@ -163,7 +163,9 @@ export default function Home() {
     const keys = new Set<string>();
     Object.values(visualizerData.schedule).forEach(dayArr => {
       dayArr.forEach((it: any) => {
-        const key = it.instructor && it.instructor.trim() ? it.instructor.trim() : it.code;
+        const key = it.code === 'HAZIRLIK' && it.instructor && it.instructor.trim()
+          ? it.instructor.trim()
+          : it.code;
         keys.add(key);
       });
     });

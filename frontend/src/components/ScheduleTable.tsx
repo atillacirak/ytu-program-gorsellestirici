@@ -168,7 +168,9 @@ export default function ScheduleTable({
                       return MONOCHROME_PALETTE;
                     }
                     
-                    const colorKey = instructor && instructor.trim() ? instructor.trim() : code;
+                    const colorKey = code === 'HAZIRLIK' && instructor && instructor.trim()
+                      ? instructor.trim()
+                      : code;
                     
                     const idx = uniqueColorKeysForSchedule.indexOf(colorKey);
                     if (idx !== -1) {
