@@ -39,6 +39,20 @@ const DEFAULT_SETTINGS: AbsenceSettings = {
   semesterStartDate: '2026-09-28'
 };
 
+const parseLocalYMD = (ymd: string): Date => {
+  if (!ymd) return new Date();
+  const parts = ymd.split('-').map(Number);
+  if (parts.length === 3 && !parts.some(isNaN)) {
+    return new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0);
+  }
+  const fallback = new Date(ymd);
+  fallback.setHours(0, 0, 0, 0);
+  return fallback;
+};
+
+const formatLocalYMD = (year: number, monthZeroIndexed: number, day: number): string =>
+  `${year}-${String(monthZeroIndexed + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
 const CalendarModal = ({ 
   course, 
   settings, 
@@ -50,9 +64,10 @@ const CalendarModal = ({
   onClose: () => void, 
   onSave: (records: Record<string, 'present' | 'absent' | 'holiday'>) => void 
 }) => {
-  const [viewDate, setViewDate] = useState<Date>(
-    settings.semesterStartDate ? new Date(settings.semesterStartDate) : new Date()
-  );
+  const [viewDate, setViewDate] = useState<Date>(() => {
+    const initial = settings.semesterStartDate ? parseLocalYMD(settings.semesterStartDate) : new Date();
+    return new Date(initial.getFullYear(), initial.getMonth(), 1);
+  });
   const [localRecords, setLocalRecords] = useState<Record<string, 'present' | 'absent' | 'holiday'>>(
     course.attendanceRecords ? { ...course.attendanceRecords } : {}
   );
@@ -83,14 +98,13 @@ const CalendarModal = ({
   const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
   const dayNames = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
 
-  const start = new Date(settings.semesterStartDate);
-  start.setHours(0,0,0,0);
+  const start = parseLocalYMD(settings.semesterStartDate);
   const diffToMonday = start.getDay() === 0 ? 6 : start.getDay() - 1;
   start.setDate(start.getDate() - diffToMonday); 
   
-  const end = new Date(start);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate());
   end.setDate(end.getDate() + (course.courseWeeks * 7) - 1);
-  end.setHours(23,59,59,999);
+  end.setHours(23, 59, 59, 999);
 
   const cells = [];
   for (let i = 0; i < firstDay; i++) {
@@ -101,18 +115,17 @@ const CalendarModal = ({
   const offset = course.frequencyOffset || 0;
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const cellDate = new Date(year, month, d);
-    cellDate.setHours(12,0,0,0); 
+    const cellDate = new Date(year, month, d, 12, 0, 0, 0);
     
     const inSemester = cellDate >= start && cellDate <= end;
     const cellDayName = dayNames[cellDate.getDay() === 0 ? 6 : cellDate.getDay() - 1];
     
     let matchesFrequency = true;
     if (inSemester) {
-      const cellStartOfDay = new Date(cellDate);
-      cellStartOfDay.setHours(0,0,0,0);
-      const msDiff = cellStartOfDay.getTime() - start.getTime();
-      const weekNum = Math.floor(msDiff / (7 * 24 * 60 * 60 * 1000)) + 1;
+      const startUTC = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+      const cellUTC = Date.UTC(year, month, d);
+      const daysDiff = Math.round((cellUTC - startUTC) / (24 * 60 * 60 * 1000));
+      const weekNum = Math.floor(daysDiff / 7) + 1;
       
       if (weekNum <= offset || (weekNum - 1 - offset) % freq !== 0) {
         matchesFrequency = false;
@@ -121,7 +134,7 @@ const CalendarModal = ({
 
     const isCourseDay = inSemester && matchesFrequency && course.scheduleDays?.includes(cellDayName);
 
-    const recordKey = cellDate.toISOString().split('T')[0];
+    const recordKey = formatLocalYMD(year, month, d);
     const state = localRecords[recordKey];
 
     let cellClass = "border border-transparent text-slate-400";
@@ -204,9 +217,7 @@ const CalendarModal = ({
             <div className="flex items-center justify-between px-2">
               <button 
                 onClick={() => {
-                  const newDate = new Date(viewDate);
-                  newDate.setMonth(newDate.getMonth() - 1);
-                  setViewDate(newDate);
+                  setViewDate(new Date(year, month - 1, 1));
                 }}
                 disabled={year < start.getFullYear() || (year === start.getFullYear() && month <= start.getMonth())}
                 className={`p-2 rounded-full transition-colors ${year < start.getFullYear() || (year === start.getFullYear() && month <= start.getMonth()) ? 'opacity-30 cursor-not-allowed text-slate-400' : 'hover:bg-slate-100 text-slate-700'}`}
@@ -218,9 +229,7 @@ const CalendarModal = ({
               </h4>
               <button 
                 onClick={() => {
-                  const newDate = new Date(viewDate);
-                  newDate.setMonth(newDate.getMonth() + 1);
-                  setViewDate(newDate);
+                  setViewDate(new Date(year, month + 1, 1));
                 }}
                 disabled={year > end.getFullYear() || (year === end.getFullYear() && month >= end.getMonth())}
                 className={`p-2 rounded-full transition-colors ${year > end.getFullYear() || (year === end.getFullYear() && month >= end.getMonth()) ? 'opacity-30 cursor-not-allowed text-slate-400' : 'hover:bg-slate-100 text-slate-700'}`}

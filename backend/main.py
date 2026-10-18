@@ -72,16 +72,88 @@ def increment_planlama_visit_endpoint():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=[
+        'https://ytudostun.com',
+        'https://www.ytudostun.com',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001',
+    ],
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
 )
 
+MAX_UPLOAD_BYTES = 12 * 1024 * 1024  # 12 MB
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ytu_courses.db')
 CURRICULA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'bologna_curricula.json')
 _CURRICULA_CACHE: Optional[Dict[str, Any]] = None
 _CURRICULA_MTIME: float = 0.0
+
+
+def _init_sqlite_optimizations() -> None:
+    """Create expression indexes and enable WAL mode on ytu_courses.db at startup."""
+    if not os.path.exists(DB_PATH):
+        return
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        conn.execute('PRAGMA journal_mode = WAL;')
+        conn.execute('PRAGMA synchronous = NORMAL;')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_courses_code_exact ON courses(code);')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_courses_code_norm ON courses(UPPER(REPLACE(code, " ", "")));')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_courses_name_norm ON courses(UPPER(REPLACE(name, " ", "")));')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_sections_lookup ON sections(course_code, section_id);')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"SQLite optimization init warning: {e}")
+
+
+_init_sqlite_optimizations()
+
+
+def _get_db_connection() -> Optional[sqlite3.Connection]:
+    if not os.path.exists(DB_PATH):
+        return None
+    try:
+        conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True, check_same_thread=False)
+    except Exception:
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    try:
+        conn.execute('PRAGMA temp_store = MEMORY;')
+        conn.execute('PRAGMA mmap_size = 30000000;')
+    except Exception:
+        pass
+    return conn
+
+
+def _save_upload_to_tempfile(file: UploadFile, suffix: str) -> str:
+    """Safely stream upload to a temporary file while enforcing MAX_UPLOAD_BYTES."""
+    total_read = 0
+    chunk_size = 64 * 1024
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp_path = tmp.name
+        while True:
+            chunk = file.file.read(chunk_size)
+            if not chunk:
+                break
+            total_read += len(chunk)
+            if total_read > MAX_UPLOAD_BYTES:
+                tmp.close()
+                if os.path.exists(tmp_path):
+                    try:
+                        os.remove(tmp_path)
+                    except Exception:
+                        pass
+                raise HTTPException(
+                    status_code=413,
+                    detail='Dosya boyutu çok büyük (Maksimum 12 MB yükleyebilirsiniz).'
+                )
+            tmp.write(chunk)
+    return tmp_path
+
 
 def _load_curricula() -> Dict[str, Any]:
     global _CURRICULA_CACHE, _CURRICULA_MTIME
@@ -94,6 +166,7 @@ def _load_curricula() -> Dict[str, Any]:
     elif _CURRICULA_CACHE is None:
         _CURRICULA_CACHE = {'faculties': []}
     return _CURRICULA_CACHE
+
 
 @app.get('/api/curricula/programs')
 def get_curricula_programs():
@@ -109,6 +182,7 @@ def get_curricula_programs():
         })
     return {'status': 'success', 'faculties': faculties_out}
 
+
 @app.get('/api/curricula/program/{program_id}')
 def get_curriculum_by_program(program_id: str):
     data = _load_curricula()
@@ -122,39 +196,50 @@ def get_curriculum_by_program(program_id: str):
                 }
     raise HTTPException(status_code=404, detail='Program müfredatı bulunamadı.')
 
+
 @app.api_route('/', methods=['GET', 'HEAD'])
 def root():
     return {'status': 'active', 'service': 'YTÜ Program Görselleştirici API'}
+
 
 @app.get('/api/course-lookup')
 def course_lookup_endpoint(code: Optional[str] = None, name: Optional[str] = None):
     if not code and not name:
         return {'status': 'success', 'found': False, 'message': 'Ders kodu veya ismi belirtilmedi.'}
-    
-    if not os.path.exists(DB_PATH):
+
+    conn = _get_db_connection()
+    if not conn:
         return {'status': 'error', 'detail': 'Veritabanı bulunamadı.'}
-        
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    row = None
 
-    if code and code.strip():
-        code_clean = code.strip().upper().replace(' ', '')
-        cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) = ? LIMIT 1', (code_clean,))
-        row = cursor.fetchone()
+    try:
+        cursor = conn.cursor()
+        row = None
 
-    if not row and name and name.strip():
-        name_clean = name.strip()
-        if len(name_clean) >= 3:
-            cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(name, " ", "")) = UPPER(REPLACE(?, " ", "")) LIMIT 1', (name_clean,))
+        if code and code.strip():
+            code_clean = code.strip().upper().replace(' ', '')
+            cursor.execute(
+                'SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) = ? LIMIT 1',
+                (code_clean,)
+            )
             row = cursor.fetchone()
-            if not row:
-                cursor.execute('SELECT code, name, credits, ects FROM courses WHERE UPPER(name) LIKE UPPER(?) LIMIT 1', (f"%{name_clean}%",))
+
+        if not row and name and name.strip():
+            name_clean = name.strip()
+            if len(name_clean) >= 3:
+                cursor.execute(
+                    'SELECT code, name, credits, ects FROM courses WHERE UPPER(REPLACE(name, " ", "")) = UPPER(REPLACE(?, " ", "")) LIMIT 1',
+                    (name_clean,)
+                )
                 row = cursor.fetchone()
-                
-    conn.close()
-    
+                if not row:
+                    cursor.execute(
+                        'SELECT code, name, credits, ects FROM courses WHERE UPPER(name) LIKE UPPER(?) LIMIT 1',
+                        (f"%{name_clean}%",)
+                    )
+                    row = cursor.fetchone()
+    finally:
+        conn.close()
+
     if row:
         return {
             'status': 'success',
@@ -175,25 +260,17 @@ def course_lookup_endpoint(code: Optional[str] = None, name: Optional[str] = Non
 
 
 @app.post('/api/parse-student-schedule')
-async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith('.pdf'):
+def parse_student_schedule_endpoint(file: UploadFile = File(...)):
+    if not file.filename or not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail='Lütfen geçerli bir PDF dosyası yükleyin.')
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-        shutil.copyfileobj(file.file, tmp)
-        tmp_path = tmp.name
+    tmp_path = _save_upload_to_tempfile(file, suffix='.pdf')
 
     try:
-        conn = None
-        if os.path.exists(DB_PATH):
-            conn = sqlite3.connect(DB_PATH)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-        else:
-            cursor = None
+        conn = _get_db_connection()
+        cursor = conn.cursor() if conn else None
 
         term = ''
-
         schedule = {
             'Pazartesi': [],
             'Salı': [],
@@ -204,7 +281,9 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
             'Pazar': []
         }
 
-        item_regex = re.compile(r'(\d+)\s+([A-ZÇĞİÖŞÜ0-9_]{2,10})\s+(.*?)\s+(\d{1,2}[\.:]\d{2})\s+(\d{1,2}[\.:]\d{2}u?)')
+        item_regex = re.compile(
+            r'(\d+)\s+([A-ZÇĞİÖŞÜ0-9_]{2,10})\s+(.*?)\s+(\d{1,2}[\.:]\d{2})\s+(\d{1,2}[\.:]\d{2}u?)'
+        )
 
         with pdfplumber.open(tmp_path) as pdf:
             for page in pdf.pages:
@@ -218,9 +297,30 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                         break
 
                 words = page.extract_words()
-                rows = {}
+
+                # Dinamik Gün Başlığı Kalibrasyonu (Farklı PDF ölçeklerine ve sayfa yönlerine uyum sağlar)
+                day_anchors: Dict[str, tuple[float, float]] = {}
                 for w in words:
-                    if w['top'] < 80 and 'Pazartesi' not in w['text']:
+                    w_txt = w['text'].strip()
+                    if w_txt in schedule and w_txt not in day_anchors:
+                        day_anchors[w_txt] = (float(w['x0']), float(w['top']))
+
+                row_split_y = day_anchors['Cuma'][1] - 12.0 if 'Cuma' in day_anchors else 300.0
+                top_cut_y = (min(v[1] for v in day_anchors.values()) - 10.0) if day_anchors else 80.0
+
+                # X sütun sınırlarını tespit edilen gün başlıklarına göre kalibre et
+                top_days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe']
+                detected_x = [day_anchors[d][0] for d in top_days if d in day_anchors]
+                if len(detected_x) == 4:
+                    c1 = (detected_x[0] + detected_x[1]) / 2.0 - 10.0
+                    c2 = (detected_x[1] + detected_x[2]) / 2.0 - 10.0
+                    c3 = (detected_x[2] + detected_x[3]) / 2.0 - 10.0
+                else:
+                    c1, c2, c3 = 225.0, 425.0, 625.0
+
+                rows: Dict[float, list] = {}
+                for w in words:
+                    if w['top'] < top_cut_y and 'Pazartesi' not in w['text']:
                         continue
                     matched_y = None
                     for ey in rows:
@@ -236,11 +336,12 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
 
                 for y_val in sorted_y:
                     row_words = sorted(rows[y_val], key=lambda x: x['x0'])
+                    is_upper_half = y_val < row_split_y
                     col_bounds = [
-                        (0, 225, 'Pazartesi' if y_val < 300 else 'Cuma'),
-                        (225, 425, 'Salı' if y_val < 300 else 'Cumartesi'),
-                        (425, 625, 'Çarşamba' if y_val < 300 else 'Pazar'),
-                        (625, 850, 'Perşembe' if y_val < 300 else None),
+                        (0.0, c1, 'Pazartesi' if is_upper_half else 'Cuma'),
+                        (c1, c2, 'Salı' if is_upper_half else 'Cumartesi'),
+                        (c2, c3, 'Çarşamba' if is_upper_half else 'Pazar'),
+                        (c3, 1200.0, 'Perşembe' if is_upper_half else None),
                     ]
 
                     for min_x, max_x, target_day in col_bounds:
@@ -264,7 +365,10 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                             ects_val = 0.0
 
                             if cursor:
-                                cursor.execute('SELECT name, instructor, credits, ects FROM courses WHERE code = ? LIMIT 1', (code,))
+                                cursor.execute(
+                                    'SELECT name, instructor, credits, ects FROM courses WHERE code = ? LIMIT 1',
+                                    (code,)
+                                )
                                 c_row = cursor.fetchone()
                                 if c_row:
                                     course_name = c_row['name']
@@ -351,6 +455,8 @@ async def parse_student_schedule_endpoint(file: UploadFile = File(...)):
             'schedule': merged_schedule,
             'courses_summary': summary_list
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'PDF ayrıştırılırken hata oluştu: {str(e)}')
     finally:
@@ -370,10 +476,13 @@ WEEKDAYS = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma']
 DAY_INDEX_MAP = {'Pazartesi': 0, 'Salı': 1, 'Çarşamba': 2, 'Perşembe': 3, 'Cuma': 4}
 
 STANDARD_HOURS = [
-    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+    '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00',
+    '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
 ]
+NUM_STANDARD_HOURS = len(STANDARD_HOURS)
 
-COURSE_CODE_RE = re.compile(r'([A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4})')
+COURSE_CODE_RE = re.compile(r'([A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4}[A-Z]?)')
+
 
 def _match_day_name(raw_str: str) -> Optional[str]:
     s = raw_str.lower().translate(str.maketrans('İıŞşÇçĞğÖöÜü', 'iissccggoouu'))
@@ -393,14 +502,16 @@ def _match_day_name(raw_str: str) -> Optional[str]:
         return 'Pazar'
     return None
 
+
 def _is_course_header(txt: str) -> bool:
     if re.search(r'^(EEF|SEF|FEF|MED|İİBF|CEV|MİM|KMB|LAB|Online)-', txt, re.IGNORECASE):
         return False
     if re.search(r'\(\s*.*?[ŞSşs5gbG$§].*?\d+', txt, re.IGNORECASE):
         return True
-    if re.search(r'\b[A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4}\b', txt):
+    if re.search(r'\b[A-ZÇĞİÖŞÜ]{2,5}\s*\d{3,4}[A-Z]?\b', txt):
         return True
     return False
+
 
 def _ocr_words_data(image, lang: str = 'tur+eng') -> List[dict]:
     import pytesseract
@@ -427,6 +538,7 @@ def _ocr_words_data(image, lang: str = 'tur+eng') -> List[dict]:
                 'cy': top + h / 2,
             })
     return words
+
 
 def parse_schedule_image_ytu(image) -> dict:
     words = _ocr_words_data(image)
@@ -490,11 +602,13 @@ def parse_schedule_image_ytu(image) -> dict:
         m = re.search(r'(\d{1,2})[:.](\d{2})', w['text'])
         if m:
             h = int(m.group(1))
-            if 8 <= h <= 18:
+            if 8 <= h <= 20:
                 hour_detections.append({'hour': h, 'y': w['cy']})
 
     row_height = 48.0
     row0_center = header_bottom + 25.0
+    max_detected_hour = max((d['hour'] for d in hour_detections), default=18)
+    active_slots = 13 if max_detected_hour >= 19 else 11
 
     if len(hour_detections) >= 2:
         h0 = hour_detections[0]
@@ -505,121 +619,148 @@ def parse_schedule_image_ytu(image) -> dict:
     else:
         body_words_tmp = [w for w in words if w['top'] > header_bottom]
         body_bottom = max((w['top'] + w['h'] for w in body_words_tmp), default=img_h * 0.9)
-        row_height = (body_bottom - header_bottom) / 11
+        row_height = (body_bottom - header_bottom) / active_slots
         row0_center = header_bottom + row_height / 2
 
     body_words = [w for w in words if w['top'] > header_bottom]
     schedule: Dict[str, list] = {d: [] for d in ALL_DAYS}
 
-    # 3. Her Gün Sütunundaki Saatleri Eşle
-    for day in WEEKDAYS:
-        col = day_cols.get(day)
-        if not col:
-            continue
+    conn = _get_db_connection()
+    cursor = conn.cursor() if conn else None
 
-        col_wds = [
-            w for w in body_words
-            if (col['xmin'] + 5) <= w['cx'] < (col['xmax'] - 5)
-            and (len(w['text']) >= 3 or re.search(r'\d', w['text']) or re.search(r'şb|sb|gr|lab', w['text'], re.I))
-        ]
-        if not col_wds:
-            continue
-
-        words_in_hour: List[List[dict]] = [[] for _ in range(11)]
-        for w in col_wds:
-            h_idx = max(0, min(10, int((w['cy'] - row0_center + row_height * 0.45) // row_height)))
-            words_in_hour[h_idx].append(w)
-
-        card_list = []
-        cur_card = None
-
-        for h in range(11):
-            wds = words_in_hour[h]
-            has_words = len(wds) > 0
-            text = ' '.join(w['text'] for w in wds)
-            is_header = _is_course_header(text)
-
-            if has_words:
-                if cur_card is None:
-                    cur_card = {'start': h, 'end': h, 'words': list(wds)}
-                elif is_header and h > cur_card['start'] and (h - cur_card['start'] >= 2):
-                    card_list.append(cur_card)
-                    cur_card = {'start': h, 'end': h, 'words': list(wds)}
-                else:
-                    cur_card['end'] = h
-                    cur_card['words'].extend(wds)
-            else:
-                if cur_card is not None:
-                    next_wds = words_in_hour[h + 1] if h + 1 < 11 else []
-                    next_has = len(next_wds) > 0
-                    next_is_hdr = _is_course_header(' '.join(w['text'] for w in next_wds))
-
-                    if next_has and not next_is_hdr and (h + 1 - cur_card['start'] <= 2):
-                        continue
-                    else:
-                        card_list.append(cur_card)
-                        cur_card = None
-
-        if cur_card is not None:
-            card_list.append(cur_card)
-
-        # Bitişik eksik parçaları birleştir
-        merged_cards = []
-        for card in card_list:
-            if not merged_cards:
-                merged_cards.append(card)
+    try:
+        # 3. Her Gün Sütunundaki Saatleri Eşle
+        for day in WEEKDAYS:
+            col = day_cols.get(day)
+            if not col:
                 continue
-            prev = merged_cards[-1]
-            prev_len = prev['end'] - prev['start'] + 1
-            card_len = card['end'] - card['start'] + 1
 
-            if card['start'] == prev['end'] + 1 and (prev_len == 1 or card_len == 1) and (card['end'] - prev['start'] + 1 <= 3):
-                prev['end'] = card['end']
-                prev['words'].extend(card['words'])
-            else:
-                merged_cards.append(card)
+            col_wds = [
+                w for w in body_words
+                if (col['xmin'] + 5) <= w['cx'] < (col['xmax'] - 5)
+                and (len(w['text']) >= 3 or re.search(r'\d', w['text']) or re.search(r'şb|sb|gr|lab', w['text'], re.I))
+            ]
+            if not col_wds:
+                continue
 
-        for card in merged_cards:
-            h_start = int(STANDARD_HOURS[card['start']].split(':')[0])
-            h_end = int(STANDARD_HOURS[card['end']].split(':')[0])
+            words_in_hour: List[List[dict]] = [[] for _ in range(active_slots)]
+            for w in col_wds:
+                h_idx = max(0, min(active_slots - 1, int((w['cy'] - row0_center + row_height * 0.45) // row_height)))
+                words_in_hour[h_idx].append(w)
 
-            start_t = f"{h_start:02d}:00"
-            end_t = f"{h_end:02d}:50"
+            card_list = []
+            cur_card = None
 
-            card_text = ' '.join(w['text'] for w in card['words'])
-            cm = COURSE_CODE_RE.search(card_text)
-            code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
+            for h in range(active_slots):
+                wds = words_in_hour[h]
+                has_words = len(wds) > 0
+                text = ' '.join(w['text'] for w in wds)
+                is_header = _is_course_header(text)
 
-            schedule[day].append({
-                'section': '1',
-                'code': code,
-                'name': code,
-                'classroom': '',
-                'instructor': '',
-                'start_time': start_t,
-                'end_time': end_t,
-                'is_lab': False,
-            })
+                if has_words:
+                    if cur_card is None:
+                        cur_card = {'start': h, 'end': h, 'words': list(wds)}
+                    elif is_header and h > cur_card['start'] and (h - cur_card['start'] >= 2):
+                        card_list.append(cur_card)
+                        cur_card = {'start': h, 'end': h, 'words': list(wds)}
+                    else:
+                        cur_card['end'] = h
+                        cur_card['words'].extend(wds)
+                else:
+                    if cur_card is not None:
+                        next_wds = words_in_hour[h + 1] if h + 1 < active_slots else []
+                        next_has = len(next_wds) > 0
+                        next_is_hdr = _is_course_header(' '.join(w['text'] for w in next_wds))
 
+                        if next_has and not next_is_hdr and (h + 1 - cur_card['start'] <= 2):
+                            continue
+                        else:
+                            card_list.append(cur_card)
+                            cur_card = None
+
+            if cur_card is not None:
+                card_list.append(cur_card)
+
+            # Bitişik eksik parçaları birleştir
+            merged_cards = []
+            for card in card_list:
+                if not merged_cards:
+                    merged_cards.append(card)
+                    continue
+                prev = merged_cards[-1]
+                prev_len = prev['end'] - prev['start'] + 1
+                card_len = card['end'] - card['start'] + 1
+
+                if card['start'] == prev['end'] + 1 and (prev_len == 1 or card_len == 1) and (card['end'] - prev['start'] + 1 <= 3):
+                    prev['end'] = card['end']
+                    prev['words'].extend(card['words'])
+                else:
+                    merged_cards.append(card)
+
+            for card in merged_cards:
+                h_start = int(STANDARD_HOURS[card['start']].split(':')[0])
+                h_end = int(STANDARD_HOURS[card['end']].split(':')[0])
+
+                start_t = f"{h_start:02d}:00"
+                end_t = f"{h_end:02d}:50"
+
+                card_text = ' '.join(w['text'] for w in card['words'])
+                cm = COURSE_CODE_RE.search(card_text)
+                code = cm.group(1).replace(' ', '').upper() if cm else 'Ders'
+
+                course_name = code
+                credits_val = 0.0
+                ects_val = 0.0
+                if cursor and code != 'Ders':
+                    cursor.execute(
+                        'SELECT name, credits, ects FROM courses WHERE UPPER(REPLACE(code, " ", "")) = ? LIMIT 1',
+                        (code,)
+                    )
+                    c_row = cursor.fetchone()
+                    if c_row:
+                        course_name = c_row['name'] or code
+                        credits_val = float(c_row['credits']) if c_row['credits'] is not None else 0.0
+                        ects_val = float(c_row['ects']) if c_row['ects'] is not None else 0.0
+
+                schedule[day].append({
+                    'section': '1',
+                    'code': code,
+                    'name': course_name,
+                    'classroom': '',
+                    'instructor': '',
+                    'start_time': start_t,
+                    'end_time': end_t,
+                    'credits': credits_val,
+                    'ects': ects_val,
+                    'is_lab': False,
+                })
+    finally:
+        if conn:
+            conn.close()
+
+    # Aynı dersin farklı gün/saat bloklarını tek bir özet kaydında birleştir (PDF parser ile birebir uyumlu)
     summary_map = {}
     for day, items in schedule.items():
         for it in items:
-            key = (it['code'], day, it['start_time'])
+            key = (it['code'], it['section'])
             if key not in summary_map:
                 summary_map[key] = {
                     'code': it['code'],
                     'name': it['name'],
+                    'credits': it.get('credits', 0.0),
+                    'ects': it.get('ects', 0.0),
                     'section': it['section'],
-                    'instructor': '',
+                    'instructor': it.get('instructor', ''),
                     'classrooms': [],
-                    'time_slots': [{
-                        'day': day,
-                        'start_time': it['start_time'],
-                        'end_time': it['end_time'],
-                        'classroom': '',
-                        'is_lab': False,
-                    }]
+                    'time_slots': []
                 }
+            summary_map[key]['time_slots'].append({
+                'day': day,
+                'start_time': it['start_time'],
+                'end_time': it['end_time'],
+                'classroom': it.get('classroom', ''),
+                'is_lab': it.get('is_lab', False),
+            })
 
     total_courses = sum(len(v) for v in schedule.values())
     if total_courses == 0:
@@ -632,43 +773,40 @@ def parse_schedule_image_ytu(image) -> dict:
         'courses_summary': list(summary_map.values()),
     }
 
+
 @app.post('/api/parse-schedule-file')
-async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
-    filename = file.filename.lower()
+def parse_schedule_file_endpoint(file: UploadFile = File(...)):
+    filename = (file.filename or '').lower()
     if filename.endswith('.pdf'):
-        return await parse_student_schedule_endpoint(file)
+        return parse_student_schedule_endpoint(file)
     elif filename.endswith(('.png', '.jpg', '.jpeg')):
-        import json
         from PIL import Image
 
-        contents = await file.read()
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
-            tmp.write(contents)
-            tmp_path = tmp.name
+        tmp_path = _save_upload_to_tempfile(file, suffix='.png')
 
         try:
-            img = Image.open(tmp_path)
-            # 1. PNG metadata (tEXt chunk) kontrol et
-            raw_meta = img.info.get('schedule_data') or img.info.get('ptu_schedule')
-            if raw_meta:
-                try:
-                    data = json.loads(raw_meta)
-                    if data and data.get('schedule'):
-                        data.pop('student_id', None)
-                        data.pop('student_name', None)
-                        data.pop('title', None)
-                        return data
-                except Exception:
-                    pass
+            with Image.open(tmp_path) as img:
+                # 1. PNG metadata (tEXt chunk) kontrol et
+                raw_meta = img.info.get('schedule_data') or img.info.get('ptu_schedule')
+                if raw_meta:
+                    try:
+                        data = json.loads(raw_meta)
+                        if data and data.get('schedule'):
+                            data.pop('student_id', None)
+                            data.pop('student_name', None)
+                            data.pop('title', None)
+                            return data
+                    except Exception:
+                        pass
 
-            # 2. Metadata yoksa Çift Stratejili OCR ile ayrıştır
-            try:
-                data = parse_schedule_image_ytu(img)
-                total = sum(len(v) for v in data.get('schedule', {}).values())
-                if total > 0:
-                    return data
-            except Exception as ocr_err:
-                print('Backend OCR error:', ocr_err)
+                # 2. Metadata yoksa Çift Stratejili OCR ile ayrıştır
+                try:
+                    data = parse_schedule_image_ytu(img)
+                    total = sum(len(v) for v in data.get('schedule', {}).values())
+                    if total > 0:
+                        return data
+                except Exception as ocr_err:
+                    print('Backend OCR error:', ocr_err)
 
             raise HTTPException(
                 status_code=400,
@@ -689,59 +827,58 @@ async def parse_schedule_file_endpoint(file: UploadFile = File(...)):
 
 
 @app.post('/api/parse-transcript')
-async def parse_transcript(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith('.pdf'):
+def parse_transcript(file: UploadFile = File(...)):
+    if not file.filename or not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail='Sadece PDF formatında transkript yükleyebilirsiniz.')
-        
+
+    tmp_path = _save_upload_to_tempfile(file, suffix='.pdf')
+
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
-            shutil.copyfileobj(file.file, tmp)
-            tmp_path = tmp.name
-            
         text = ""
         with pdfplumber.open(tmp_path) as pdf:
             for page in pdf.pages:
                 extracted = page.extract_text()
                 if extracted:
                     text += extracted + "\n"
-                
-        os.remove(tmp_path)
-        
+
         cgpa = None
         total_credits = None
-        
+
         # 1. YTU Orijinal Format
         ytu_cgpa = re.search(r'\(AGNO\)\s*:\s*([\d.,]+)', text)
         ytu_credits = re.search(r'Tamamlanan Yerel Kredi Say\S*\s*:\s*([\d.,]+)', text)
-        
+
         # 2. e-Devlet Format
         edev_cgpa = re.search(r'GNO\s*:\s*([\d.,]+)', text)
         if not edev_cgpa:
             edev_cgpa = re.search(r'\(Cumulative GPA\)\s*[\n:]*\s*([\d.,]+)', text)
-            
+
         edev_credits = re.search(r'TUK\s*:\s*([\d.,]+)', text)
         if not edev_credits:
             edev_credits = re.search(r'\(Credits Completed\)\s*[\n:]*\s*([\d.,]+)', text)
-            
+
         if ytu_cgpa:
             cgpa = ytu_cgpa.group(1).replace(',', '.')
         elif edev_cgpa:
             cgpa = edev_cgpa.group(1).replace(',', '.')
-            
+
         if ytu_credits:
             total_credits = ytu_credits.group(1).replace(',', '.')
         elif edev_credits:
             total_credits = edev_credits.group(1).replace(',', '.')
-            
+
         # Dersleri parse etme (Geçmiş durum tablosu ve Akademik Planlama için)
         courses = []
-        valid_grades = ['AA', 'BA', 'BB', 'CB', 'CC', 'DC', 'DD', 'FD', 'FF', 'F0', 'G', 'K', 'M', 'MU', 'BL', 'EX', 'İ', '--']
-        
+        valid_grades = [
+            'AA', 'BA', 'BB', 'CB', 'CC', 'DC', 'DD', 'FD', 'FF', 'F0',
+            'G', 'K', 'M', 'MU', 'BL', 'EX', 'İ', '--'
+        ]
+
         current_term = ""
         lines = text.split('\n')
         for idx, line in enumerate(lines):
             line = line.strip()
-            
+
             # Dönem başlığını yakala
             term_match = re.match(r'^20\d{2}-20\d{2}\s+([Gg].z|[Bb]ahar|[Yy]az|[Mm]uaf|[İiI]ntibak)', line)
             if term_match:
@@ -750,20 +887,20 @@ async def parse_transcript(file: UploadFile = File(...)):
                     current_term = f"{term_parts[0]} {term_parts[1].capitalize()}"
             elif re.search(r'(Muafiyet|İntibak)\s+Dönemi', line, re.IGNORECASE):
                 current_term = "Muafiyet"
-            
+
             # Örn: MAT1071, İSG1811 veya *TIB1000 ile başlayan satırlar
-            code_match = re.match(r'^(\*?[A-ZÇĞİÖŞÜ]{2,5}\s?\d{3,4}[A-Z]?)\s+', line)
+            code_match = re.match(r'^(\*?[A-ZÇĞİÖŞÜ]{2,6}\s?\d{3,4}[A-Z]?)\s+', line)
             if not code_match:
                 continue
-                
+
             code = re.sub(r'\s+', '', code_match.group(1).replace('*', '')).upper()
             parts = line.split()
-            
+
             best_grade = None
             best_grade_idx = -1
             max_numbers_before = -1
-            
-            for i in range(len(parts)-1, 0, -1):
+
+            for i in range(len(parts) - 1, 0, -1):
                 if parts[i] in valid_grades:
                     num_count = 0
                     for j in range(i - 1, 0, -1):
@@ -775,13 +912,13 @@ async def parse_transcript(file: UploadFile = File(...)):
                         max_numbers_before = num_count
                         best_grade = parts[i]
                         best_grade_idx = i
-                        
+
             if best_grade is None:
                 continue
-                
+
             grade = best_grade if best_grade != '--' else ''
             grade_idx = best_grade_idx
-            
+
             # Notun hemen oncesindeki sayisal degerleri (AKTS, Kredi, U, T) topla
             numbers_before_grade = []
             for i in range(grade_idx - 1, 0, -1):
@@ -789,33 +926,39 @@ async def parse_transcript(file: UploadFile = File(...)):
                     numbers_before_grade.append(parts[i].replace(',', '.'))
                 else:
                     break
-                    
+
             if len(numbers_before_grade) >= 2:
                 credit_str = numbers_before_grade[1]
             elif len(numbers_before_grade) == 1:
                 credit_str = numbers_before_grade[0]
             else:
                 credit_str = "0"
-                
+
             # Ders Adı Çıkarımı
             name_parts = []
             for i in range(1, grade_idx - len(numbers_before_grade)):
                 if parts[i] not in ['TR', 'EN', 'Z', 'S', 'İng.', 'Türkçe', 'Tr']:
                     name_parts.append(parts[i])
-                    
+
             name = " ".join(name_parts).strip()
-            
-            # Eğer isim boş kaldıysa veya çok kısaysa, pdfplumber ders adını bir önceki satıra atmış olabilir
+
+            # Eğer isim boş kaldıysa veya çok kısaysa, pdfplumber ders adını bir önceki ve bir sonraki satıra bölmüş olabilir
             if len(name) < 3 and idx > 0:
-                prev_line = lines[idx-1].strip()
-                # Önceki satır bir başlık, kod veya boş değilse onu isim olarak al
-                if prev_line and not re.match(r'^(\*?[A-ZÇĞİÖŞÜ]{2,5}\s?\d{3,4})', prev_line):
+                prev_line = lines[idx - 1].strip()
+                if prev_line and not re.match(r'^(\*?[A-ZÇĞİÖŞÜ]{2,6}\s?\d{3,4}|20\d{2}-20\d{2}|Ders\s+Kodu)', prev_line, re.I):
                     name = prev_line
-                    
-            # Eğer yine boşsa, en azından boş kalmasın
+                    if idx + 1 < len(lines):
+                        next_line = lines[idx + 1].strip()
+                        if (
+                            next_line and
+                            len(next_line) < 45 and
+                            not re.match(r'^(\*?[A-ZÇĞİÖŞÜ]{2,6}\s?\d{3,4}|20\d{2}-20\d{2}|AGNO|GNO|TUK|Toplam)', next_line, re.I)
+                        ):
+                            name = f"{name} {next_line}".strip()
+
             if not name:
                 name = "Bilinmeyen Ders"
-            
+
             courses.append({
                 "code": code,
                 "name": name,
@@ -823,12 +966,12 @@ async def parse_transcript(file: UploadFile = File(...)):
                 "expectedGrade": grade,
                 "term": current_term
             })
-            
+
         # Aynı kodlu derslerin son alınanını tut (Transkript kronolojiktir)
         course_dict = {}
         for c in courses:
             course_dict[c['code']] = c
-            
+
         final_courses = list(course_dict.values())
 
         # Transkriptteki ders kodları ve başlık metninden Fakülte & Bölüm tespiti
@@ -838,7 +981,6 @@ async def parse_transcript(file: UploadFile = File(...)):
         try:
             curricula_data = _load_curricula()
             transcript_codes = {c['code'] for c in final_courses}
-            # Ortak YÖK dersleri hariç bölüm ders kodları
             dept_codes = {
                 code for code in transcript_codes
                 if not code.startswith(('ATA', 'TDB', 'MDB', 'YDB', 'ISG', 'İSG'))
@@ -870,7 +1012,7 @@ async def parse_transcript(file: UploadFile = File(...)):
                         detected_program_name = p_name
         except Exception:
             pass
-            
+
         return {
             "status": "success",
             "cgpa": float(cgpa) if cgpa else 0.0,
@@ -880,11 +1022,15 @@ async def parse_transcript(file: UploadFile = File(...)):
             "detected_program_id": detected_program_id,
             "detected_program_name": detected_program_name
         }
-        
+    except HTTPException:
+        raise
     except Exception as e:
-        if 'tmp_path' in locals() and os.path.exists(tmp_path):
+        raise HTTPException(status_code=500, detail=f'Transkript okunurken hata: {str(e)}')
+    finally:
+        # KVKK Güvencesi: Hata veya bağlantı kopması (CancelledError) durumunda bile geçici PDF dosyasını kesin imha et
+        if os.path.exists(tmp_path):
             try:
                 os.remove(tmp_path)
-            except:
+            except Exception:
                 pass
-        raise HTTPException(status_code=500, detail=f'Transkript okunurken hata: {str(e)}')
+
