@@ -39,6 +39,7 @@ const GRADE_WEIGHTS: Record<string, number | null> = {
   'İ': null  // İzinli (Ortalamaya katılmaz)
 };
 import { extractMetadataFromPngArrayBuffer } from '../../utils/pngMetadata';
+import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 
 interface ScenarioCourse {
   id: string;
@@ -51,17 +52,17 @@ interface ScenarioCourse {
 
 export default function GanoCalculator() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  // Past state
-  const [pastCgpa, setPastCgpa] = useState<string>('');
-  const [pastTotalCredits, setPastTotalCredits] = useState<string>('');
-  const [pastCourses, setPastCourses] = useState<ScenarioCourse[]>([]);
+  // Past state (LocalStorage ile kalıcı)
+  const [pastCgpa, setPastCgpa] = useLocalStorageState<string>('ytu_agno_past_cgpa', '');
+  const [pastTotalCredits, setPastTotalCredits] = useLocalStorageState<string>('ytu_agno_past_credits', '');
+  const [pastCourses, setPastCourses] = useLocalStorageState<ScenarioCourse[]>('ytu_agno_past_courses', []);
 
-  // Target GPA State
-  const [targetCgpa, setTargetCgpa] = useState<string>('');
-  const [nextSemesterCredits, setNextSemesterCredits] = useState<string>('');
+  // Target GPA State (LocalStorage ile kalıcı)
+  const [targetCgpa, setTargetCgpa] = useLocalStorageState<string>('ytu_agno_target_cgpa', '');
+  const [nextSemesterCredits, setNextSemesterCredits] = useLocalStorageState<string>('ytu_agno_target_credits', '');
 
-  // Current semester courses
-  const [currentCourses, setCurrentCourses] = useState<ScenarioCourse[]>([]);
+  // Current semester courses (LocalStorage ile kalıcı)
+  const [currentCourses, setCurrentCourses] = useLocalStorageState<ScenarioCourse[]>('ytu_agno_current_courses', []);
 
   // Upload States
   const [isUploadingTranscript, setIsUploadingTranscript] = useState(false);
