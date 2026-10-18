@@ -348,14 +348,15 @@ export default function GanoCalculator() {
     };
   }, [pastCgpa, pastTotalCredits, currentCourses]);
 
-  const targetNum = parseFloat(targetCgpa.replace(',', '.'));
-  const isTargetInvalid = targetCgpa.trim() !== '' && !isNaN(targetNum) && (targetNum < 0 || targetNum > 4.00);
+  const targetStr = String(targetCgpa ?? '');
+  const targetNum = parseFloat(targetStr.replace(',', '.'));
+  const isTargetInvalid = targetStr.trim() !== '' && !isNaN(targetNum) && (targetNum < 0 || targetNum > 4.00);
 
   const targetCalculation = useMemo(() => {
-    const cgpa = parseFloat(pastCgpa.replace(',', '.'));
-    const pastCredits = parseFloat(pastTotalCredits.replace(',', '.'));
-    const target = parseFloat(targetCgpa.replace(',', '.'));
-    const nextCredits = parseFloat(nextSemesterCredits.replace(',', '.'));
+    const cgpa = parseFloat(String(pastCgpa ?? '').replace(',', '.'));
+    const pastCredits = parseFloat(String(pastTotalCredits ?? '').replace(',', '.'));
+    const target = parseFloat(String(targetCgpa ?? '').replace(',', '.'));
+    const nextCredits = parseFloat(String(nextSemesterCredits ?? '').replace(',', '.'));
 
     if (isTargetInvalid) {
       return { isInvalidRange: true, requiredYano: 0, target: 0, nextCredits: 0, isPossible: false, isAlreadyAchieved: false };
