@@ -308,15 +308,39 @@ def parse_student_schedule_endpoint(file: UploadFile = File(...)):
                 row_split_y = day_anchors['Cuma'][1] - 12.0 if 'Cuma' in day_anchors else 300.0
                 top_cut_y = (min(v[1] for v in day_anchors.values()) - 10.0) if day_anchors else 80.0
 
-                # X sütun sınırlarını tespit edilen gün başlıklarına göre kalibre et
-                top_days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe']
-                detected_x = [day_anchors[d][0] for d in top_days if d in day_anchors]
-                if len(detected_x) == 4:
-                    c1 = (detected_x[0] + detected_x[1]) / 2.0 - 10.0
-                    c2 = (detected_x[1] + detected_x[2]) / 2.0 - 10.0
-                    c3 = (detected_x[2] + detected_x[3]) / 2.0 - 10.0
+                # X sütun sınırlarını tespit et:
+                # 1. Öncelik: Tablodaki dikey çizgiler (page.lines) ile kesin sütun ayrımı
+                vlines = sorted(list(set(
+                    round(l['x0'], 1) for l in page.lines
+                    if abs(l['x0'] - l['x1']) < 1.0 and (l.get('top', 0) < 200 or l.get('bottom', 0) < 200)
+                )))
+                # Her sütun bloğu arasında çift çizgi (aralık ~5.7pt) bulunur:
+                # 222.5 & 228.2 (Pzt-Salı arası), 420.9 & 426.6 (Salı-Çarş arası), 619.4 & 625.0 (Çarş-Perş arası)
+                # Çift çizgileri gruplayıp orta noktalarını sütun sınırı yapalım:
+                divider_groups = []
+                for vx in [x for x in vlines if 150 < x < 750]:
+                    if not divider_groups or abs(vx - divider_groups[-1][-1]) > 15.0:
+                        divider_groups.append([vx])
+                    else:
+                        divider_groups[-1].append(vx)
+
+                if len(divider_groups) >= 3:
+                    c1 = (divider_groups[0][0] + divider_groups[0][-1]) / 2.0
+                    c2 = (divider_groups[1][0] + divider_groups[1][-1]) / 2.0
+                    c3 = (divider_groups[2][0] + divider_groups[2][-1]) / 2.0
                 else:
-                    c1, c2, c3 = 225.0, 425.0, 625.0
+                    # 2. Öncelik: Şb. sütun başlıkları
+                    sb_x_list = sorted(list(set(
+                        round(w['x0'], 1) for w in words
+                        if 70 < w['top'] < 100 and ('b' in w['text'] or 'Şb' in w['text'] or 'Sb' in w['text'])
+                    )))
+                    if len(sb_x_list) >= 4:
+                        c1 = (sb_x_list[0] + sb_x_list[1]) / 2.0 + 45.0
+                        c2 = (sb_x_list[1] + sb_x_list[2]) / 2.0 + 45.0
+                        c3 = (sb_x_list[2] + sb_x_list[3]) / 2.0 + 45.0
+                    else:
+                        # 3. Fallback: Standart USIS sınırları
+                        c1, c2, c3 = 225.0, 425.0, 625.0
 
                 rows: Dict[float, list] = {}
                 for w in words:
