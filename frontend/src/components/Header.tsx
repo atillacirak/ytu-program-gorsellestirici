@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles } from 'lucide-react';
+import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio } from 'lucide-react';
 import WhatsNewModal from './WhatsNewModal';
 
 const WHATS_NEW_STORAGE_KEY = 'ytudostun_whats_new_v2_3_seen';
@@ -42,12 +42,13 @@ export default function Header() {
     } catch {}
   };
 
-  if (pathname === '/stats') return null;
+  if (pathname === '/stats' || pathname === '/uygun-musun' || pathname.startsWith('/uygun-musun')) return null;
   const isOrtak = pathname === '/ortak';
   const isSingle = pathname === '/' && !isOrtak;
   const isAgno = pathname === '/agno';
   const isDevamsizlik = pathname === '/devamsizlik';
   const isPlanlama = pathname === '/planlama';
+  const isUygunMusun = pathname === '/uygun-musun';
 
   return (
     <>

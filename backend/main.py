@@ -8,9 +8,10 @@ import tempfile
 from typing import Dict, List, Any, Optional
 
 import pdfplumber
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 import stats_db
+import uygun_musun_store
 
 app = FastAPI(title='YTÜ Program Görselleştirici API', version='1.0.0')
 
@@ -1057,4 +1058,75 @@ def parse_transcript(file: UploadFile = File(...)):
                 os.remove(tmp_path)
             except Exception:
                 pass
+
+
+# ---------------------------------------------------------------------------
+# Uygun Musun? - Çoklu Profil Program & Canlı Durum Senkronizasyon Uç Noktaları
+# ---------------------------------------------------------------------------
+
+@app.get('/api/uygun-musun/room/{room_code}')
+def get_uygun_musun_room(room_code: str):
+    try:
+        return uygun_musun_store.get_room(room_code)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Oda bilgisi alınamadı: {str(e)}')
+
+
+@app.post('/api/uygun-musun/room/{room_code}/profile')
+def upsert_uygun_musun_profile(room_code: str, payload: Dict[str, Any] = Body(...)):
+    try:
+        return uygun_musun_store.upsert_profile(room_code, payload)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Profil kaydedilemedi: {str(e)}')
+
+
+@app.post('/api/uygun-musun/room/{room_code}/status')
+def update_uygun_musun_status(room_code: str, payload: Dict[str, Any] = Body(...)):
+    profile_id = str(payload.get('profile_id') or '').strip()
+    if not profile_id:
+        raise HTTPException(status_code=400, detail='profile_id alanı zorunludur.')
+    custom_status = payload.get('custom_status')
+    try:
+        return uygun_musun_store.update_profile_status(room_code, profile_id, custom_status)
+    except KeyError as ke:
+        raise HTTPException(status_code=404, detail=str(ke))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Durum güncellenemedi: {str(e)}')
+
+
+@app.delete('/api/uygun-musun/room/{room_code}/profile/{profile_id}')
+def delete_uygun_musun_profile(room_code: str, profile_id: str):
+    try:
+        return uygun_musun_store.delete_profile(room_code, profile_id)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Profil silinemedi: {str(e)}')
+
+
+@app.post('/api/uygun-musun/room/{room_code}/ping')
+def send_uygun_musun_ping(room_code: str, payload: Dict[str, Any] = Body(...)):
+    from_id = str(payload.get('from_id') or '').strip()
+    to_id = str(payload.get('to_id') or '').strip()
+    ping_type = str(payload.get('type') or 'coffee')
+    message = str(payload.get('message') or '')
+    emoji = str(payload.get('emoji') or '☕')
+    if not from_id or not to_id:
+        raise HTTPException(status_code=400, detail='from_id ve to_id zorunludur.')
+    try:
+        return uygun_musun_store.send_ping(room_code, from_id, to_id, ping_type, message, emoji)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Ping gönderilemedi: {str(e)}')
+
+
+@app.post('/api/uygun-musun/room/{room_code}/ping/{ping_id}/dismiss')
+def dismiss_uygun_musun_ping(room_code: str, ping_id: str):
+    try:
+        return uygun_musun_store.dismiss_ping(room_code, ping_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Ping kapatılamadı: {str(e)}')
+
+
 

@@ -7,3 +7,4 @@ pydantic
 pytesseract
 pillow
 requests
+python-dotenv
