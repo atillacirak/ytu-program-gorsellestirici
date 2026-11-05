@@ -2,16 +2,98 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio } from 'lucide-react';
 import WhatsNewModal from './WhatsNewModal';
 
 const WHATS_NEW_STORAGE_KEY = 'ytudostun_whats_new_v2_4_seen';
+const PWA_ACTIVE_TAB_KEY = 'ytu_pwa_active_tab';
+const PWA_BOOTED_SESSION_KEY = 'ytu_pwa_booted';
+
+const TAB_TITLES: Record<string, string> = {
+  '/': 'YTÜ Dostun',
+  '/ortak': 'Ortak Saatler',
+  '/uygun-musun': 'Uygun Musun?',
+  '/uygun-musun-atilla': 'Uygun Musun',
+  '/uygun-musun-neva': 'Uygun Musun',
+  '/agno': 'YTÜ AGNO',
+  '/devamsizlik': 'Devamsızlık',
+  '/planlama': 'Planlama',
+};
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const [hasUnseenNews, setHasUnseenNews] = useState(false);
+
+  // Mobil PWA (Ana Ekrana Ekle) için aktif sekmeyi ve manifest start_url'ini senkronize et
+  useEffect(() => {
+    if (typeof window === 'undefined' || !pathname) return;
+
+    try {
+      // 1. <link rel="manifest"> ve iOS başlığını bulunduğun sekmeye göre güncelle
+      const manifestHref = `/manifest.webmanifest?path=${encodeURIComponent(pathname)}`;
+      let manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null;
+      if (manifestLink) {
+        if (manifestLink.getAttribute('href') !== manifestHref) {
+          manifestLink.setAttribute('href', manifestHref);
+        }
+      } else {
+        manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestHref;
+        document.head.appendChild(manifestLink);
+      }
+
+      const appTitle = TAB_TITLES[pathname] || 'YTÜ Dostun';
+      let appleTitleMeta = document.querySelector(
+        'meta[name="apple-mobile-web-app-title"]'
+      ) as HTMLMetaElement | null;
+      if (!appleTitleMeta) {
+        appleTitleMeta = document.createElement('meta');
+        appleTitleMeta.name = 'apple-mobile-web-app-title';
+        document.head.appendChild(appleTitleMeta);
+      }
+      appleTitleMeta.content = appTitle;
+
+      // 2. Standalone (Mobil Uygulama) ilk açılışında kaydedilen sekmeyi geri yükle
+      const isStandalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        Boolean((window.navigator as any).standalone);
+      const alreadyBooted = sessionStorage.getItem(PWA_BOOTED_SESSION_KEY) === '1';
+
+      if (!alreadyBooted) {
+        sessionStorage.setItem(PWA_BOOTED_SESSION_KEY, '1');
+        if (isStandalone && pathname === '/') {
+          const savedTab = localStorage.getItem(PWA_ACTIVE_TAB_KEY);
+          if (savedTab && savedTab !== '/' && savedTab.startsWith('/')) {
+            router.replace(savedTab);
+            return;
+          }
+        }
+      }
+
+      // Kullanıcının aktif bulunduğu sekmeyi kaydet
+      if (pathname !== '/stats') {
+        localStorage.setItem(PWA_ACTIVE_TAB_KEY, pathname);
+      }
+    } catch {}
+  }, [pathname, router]);
+
+  const handleTabNavClick = (targetPath: string) => {
+    try {
+      sessionStorage.setItem(PWA_BOOTED_SESSION_KEY, '1');
+      localStorage.setItem(PWA_ACTIVE_TAB_KEY, targetPath);
+    } catch {}
+    if (typeof window !== 'undefined' && pathname !== targetPath) {
+      setTimeout(() => {
+        if (window.location.pathname !== targetPath) {
+          window.location.assign(targetPath);
+        }
+      }, 450);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -56,7 +138,11 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3.5 text-left group cursor-pointer focus:outline-none">
+          <Link
+            href="/"
+            onClick={() => handleTabNavClick('/')}
+            className="flex items-center space-x-3.5 text-left group cursor-pointer focus:outline-none"
+          >
             <div className="w-9 h-9 rounded-lg bg-[#0c3f79] group-hover:bg-[#00306a] flex items-center justify-center text-white shadow-xs transition-colors">
               <GraduationCap className="w-5 h-5 text-[#e7a240]" />
             </div>
@@ -77,6 +163,7 @@ export default function Header() {
               
               <Link 
                 href="/"
+                onClick={() => handleTabNavClick('/')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   isSingle
                     ? 'bg-[#0c3f79] text-white shadow-2xs'
@@ -89,6 +176,7 @@ export default function Header() {
 
               <Link 
                 href="/ortak"
+                onClick={() => handleTabNavClick('/ortak')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   isOrtak
                     ? 'bg-[#0c3f79] text-white shadow-2xs'
@@ -96,11 +184,13 @@ export default function Header() {
                 }`}
               >
                 <Users className="w-3.5 h-3.5 text-amber-400" />
-                <span>Ortak Boş Saatler (Karşılaştır)</span>
+                <span className="sm:hidden">Ortak Saatler</span>
+                <span className="hidden sm:inline">Ortak Boş Saatler (Karşılaştır)</span>
               </Link>
 
               <Link 
                 href="/uygun-musun"
+                onClick={() => handleTabNavClick('/uygun-musun')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   isUygunMusun
                     ? 'bg-[#0c3f79] text-white shadow-2xs'
@@ -122,6 +212,7 @@ export default function Header() {
 
               <Link 
                 href="/agno"
+                onClick={() => handleTabNavClick('/agno')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   isAgno
                     ? 'bg-[#0c3f79] text-white shadow-2xs'
@@ -134,6 +225,7 @@ export default function Header() {
 
               <Link 
                 href="/devamsizlik"
+                onClick={() => handleTabNavClick('/devamsizlik')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   isDevamsizlik
                     ? 'bg-[#0c3f79] text-white shadow-2xs'
@@ -146,6 +238,7 @@ export default function Header() {
 
               <Link 
                 href="/planlama"
+                onClick={() => handleTabNavClick('/planlama')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   isPlanlama
                     ? 'bg-[#0c3f79] text-white shadow-2xs'

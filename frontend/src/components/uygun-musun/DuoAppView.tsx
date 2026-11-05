@@ -279,7 +279,7 @@ export default function DuoAppView({
     return calculateMutualAvailability([me, partner], activeDayName, activeMinutes, nowEpochMs);
   }, [me, partner, activeDayName, activeMinutes, nowEpochMs]);
 
-  // Kendi formunu mevcuttan güncelle
+  // Kendi formunu mevcuttan güncelle (arka plan yenilemesinde yazılan notu silmemek için created_at bazlı)
   useEffect(() => {
     if (me.custom_status) {
       setSelectedPresetId(me.custom_status.preset_id || '');
@@ -290,21 +290,28 @@ export default function DuoAppView({
       setStatusNote('');
       setIsEarlyExitActive(false);
     }
-  }, [me.custom_status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me.custom_status?.created_at, me.custom_status?.early_exit]);
 
   // Kendi durumunu kaydet
   const handleSaveMyStatus = async (overrideEarlyExit?: boolean) => {
     const isEarly = overrideEarlyExit !== undefined ? overrideEarlyExit : isEarlyExitActive;
+    const activeSlot =
+      myStatus.currentClass ||
+      myStatus.earlyDismissedClass ||
+      myStatus.todaySlots.find(
+        (s) => activeMinutes >= s.start_minutes && activeMinutes < s.end_minutes
+      ) ||
+      null;
+
     let expiresAt: number | null = null;
     if (statusDuration !== 'auto') {
       expiresAt = Date.now() + (statusDuration as number) * 60 * 1000;
-    } else if (isEarly && myStatus.currentClass) {
-      const parts = myStatus.currentClass.end_time.split(':');
-      const endH = parseInt(parts[0], 10);
-      const endM = parseInt(parts[1], 10);
-      const targetDate = new Date(nowDate);
-      targetDate.setHours(endH, endM, 0, 0);
-      expiresAt = targetDate.getTime();
+    } else if (isEarly && activeSlot) {
+      const remainingMins = Math.max(30, activeSlot.end_minutes - activeMinutes);
+      expiresAt = Date.now() + remainingMins * 60 * 1000;
+    } else {
+      expiresAt = Date.now() + 3 * 3600 * 1000;
     }
 
     const preset = STATUS_PRESETS.find((p) => p.id === selectedPresetId);
@@ -316,6 +323,8 @@ export default function DuoAppView({
       emoji: preset?.emoji || (isEarly ? '⚡' : '📍'),
       label: isEarly ? 'Dersim Erken Bitti' : preset?.label || 'Özel Durum',
       early_exit: isEarly,
+      early_exit_day: activeDayName,
+      early_exit_until: activeSlot ? activeSlot.end_time : '23:59',
       created_at: Date.now(),
       expires_at: expiresAt,
     };

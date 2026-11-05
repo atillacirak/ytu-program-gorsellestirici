@@ -761,21 +761,35 @@ export default function UygunMusunLobbyPage() {
     }
   };
 
-  // Tek Tıkla "Dersim Erken Bitti!" Aksiyonu
+  // Tek Tıkla "Dersim Erken Bitti!" Aksiyonu (mevcut özel not varsa korur)
   const handleOneTapEarlyExit = async () => {
     if (!myProfile) return;
     const myStatus = liveStatuses[myProfile.id];
-    const currentCls = myStatus?.currentClass;
+    const currentCls =
+      myStatus?.currentClass ||
+      myStatus?.earlyDismissedClass ||
+      myStatus?.todaySlots.find(
+        (s) => activeMinutes >= s.start_minutes && activeMinutes < s.end_minutes
+      ) ||
+      null;
+    const existingCS = myStatus?.activeCustomStatus;
+    const existingCustomNote = existingCS?.note?.trim();
+
     const statusObj: CustomStatusOverride = {
       type: 'early_exit',
-      preset_id: 'early_exit',
-      emoji: '⚡',
-      label: 'Ders Erken Bitti',
-      note: currentCls
-        ? `${currentCls.name} dersi erken bitti, şu an boşum!`
-        : 'Dersim erken bitti, şu an müsaitim!',
+      preset_id: existingCS?.preset_id || 'early_exit',
+      emoji: existingCS?.emoji && existingCS.emoji !== '💬' ? existingCS.emoji : '⚡',
+      label:
+        existingCS?.label && existingCS.label !== 'Anlık Durum' && existingCS.label !== 'Durum Notu'
+          ? existingCS.label
+          : 'Ders Erken Bitti',
+      note:
+        existingCustomNote ||
+        (currentCls
+          ? `${currentCls.name} dersi erken bitti, şu an boşum!`
+          : 'Dersim erken bitti, şu an müsaitim!'),
       early_exit: true,
-      early_exit_until: currentCls ? currentCls.end_time : undefined,
+      early_exit_until: currentCls ? currentCls.end_time : '23:59',
       early_exit_day: activeDayName,
       created_at: Date.now(),
       expires_at: Date.now() + 3 * 3600 * 1000,

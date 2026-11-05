@@ -64,7 +64,7 @@ export default function StatusCheckInSheet({
   const [saving, setSaving] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
 
-  // Profil değiştiğinde mevcut durumu forma yükle
+  // Profil değiştiğinde mevcut durumu forma yükle (arka plan yenilemelerinde kullanıcının yazdığı notu/seçimi sıfırlama)
   useEffect(() => {
     const cs = liveStatuses[activeProfile.id]?.activeCustomStatus;
     if (cs) {
@@ -80,7 +80,8 @@ export default function StatusCheckInSheet({
       setNote('');
       setEarlyExit(false);
     }
-  }, [activeProfile.id, liveStatuses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeProfile.id]);
 
   // O anki veya erken çıkılabilecek dersi tespit et
   const currentOrActiveSlot =
@@ -100,10 +101,16 @@ export default function StatusCheckInSheet({
     setSelectedPresetId(preset.id);
     setEmoji(preset.emoji);
     setLabel(preset.label);
-    if (!note || STATUS_PRESETS.some((p) => p.defaultNote === note)) {
+    if (!note.trim() || STATUS_PRESETS.some((p) => p.defaultNote === note)) {
       setNote(preset.defaultNote);
     }
     if (preset.earlyExit) {
+      setEarlyExit(true);
+    } else if (
+      currentOrActiveSlot &&
+      ['coffee', 'library', 'dining', 'home'].includes(preset.id)
+    ) {
+      // Kullanıcı ders saatinde kahve/kütüphane/yemekhane/eve geçtim seçtiyse dersten erken çıkmış demektir
       setEarlyExit(true);
     }
   };
@@ -115,18 +122,18 @@ export default function StatusCheckInSheet({
     if (durationOpt === '120m') return now + 120 * 60 * 1000;
     if (durationOpt === 'next_class') {
       if (earlyExit && currentOrActiveSlot) {
-        const diffMins = Math.max(15, currentOrActiveSlot.end_minutes - currentMinutes);
+        const diffMins = Math.max(30, currentOrActiveSlot.end_minutes - currentMinutes);
         return now + diffMins * 60 * 1000;
       }
       if (liveStatus?.nextClass) {
-        const diffMins = Math.max(15, liveStatus.nextClass.start_minutes - currentMinutes);
+        const diffMins = Math.max(30, liveStatus.nextClass.start_minutes - currentMinutes);
         return now + diffMins * 60 * 1000;
       }
       if (liveStatus?.currentClass) {
-        const diffMins = Math.max(15, liveStatus.currentClass.end_minutes - currentMinutes);
+        const diffMins = Math.max(30, liveStatus.currentClass.end_minutes - currentMinutes);
         return now + diffMins * 60 * 1000;
       }
-      return now + 90 * 60 * 1000;
+      return now + 120 * 60 * 1000;
     }
     // 'today' -> gece yarısına kadar
     const endOfDay = new Date();
@@ -139,21 +146,29 @@ export default function StatusCheckInSheet({
     setSaving(true);
     try {
       const targetUntil =
-        earlyExit && currentOrActiveSlot
+        durationOpt === 'today'
+          ? '23:59'
+          : earlyExit && currentOrActiveSlot
           ? currentOrActiveSlot.end_time
           : earlyExit && liveStatus?.todaySlots.length
           ? liveStatus.todaySlots[liveStatus.todaySlots.length - 1].end_time
-          : '';
+          : '23:59';
 
       const payload: CustomStatusOverride = {
         type: earlyExit ? 'early_exit' : selectedPresetId ? 'preset' : 'custom',
-        preset_id: selectedPresetId || undefined,
+        preset_id: selectedPresetId || (earlyExit ? 'early_exit' : undefined),
         emoji: earlyExit && emoji === '💬' ? '⚡' : emoji,
         label:
-          earlyExit && (!label || label === 'Anlık Durum')
+          earlyExit && (!label || label === 'Anlık Durum' || label === 'Durum Notu')
             ? 'Ders Erken Bitti'
             : label || 'Anlık Durum',
-        note: note.trim(),
+        note:
+          note.trim() ||
+          (earlyExit
+            ? currentOrActiveSlot
+              ? `${currentOrActiveSlot.name} dersi erken bitti, şu an müsaitim!`
+              : 'Dersim erken bitti, şu an müsaitim!'
+            : ''),
         early_exit: earlyExit,
         early_exit_until: targetUntil || minutesToEndOfHour(currentMinutes),
         early_exit_day: dayName,

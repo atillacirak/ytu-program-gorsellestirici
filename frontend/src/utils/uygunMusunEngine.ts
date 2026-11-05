@@ -297,9 +297,20 @@ export function getActiveCustomStatus(
 export function isCourseEarlyDismissed(
   slot: NormalizedCourseSlot,
   activeStatus: CustomStatusOverride | null,
-  dayName: string
+  dayName: string,
+  currentMinutes?: number
 ): boolean {
   if (!activeStatus || !activeStatus.early_exit) return false;
+
+  // Eğer şu anki saat bu dersin içindeyse ve "Erken Çıktım" aktifse, koşulsuz olarak bu dersi bitti say
+  if (
+    typeof currentMinutes === 'number' &&
+    currentMinutes >= slot.start_minutes &&
+    currentMinutes < slot.end_minutes
+  ) {
+    return true;
+  }
+
   if (
     activeStatus.early_exit_day &&
     normalizeDayKey(activeStatus.early_exit_day) !== normalizeDayKey(dayName)
@@ -308,7 +319,7 @@ export function isCourseEarlyDismissed(
   }
   if (activeStatus.early_exit_until) {
     const untilM = toMinutes(activeStatus.early_exit_until);
-    return slot.start_minutes < untilM && slot.end_minutes <= untilM + 5;
+    return slot.start_minutes < untilM;
   }
   return true;
 }
@@ -380,7 +391,10 @@ export function calculateProfileLiveStatus(
   let earlyDismissedClass: NormalizedCourseSlot | null = null;
   let effectiveCurrentClass: NormalizedCourseSlot | null = rawCurrentClass;
 
-  if (rawCurrentClass && isCourseEarlyDismissed(rawCurrentClass, activeCustomStatus, dayName)) {
+  if (
+    rawCurrentClass &&
+    isCourseEarlyDismissed(rawCurrentClass, activeCustomStatus, dayName, currentMinutes)
+  ) {
     earlyDismissedClass = rawCurrentClass;
     effectiveCurrentClass = null;
   }
@@ -461,7 +475,7 @@ export function calculateProfileLiveStatus(
     return {
       state: stateType,
       isAvailableNow: true,
-      isEarlyExitActive: Boolean(earlyDismissedClass),
+      isEarlyExitActive: Boolean(earlyDismissedClass || activeCustomStatus?.early_exit),
       earlyDismissedClass,
       currentClass: null,
       nextClass,
@@ -469,9 +483,10 @@ export function calculateProfileLiveStatus(
       progressPercent: Math.round((completedClassesCount / todaySlots.length) * 100),
       freeUntilTime: nextClass.start_time,
       busyUntilTime: null,
-      headline: earlyDismissedClass
-        ? `Erken Çıktı • ${formatDurationTr(freeMins)} boş`
-        : `Şu an boş • ${formatDurationTr(freeMins)} müsait`,
+      headline:
+        earlyDismissedClass || activeCustomStatus?.early_exit
+          ? `Erken Çıktı • ${formatDurationTr(freeMins)} boş`
+          : `Şu an boş • ${formatDurationTr(freeMins)} müsait`,
       subheadline: `${nextClass.start_time}'da ${nextClass.name} (${nextClass.code}) başlayacak`,
       activeCustomStatus,
       todaySlots,
@@ -485,7 +500,7 @@ export function calculateProfileLiveStatus(
   return {
     state: 'DONE_FOR_TODAY',
     isAvailableNow: true,
-    isEarlyExitActive: Boolean(earlyDismissedClass),
+    isEarlyExitActive: Boolean(earlyDismissedClass || activeCustomStatus?.early_exit),
     earlyDismissedClass,
     currentClass: null,
     nextClass: null,
@@ -493,9 +508,10 @@ export function calculateProfileLiveStatus(
     progressPercent: 100,
     freeUntilTime: 'Gün boyu',
     busyUntilTime: null,
-    headline: earlyDismissedClass
-      ? 'Son Dersi Erken Bitti! 🎉'
-      : 'Bugünkü Dersleri Bitti! 🎉',
+    headline:
+      earlyDismissedClass || activeCustomStatus?.early_exit
+        ? 'Son Dersi Erken Bitti! 🎉'
+        : 'Bugünkü Dersleri Bitti! 🎉',
     subheadline: `Son ders ${lastClass.end_time}'de tamamlandı. Günün geri kalanında serbest.`,
     activeCustomStatus,
     todaySlots,
@@ -541,7 +557,7 @@ export function calculateMutualAvailability(
         if (s.is_online) {
           return { start: s.start_minutes, end: s.start_minutes };
         }
-        if (isCourseEarlyDismissed(s, activeCS, dayName)) {
+        if (isCourseEarlyDismissed(s, activeCS, dayName, currentMinutes)) {
           // Ders erken bittiyse şu andan sonrası boş kabul edilir
           const effectiveEnd = Math.min(s.end_minutes, currentMinutes);
           return { start: s.start_minutes, end: effectiveEnd };
@@ -757,7 +773,7 @@ export function calculateGroupMutualAvailability(
         if (s.is_online) {
           return { start: s.start_minutes, end: s.start_minutes };
         }
-        if (isCourseEarlyDismissed(s, activeCS, dayName)) {
+        if (isCourseEarlyDismissed(s, activeCS, dayName, currentMinutes)) {
           const effectiveEnd = Math.min(s.end_minutes, currentMinutes);
           return { start: s.start_minutes, end: effectiveEnd };
         }
