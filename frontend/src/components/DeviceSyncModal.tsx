@@ -16,7 +16,13 @@ import {
   ShieldCheck,
   Download,
   UploadCloud,
-  CheckCircle2
+  CheckCircle2,
+  Calendar,
+  GraduationCap,
+  Users,
+  Calculator,
+  ClipboardList,
+  Layers
 } from 'lucide-react';
 import { generateQrMatrix } from '../utils/qrCodeGenerator';
 
@@ -62,7 +68,7 @@ export default function DeviceSyncModal({
     setIsMobileDevice(isMob);
   }, []);
 
-  // Mevcut yerel verileri topla
+  // Mevcut yerel verileri topla (Tüm platform: Program, AGNO, Akademik Plan, Lobiler, Devamsızlık, Notlar)
   const collectLocalPayload = () => {
     let schedule = currentSchedule || null;
     let term = '2026-2027 Güz';
@@ -71,8 +77,9 @@ export default function DeviceSyncModal({
     let department = '';
     let courses_summary: any[] = [];
 
+    // 1. Ders Programı & Öğrenci Bilgisi
     try {
-      const raw = localStorage.getItem('ytu_schedule_data');
+      const raw = localStorage.getItem('ytu_schedule_data') || localStorage.getItem('ytu_visualizer_data');
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed) {
@@ -86,16 +93,113 @@ export default function DeviceSyncModal({
       }
     } catch {}
 
+    // Transkript önbelleğinden öğrenci no / isim çekmeyi dene (eğer program yoksa)
+    try {
+      const rawCache = localStorage.getItem('ytu_parsed_transcript_cache');
+      if (rawCache) {
+        const cacheParsed = JSON.parse(rawCache);
+        if (cacheParsed) {
+          if (!student_id && cacheParsed.student_id) student_id = cacheParsed.student_id;
+          if (!student_name && cacheParsed.student_name) student_name = cacheParsed.student_name;
+          if (!department && cacheParsed.department) department = cacheParsed.department;
+        }
+      }
+    } catch {}
+
+    // 2. Arkadaş Lobileri & Aktif Oda
     let saved_lobbies: any[] = [];
     try {
       const rawLobbies = localStorage.getItem('ytu_saved_lobbies_v1');
       if (rawLobbies) saved_lobbies = JSON.parse(rawLobbies);
     } catch {}
 
+    let active_room_code: string | null = null;
+    try {
+      const rawActive = localStorage.getItem('ytu_active_room_code');
+      if (rawActive) active_room_code = JSON.parse(rawActive);
+    } catch {}
+
+    // 3. Notlar
     let course_notes: Record<string, any> = {};
     try {
-      const rawNotes = localStorage.getItem('ytu_course_notes_v1');
+      const rawNotes = localStorage.getItem('ytu_course_notes_v1') || localStorage.getItem('ytu_schedule_notes');
       if (rawNotes) course_notes = JSON.parse(rawNotes);
+    } catch {}
+
+    // 4. Görselleştirici Tercihleri
+    let visualizer_settings: Record<string, any> = {};
+    try {
+      const getVal = (k: string) => {
+        const v = localStorage.getItem(k);
+        if (!v) return null;
+        try { return JSON.parse(v); } catch { return v; }
+      };
+      visualizer_settings = {
+        view_mode: getVal('ytu_visualizer_view_mode'),
+        color_mode: getVal('ytu_visualizer_color_mode'),
+        show_instructor: getVal('ytu_show_instructor'),
+        show_section: getVal('ytu_show_section'),
+        show_notes: getVal('ytu_show_notes'),
+        font_family: getVal('ytu_schedule_font'),
+        font_scale: getVal('ytu_schedule_scale'),
+      };
+    } catch {}
+
+    // 5. AGNO Simülatörü
+    let agno: Record<string, any> = {};
+    try {
+      const parseItem = (k: string) => {
+        const v = localStorage.getItem(k);
+        if (!v) return null;
+        try { return JSON.parse(v); } catch { return v; }
+      };
+      agno = {
+        past_cgpa: parseItem('ytu_agno_past_cgpa'),
+        past_credits: parseItem('ytu_agno_past_credits'),
+        past_courses: parseItem('ytu_agno_past_courses') || [],
+        target_cgpa: parseItem('ytu_agno_target_cgpa'),
+        target_credits: parseItem('ytu_agno_target_credits'),
+        current_courses: parseItem('ytu_agno_current_courses') || [],
+        transcript_cache: parseItem('ytu_parsed_transcript_cache'),
+      };
+    } catch {}
+
+    // 6. Akademik Planlama (4 Yıllık)
+    let academic_plan: Record<string, any> = {};
+    try {
+      const prefs = localStorage.getItem('ytu_plan_prefs_v2');
+      const scenarios: Record<string, any> = {};
+      const plans: Record<string, any> = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        if (key.startsWith('ytu_scenarios_v2_')) {
+          const val = localStorage.getItem(key);
+          if (val) scenarios[key] = val;
+        } else if (key.startsWith('ytu_plan_v2_')) {
+          const val = localStorage.getItem(key);
+          if (val) plans[key] = val;
+        }
+      }
+      academic_plan = {
+        prefs: prefs ? (prefs.startsWith('{') ? JSON.parse(prefs) : prefs) : null,
+        scenarios,
+        plans,
+      };
+    } catch {}
+
+    // 7. Devamsızlık Takibi
+    let absence: Record<string, any> = {};
+    try {
+      const parseItem = (k: string) => {
+        const v = localStorage.getItem(k);
+        if (!v) return null;
+        try { return JSON.parse(v); } catch { return v; }
+      };
+      absence = {
+        courses: parseItem('ytu_absence_courses') || [],
+        settings: parseItem('ytu_absence_settings') || null,
+      };
     } catch {}
 
     return {
@@ -106,15 +210,50 @@ export default function DeviceSyncModal({
       schedule,
       courses_summary,
       saved_lobbies,
+      active_room_code,
       course_notes,
+      visualizer_settings,
+      agno,
+      academic_plan,
+      absence,
       exported_at: Date.now()
     };
   };
 
-  // Öğrenci numarasını otomatik doldur (eğer varsa)
+  // Herhangi bir yedeklenebilir veri var mı kontrolü
+  const hasAnyBackupData = (payload: any): boolean => {
+    const hasSched = Boolean(payload.schedule && Object.keys(payload.schedule).length > 0);
+    const hasLobb = Boolean(payload.saved_lobbies && payload.saved_lobbies.length > 0);
+    const hasNot = Boolean(payload.course_notes && Object.keys(payload.course_notes).length > 0);
+    const hasAg = Boolean(
+      payload.agno && (
+        (payload.agno.past_courses && payload.agno.past_courses.length > 0) ||
+        (payload.agno.current_courses && payload.agno.current_courses.length > 0) ||
+        payload.agno.past_cgpa
+      )
+    );
+    const hasPl = Boolean(
+      payload.academic_plan && (
+        payload.academic_plan.prefs ||
+        (payload.academic_plan.plans && Object.keys(payload.academic_plan.plans).length > 0) ||
+        (payload.academic_plan.scenarios && Object.keys(payload.academic_plan.scenarios).length > 0)
+      )
+    );
+    const hasAbs = Boolean(
+      payload.absence && payload.absence.courses && payload.absence.courses.length > 0
+    );
+
+    return hasSched || hasLobb || hasNot || hasAg || hasPl || hasAbs;
+  };
+
+  // Yerel veri envanteri (UI durum çipi için)
+  const [localInventory, setLocalInventory] = useState<any>(null);
+
+  // Öğrenci numarasını ve envanteri otomatik doldur (eğer varsa)
   useEffect(() => {
     if (isOpen) {
       const local = collectLocalPayload();
+      setLocalInventory(local);
       if (local.student_id && !studentId) {
         setStudentId(local.student_id);
       }
@@ -128,8 +267,8 @@ export default function DeviceSyncModal({
     setStatusMsg(null);
     try {
       const payload = collectLocalPayload();
-      if (!payload.schedule || Object.keys(payload.schedule).length === 0) {
-        throw new Error('Aktarılacak ders programı bulunamadı. Lütfen önce bir program yükleyin.');
+      if (!hasAnyBackupData(payload)) {
+        throw new Error('Aktarılacak herhangi bir veri (Ders Programı, AGNO, Akademik Plan veya Lobi) bulunamadı.');
       }
 
       const res = await fetch(`${apiBase}/api/sync/transfer/create`, {
@@ -169,8 +308,9 @@ export default function DeviceSyncModal({
     return () => clearInterval(timer);
   }, [transferCode, expiresIn]);
 
-  // Alınan veriyi tarayıcıya kaydet
+  // Alınan veriyi tarayıcıya kaydet (Tüm modülleri geri yükler)
   const applyImportedPayload = (payload: any) => {
+    // 1. Ders Programı
     if (payload.schedule) {
       const mainData = {
         term: payload.term || 'Aktif Dönem',
@@ -181,8 +321,30 @@ export default function DeviceSyncModal({
         courses_summary: payload.courses_summary || [],
       };
       localStorage.setItem('ytu_schedule_data', JSON.stringify(mainData));
+      localStorage.setItem('ytu_visualizer_data', JSON.stringify(mainData));
     }
 
+    // 2. Notlar
+    if (payload.course_notes) {
+      try {
+        localStorage.setItem('ytu_course_notes_v1', JSON.stringify(payload.course_notes));
+        localStorage.setItem('ytu_schedule_notes', JSON.stringify(payload.course_notes));
+      } catch {}
+    }
+
+    // 3. Görselleştirici Tercihleri
+    if (payload.visualizer_settings) {
+      const s = payload.visualizer_settings;
+      if (s.view_mode) localStorage.setItem('ytu_visualizer_view_mode', JSON.stringify(s.view_mode));
+      if (s.color_mode) localStorage.setItem('ytu_visualizer_color_mode', JSON.stringify(s.color_mode));
+      if (typeof s.show_instructor === 'boolean') localStorage.setItem('ytu_show_instructor', JSON.stringify(s.show_instructor));
+      if (typeof s.show_section === 'boolean') localStorage.setItem('ytu_show_section', JSON.stringify(s.show_section));
+      if (typeof s.show_notes === 'boolean') localStorage.setItem('ytu_show_notes', JSON.stringify(s.show_notes));
+      if (s.font_family) localStorage.setItem('ytu_schedule_font', JSON.stringify(s.font_family));
+      if (s.font_scale) localStorage.setItem('ytu_schedule_scale', JSON.stringify(s.font_scale));
+    }
+
+    // 4. Arkadaş Lobileri
     if (payload.saved_lobbies && Array.isArray(payload.saved_lobbies)) {
       try {
         const existingRaw = localStorage.getItem('ytu_saved_lobbies_v1');
@@ -193,10 +355,53 @@ export default function DeviceSyncModal({
         localStorage.setItem('ytu_saved_lobbies_v1', JSON.stringify(Array.from(mergedMap.values())));
       } catch {}
     }
-
-    if (payload.course_notes) {
+    if (payload.active_room_code) {
       try {
-        localStorage.setItem('ytu_course_notes_v1', JSON.stringify(payload.course_notes));
+        localStorage.setItem('ytu_active_room_code', JSON.stringify(payload.active_room_code));
+      } catch {}
+    }
+
+    // 5. AGNO Simülatörü
+    if (payload.agno) {
+      try {
+        const a = payload.agno;
+        if (a.past_cgpa !== undefined && a.past_cgpa !== null) localStorage.setItem('ytu_agno_past_cgpa', JSON.stringify(a.past_cgpa));
+        if (a.past_credits !== undefined && a.past_credits !== null) localStorage.setItem('ytu_agno_past_credits', JSON.stringify(a.past_credits));
+        if (a.past_courses && Array.isArray(a.past_courses)) localStorage.setItem('ytu_agno_past_courses', JSON.stringify(a.past_courses));
+        if (a.target_cgpa !== undefined && a.target_cgpa !== null) localStorage.setItem('ytu_agno_target_cgpa', JSON.stringify(a.target_cgpa));
+        if (a.target_credits !== undefined && a.target_credits !== null) localStorage.setItem('ytu_agno_target_credits', JSON.stringify(a.target_credits));
+        if (a.current_courses && Array.isArray(a.current_courses)) localStorage.setItem('ytu_agno_current_courses', JSON.stringify(a.current_courses));
+        if (a.transcript_cache) localStorage.setItem('ytu_parsed_transcript_cache', JSON.stringify(a.transcript_cache));
+      } catch {}
+    }
+
+    // 6. Akademik Planlama (4 Yıllık)
+    if (payload.academic_plan) {
+      try {
+        const p = payload.academic_plan;
+        if (p.prefs) localStorage.setItem('ytu_plan_prefs_v2', typeof p.prefs === 'string' ? p.prefs : JSON.stringify(p.prefs));
+        if (p.scenarios && typeof p.scenarios === 'object') {
+          Object.entries(p.scenarios).forEach(([k, v]) => {
+            localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+          });
+        }
+        if (p.plans && typeof p.plans === 'object') {
+          Object.entries(p.plans).forEach(([k, v]) => {
+            localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+          });
+        }
+      } catch {}
+    }
+
+    // 7. Devamsızlık Takibi
+    if (payload.absence) {
+      try {
+        if (payload.absence.courses && Array.isArray(payload.absence.courses)) {
+          localStorage.setItem('ytu_absence_courses', JSON.stringify(payload.absence.courses));
+        }
+        if (payload.absence.settings) {
+          localStorage.setItem('ytu_absence_settings', JSON.stringify(payload.absence.settings));
+        }
       } catch {}
     }
 
@@ -227,7 +432,7 @@ export default function DeviceSyncModal({
         applyImportedPayload(data.payload);
         setStatusMsg({
           type: 'success',
-          text: `Harika! ${data.payload.student_name || 'Program'} başarıyla bu cihaza aktarıldı! 🎉`
+          text: `Harika! ${data.payload.student_name ? data.payload.student_name + ' verileri' : 'Tüm verileriniz'} başarıyla bu cihaza aktarıldı! 🎉`
         });
         setTimeout(() => {
           onClose();
@@ -259,8 +464,8 @@ export default function DeviceSyncModal({
     setStatusMsg(null);
     try {
       const payload = collectLocalPayload();
-      if (!payload.schedule || Object.keys(payload.schedule).length === 0) {
-        throw new Error('Yedeklenecek ders programı bulunamadı.');
+      if (!hasAnyBackupData(payload)) {
+        throw new Error('Yedeklenecek herhangi bir veri (Ders Programı, AGNO, Akademik Plan veya Lobi) bulunamadı.');
       }
 
       const res = await fetch(`${apiBase}/api/sync/save`, {
@@ -280,7 +485,7 @@ export default function DeviceSyncModal({
 
       setStatusMsg({
         type: 'success',
-        text: 'Programınız ve lobileriniz PIN şifrenizle buluta güvenle yedeklendi! ☁️'
+        text: 'Programınız, AGNO, akademik planınız ve lobileriniz PIN şifrenizle buluta güvenle yedeklendi! ☁️'
       });
     } catch (err: any) {
       setStatusMsg({ type: 'error', text: err.message || 'Yedekleme sırasında hata oluştu.' });
@@ -325,7 +530,7 @@ export default function DeviceSyncModal({
         applyImportedPayload(data.payload);
         setStatusMsg({
           type: 'success',
-          text: `Yedek bulundu! ${data.payload.student_name || 'Program'} başarıyla yüklendi! 🎉`
+          text: `Yedek bulundu! ${data.payload.student_name ? data.payload.student_name + ' verileri' : 'Tüm verileriniz'} başarıyla yüklendi! 🎉`
         });
         setTimeout(() => {
           onClose();
@@ -427,6 +632,71 @@ export default function DeviceSyncModal({
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
               )}
               <span>{statusMsg.text}</span>
+            </div>
+          )}
+
+          {/* Cihaz Veri Envanteri Özeti */}
+          {localInventory && (
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs space-y-1.5">
+              <div className="flex items-center justify-between text-slate-500 font-medium">
+                <span className="flex items-center gap-1.5 font-bold text-slate-700">
+                  <Layers className="w-3.5 h-3.5 text-[#0c3f79]" />
+                  <span>Bu Cihazdaki Veriler</span>
+                </span>
+                <span className="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-mono font-bold">
+                  Otomatik Eşleme
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {localInventory.schedule && Object.keys(localInventory.schedule).length > 0 ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold">
+                    <Calendar className="w-3 h-3 text-emerald-600" />
+                    <span>Ders Programı</span>
+                  </span>
+                ) : null}
+
+                {localInventory.agno && (
+                  (localInventory.agno.past_courses?.length > 0) ||
+                  (localInventory.agno.current_courses?.length > 0) ||
+                  localInventory.agno.past_cgpa
+                ) ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-800 border border-blue-200 text-[11px] font-semibold">
+                    <Calculator className="w-3 h-3 text-blue-600" />
+                    <span>AGNO ({((localInventory.agno.past_courses?.length || 0) + (localInventory.agno.current_courses?.length || 0))} Ders)</span>
+                  </span>
+                ) : null}
+
+                {localInventory.academic_plan && (
+                  localInventory.academic_plan.prefs ||
+                  Object.keys(localInventory.academic_plan.plans || {}).length > 0 ||
+                  Object.keys(localInventory.academic_plan.scenarios || {}).length > 0
+                ) ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 text-[11px] font-semibold">
+                    <GraduationCap className="w-3 h-3 text-purple-600" />
+                    <span>Akademik Plan</span>
+                  </span>
+                ) : null}
+
+                {localInventory.saved_lobbies && localInventory.saved_lobbies.length > 0 ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-semibold">
+                    <Users className="w-3 h-3 text-amber-600" />
+                    <span>{localInventory.saved_lobbies.length} Lobi</span>
+                  </span>
+                ) : null}
+
+                {localInventory.absence && localInventory.absence.courses?.length > 0 ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-semibold">
+                    <ClipboardList className="w-3 h-3 text-rose-600" />
+                    <span>Devamsızlık Takibi</span>
+                  </span>
+                ) : null}
+
+                {!hasAnyBackupData(localInventory) ? (
+                  <span className="text-slate-400 italic text-[11px] py-0.5">
+                    Henüz bu cihazda kayıtlı bir veri bulunmuyor.
+                  </span>
+                ) : null}
+              </div>
             </div>
           )}
 

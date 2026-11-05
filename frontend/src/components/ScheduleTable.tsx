@@ -350,6 +350,24 @@ export default function ScheduleTable({
                                         </span>
                                       )}
 
+                                      {isOnline && (
+                                        <span
+                                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-mono shrink-0 shadow-2xs ${
+                                            isMonochrome
+                                              ? 'bg-white border-slate-300 text-slate-800'
+                                              : 'bg-rose-50/80 border-rose-300 text-rose-600'
+                                          }`}
+                                          title="Online / Sanal Ders"
+                                        >
+                                          <span
+                                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                              isMonochrome ? 'bg-slate-700' : 'bg-rose-500 animate-pulse'
+                                            }`}
+                                          />
+                                          <Video className="w-2.5 h-2.5 shrink-0" />
+                                        </span>
+                                      )}
+
                                       {isEditMode && (
                                         <span
                                           className="p-0.5 rounded bg-amber-400 text-slate-950 text-[9px] shadow-2xs font-bold leading-none"
