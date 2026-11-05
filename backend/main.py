@@ -260,6 +260,19 @@ def course_lookup_endpoint(code: Optional[str] = None, name: Optional[str] = Non
         }
 
 
+def clean_instructor_title(name: str) -> str:
+    if not name:
+        return ''
+    cleaned = name.strip()
+    pattern = r'^(?:Prof\.?\s*Dr\.?|Prof\.?|Doç\.?\s*Dr\.?|Doç\.?|Doc\.?\s*Dr\.?|Doc\.?|Dr\.?\s*Öğr\.?\s*(?:Üyesi|Üy\.?)|Dr\.?\s*Öğretim\s*Üyesi|Dr\.?|Yrd\.?\s*Doç\.?\s*Dr\.?|Yrd\.?\s*Doç\.?|Öğr\.?\s*Gör\.?\s*Dr\.?|Öğr\.?\s*Gör\.?|Öğretim\s*Görevlisi|Arş\.?\s*Gör\.?\s*Dr\.?|Arş\.?\s*Gör\.?|Arş\.?\s*Grv\.?|Araştırma\s*Görevlisi)\s+'
+    while True:
+        new_cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE).strip()
+        if new_cleaned == cleaned:
+            break
+        cleaned = new_cleaned
+    return cleaned
+
+
 def _extract_text_and_check_is_new_obs(pdf) -> tuple[bool, str]:
     if not pdf.pages:
         return False, ''
@@ -372,6 +385,8 @@ def parse_new_obs_time_table_pdf(pdf, cursor=None) -> dict:
             if overflow_text and any(instructor.rstrip().lower().endswith(t) for t in ['üyesi', 'dr.', 'prof.', 'doç.', 'öğr.gör.']):
                 instructor = (instructor + ' ' + ' '.join(overflow_text)).strip()
 
+            instructor = clean_instructor_title(instructor)
+
             credits_val = 0.0
             ects_val = 0.0
             if cursor:
@@ -384,7 +399,7 @@ def parse_new_obs_time_table_pdf(pdf, cursor=None) -> dict:
                     if not name or name == code:
                         name = c_row['name'] or code
                     if not instructor and c_row['instructor']:
-                        instructor = c_row['instructor']
+                        instructor = clean_instructor_title(c_row['instructor'])
                     credits_val = float(c_row['credits']) if c_row['credits'] is not None else 0.0
                     ects_val = float(c_row['ects']) if c_row['ects'] is not None else 0.0
 
@@ -394,19 +409,20 @@ def parse_new_obs_time_table_pdf(pdf, cursor=None) -> dict:
                 )
                 sec_db = cursor.fetchone()
                 if sec_db and sec_db['instructor'] and not instructor:
-                    instructor = sec_db['instructor']
+                    instructor = clean_instructor_title(sec_db['instructor'])
 
             schedule[day_name].append({
                 'section': sec,
                 'code': code,
                 'name': name,
                 'classroom': classroom,
-                'instructor': instructor,
+                'instructor': clean_instructor_title(instructor),
                 'start_time': start_t,
                 'end_time': end_t,
                 'credits': credits_val,
                 'ects': ects_val,
-                'is_lab': is_lab
+                'is_lab': is_lab,
+                'is_online': bool(re.search(r'sanal|online|uzaktan|uzem', classroom or '', re.I) or re.search(r'uzaktan', name or '', re.I))
             })
 
     # Merge consecutive hours for same course block
@@ -589,7 +605,7 @@ def parse_old_usis_schedule_pdf(pdf, cursor=None) -> dict:
                         c_row = cursor.fetchone()
                         if c_row:
                             course_name = c_row['name']
-                            instructor = c_row['instructor'] or ''
+                            instructor = clean_instructor_title(c_row['instructor'] or '')
                             credits_val = float(c_row['credits']) if c_row['credits'] is not None else 0.0
                             ects_val = float(c_row['ects']) if c_row['ects'] is not None else 0.0
 
@@ -599,19 +615,20 @@ def parse_old_usis_schedule_pdf(pdf, cursor=None) -> dict:
                         )
                         sec_db = cursor.fetchone()
                         if sec_db and sec_db['instructor']:
-                            instructor = sec_db['instructor']
+                            instructor = clean_instructor_title(sec_db['instructor'])
 
                     schedule[target_day].append({
                         'section': sec_no,
                         'code': code,
                         'name': course_name,
                         'classroom': classroom.strip(),
-                        'instructor': instructor,
+                        'instructor': clean_instructor_title(instructor),
                         'start_time': start_t_clean,
                         'end_time': end_t_clean,
                         'credits': credits_val,
                         'ects': ects_val,
-                        'is_lab': 'LAB' in classroom.upper()
+                        'is_lab': 'LAB' in classroom.upper(),
+                        'is_online': bool(re.search(r'sanal|online|uzaktan|uzem', classroom or '', re.I) or re.search(r'uzaktan', course_name or '', re.I))
                     })
 
     # Merge consecutive hours for same course block

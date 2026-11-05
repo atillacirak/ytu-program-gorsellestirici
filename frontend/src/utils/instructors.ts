@@ -60,6 +60,18 @@ Object.entries(INSTRUCTOR_MAP).forEach(([code, fullName]) => {
   REVERSE_MAP[cleanName] = code;
 });
 
+export function cleanInstructorTitle(name?: string): string {
+  if (!name) return '';
+  let cleaned = name.trim();
+  const pattern = /^(?:Prof\.?\s*Dr\.?|Prof\.?|Doç\.?\s*Dr\.?|Doç\.?|Doc\.?\s*Dr\.?|Doc\.?|Dr\.?\s*Öğr\.?\s*(?:Üyesi|Üy\.?)|Dr\.?\s*Öğretim\s*Üyesi|Dr\.?|Yrd\.?\s*Doç\.?\s*Dr\.?|Yrd\.?\s*Doç\.?|Öğr\.?\s*Gör\.?\s*Dr\.?|Öğr\.?\s*Gör\.?|Öğretim\s*Görevlisi|Arş\.?\s*Gör\.?\s*Dr\.?|Arş\.?\s*Gör\.?|Arş\.?\s*Grv\.?|Araştırma\s*Görevlisi)\s+/i;
+  while (true) {
+    const next = cleaned.replace(pattern, '').trim();
+    if (next === cleaned) break;
+    cleaned = next;
+  }
+  return cleaned;
+}
+
 export function getFullInstructorName(codeOrName?: string): string {
   if (!codeOrName) return '';
   const trimmed = codeOrName.trim();

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Calendar, FlaskConical } from 'lucide-react';
-import { getInstructorAbbreviation } from '../utils/instructors';
+import { Calendar, FlaskConical, Video } from 'lucide-react';
+import { getInstructorAbbreviation, cleanInstructorTitle } from '../utils/instructors';
 
 const CLEAN_OFFICE_PALETTES = [
   { bg: 'bg-blue-50/90', border: 'border-blue-200/90', text: 'text-blue-950', accent: 'text-blue-700', badge: 'bg-white text-blue-800 border-blue-200' },
@@ -282,18 +282,24 @@ export default function ScheduleTable({
                             (it.code && /lab/i.test(it.code))
                           );
 
-                          const formatClassroomLabel = (cr: string) => {
-                            if (!cr) return 'Derslik';
-                            return cr
-                              .replace(/Davutpaşa Diğer/gi, 'D.Paşa Diğer')
-                              .replace(/Davutpaşa/gi, 'D.Paşa');
-                          };
-
                           const isOnline = Boolean(
                             it.is_online ||
                             (it.classroom && /sanal|online|uzaktan|uzem/i.test(it.classroom)) ||
                             (it.name && /uzaktan/i.test(it.name))
                           );
+
+                          const formatClassroomLabel = (cr: string) => {
+                            if (isOnline) {
+                              if (!cr || /^(uzem|sanal|online|uzaktan.*)$/i.test(cr.trim())) {
+                                return 'Online';
+                              }
+                              return `Online (${cr.replace(/Davutpaşa Diğer/gi, 'D.Paşa Diğer').replace(/Davutpaşa/gi, 'D.Paşa')})`;
+                            }
+                            if (!cr) return 'Derslik';
+                            return cr
+                              .replace(/Davutpaşa Diğer/gi, 'D.Paşa Diğer')
+                              .replace(/Davutpaşa/gi, 'D.Paşa');
+                          };
 
                           const isMonochrome = visualizerColorMode === 'monochrome';
                           const noteText = courseNotes[it.code];
@@ -350,26 +356,6 @@ export default function ScheduleTable({
                                           title="Not Ekle / Düzenle"
                                         >
                                           ✏️
-                                        </span>
-                                      )}
-
-                                      {isOnline && (
-                                        <span
-                                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-mono shrink-0 shadow-2xs ${
-                                            isMonochrome
-                                              ? 'bg-white border-slate-300 text-slate-800'
-                                              : 'bg-rose-50/80 border-rose-300 text-rose-600'
-                                          }`}
-                                          title="Online / Sanal Ders"
-                                        >
-                                          <span
-                                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                              isMonochrome ? 'bg-slate-700' : 'bg-rose-500 animate-pulse'
-                                            }`}
-                                          />
-                                          <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
-                                          </svg>
                                         </span>
                                       )}
                                     </div>
@@ -433,16 +419,22 @@ export default function ScheduleTable({
                                   </p>
 
                                   <div className="flex items-center gap-1 flex-wrap">
-                                    {it.classroom ? (
+                                    {(it.classroom || isOnline) ? (
                                       <div
-                                        style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
-                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono font-bold shadow-2xs whitespace-nowrap shrink-0 ${
-                                          isLab
+                                        style={{ fontSize: `${Math.round(11 * scheduleFontScale)}px` }}
+                                        className={`inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded-md border font-mono font-bold shadow-2xs whitespace-nowrap shrink-0 ${
+                                          isOnline
+                                            ? 'bg-rose-50/90 border-rose-200 text-rose-700'
+                                            : isLab
                                             ? 'bg-sky-50/90 border-sky-200 text-sky-950'
                                             : palette.badge
                                         }`}
                                       >
-                                        {isLab && <FlaskConical className="w-2.5 h-2.5 text-sky-600 shrink-0" />}
+                                        {isOnline ? (
+                                          <Video className="w-3 h-3 text-rose-600 shrink-0" />
+                                        ) : isLab ? (
+                                          <FlaskConical className="w-2.5 h-2.5 text-sky-600 shrink-0" />
+                                        ) : null}
                                         <span>
                                           {formatClassroomLabel(it.classroom)}
                                         </span>
@@ -452,10 +444,11 @@ export default function ScheduleTable({
                                     {showInstructor && it.instructor ? (
                                       <div
                                         style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
-                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono font-medium shadow-2xs whitespace-nowrap shrink-0 ${palette.badge}`}
+                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono font-medium shadow-2xs whitespace-nowrap shrink-0 max-w-full overflow-hidden ${palette.badge}`}
+                                        title={it.instructor.trim()}
                                       >
-                                        <span className="text-[9px]">👤</span>
-                                        <span>{it.instructor.trim()}</span>
+                                        <span className="text-[9px] shrink-0">👤</span>
+                                        <span className="truncate">{cleanInstructorTitle(it.instructor)}</span>
                                       </div>
                                     ) : null}
                                   </div>
@@ -496,6 +489,29 @@ export default function ScheduleTable({
                   {dayItems.map((it: any, idx: number) => {
                     const noteText = courseNotes[it.code];
                     const instInfo = getInstructorAbbreviation(it.instructor);
+                    const isLab = Boolean(
+                      it.is_lab ||
+                      (it.classroom && /lab|laboratuvar/i.test(it.classroom)) ||
+                      (it.name && /laboratuvarı?|lab\b/i.test(it.name)) ||
+                      (it.code && /lab/i.test(it.code))
+                    );
+                    const isOnline = Boolean(
+                      it.is_online ||
+                      (it.classroom && /sanal|online|uzaktan|uzem/i.test(it.classroom)) ||
+                      (it.name && /uzaktan/i.test(it.name))
+                    );
+                    const formatCardClassroomLabel = (cr: string) => {
+                      if (isOnline) {
+                        if (!cr || /^(uzem|sanal|online|uzaktan.*)$/i.test(cr.trim())) {
+                          return 'Online';
+                        }
+                        return `Online (${cr.replace(/Davutpaşa Diğer/gi, 'D.Paşa Diğer').replace(/Davutpaşa/gi, 'D.Paşa')})`;
+                      }
+                      if (!cr) return 'Derslik';
+                      return cr
+                        .replace(/Davutpaşa Diğer/gi, 'D.Paşa Diğer')
+                        .replace(/Davutpaşa/gi, 'D.Paşa');
+                    };
 
                     return (
                       <div
@@ -515,21 +531,33 @@ export default function ScheduleTable({
                             {it.code} {showSection && it.section ? `(Şb. ${it.section})` : ''}
                           </span>
                           <div className="flex items-center gap-1 flex-wrap">
-                            {it.classroom && (
+                            {(it.classroom || isOnline) && (
                               <span
-                                style={{ fontSize: `${Math.round(10 * scheduleFontScale)}px` }}
-                                className="font-mono px-1.5 py-0.5 rounded bg-white border border-slate-300 text-slate-700 whitespace-nowrap shrink-0 font-medium"
+                                style={{ fontSize: `${Math.round(11 * scheduleFontScale)}px` }}
+                                className={`font-mono px-1.5 py-0.5 rounded border whitespace-nowrap shrink-0 font-bold flex items-center gap-1 ${
+                                  isOnline
+                                    ? 'bg-rose-50 border-rose-200 text-rose-700'
+                                    : isLab
+                                    ? 'bg-sky-50 border-sky-200 text-sky-950'
+                                    : 'bg-white border-slate-300 text-slate-700'
+                                }`}
                               >
-                                {it.classroom}
+                                {isOnline ? (
+                                  <Video className="w-3 h-3 text-rose-600 shrink-0" />
+                                ) : isLab ? (
+                                  <FlaskConical className="w-2.5 h-2.5 text-sky-600 shrink-0" />
+                                ) : null}
+                                <span>{formatCardClassroomLabel(it.classroom)}</span>
                               </span>
                             )}
                             {showInstructor && it.instructor && (
                               <span
-                                style={{ fontSize: `${Math.round(10 * scheduleFontScale)}px` }}
-                                className="font-mono px-1.5 py-0.5 rounded bg-white border border-slate-300 text-slate-800 whitespace-nowrap shrink-0 font-bold flex items-center gap-1"
+                                style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
+                                className="font-mono px-1.5 py-0.5 rounded bg-white border border-slate-300 text-slate-800 whitespace-nowrap shrink-0 font-medium flex items-center gap-1 max-w-[140px] overflow-hidden"
+                                title={it.instructor.trim()}
                               >
-                                <span>👤</span>
-                                <span>{it.instructor.trim()}</span>
+                                <span className="shrink-0 text-[9px]">👤</span>
+                                <span className="truncate">{cleanInstructorTitle(it.instructor)}</span>
                               </span>
                             )}
                           </div>

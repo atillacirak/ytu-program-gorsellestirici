@@ -1,6 +1,6 @@
 import React from 'react';
 import { Building2 } from 'lucide-react';
-import { getFullInstructorName } from '../utils/instructors';
+import { getFullInstructorName, cleanInstructorTitle } from '../utils/instructors';
 
 interface CourseSummaryTableProps {
   visualizerData: any;
@@ -74,7 +74,7 @@ export default function CourseSummaryTable({
                   <td className="p-2.5 font-medium">
                     {c.instructor ? (
                       <span title={getFullInstructorName(c.instructor)}>
-                        {c.instructor}
+                        {cleanInstructorTitle(c.instructor)}
                       </span>
                     ) : (
                       <span className="text-slate-400 italic">-</span>
