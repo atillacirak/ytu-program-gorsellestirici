@@ -98,20 +98,20 @@ export default function UploadScreen({
         <div className="p-4 bg-[#e7a240]/[0.05] border border-[#e7a240]/30 rounded-xl space-y-2.5 text-left">
           <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
             <FileText className="w-4 h-4 text-[#d38e2c]" />
-            <span>OBS Üzerinden Ders Programı PDF'i Nasıl Alınır?</span>
+            <span>Yıldız Teknik Üniversitesi — Güncel OBS Ders Programı PDF İndirme Rehberi</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
             <div className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-lg border border-[#e7a240]/25 shadow-2xs">
               <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e7a240] to-[#d38e2c] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 shadow-2xs">1</span>
-              <span><strong>OBS</strong> sistemine giriş yapınız ve <strong>Ders Programı</strong> ekranını açınız.</span>
+              <span><strong>OBS'ye</strong> giriş yapınız ve sol menüden <strong>Ders Programı</strong> ekranına gidiniz.</span>
             </div>
             <div className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-lg border border-[#e7a240]/25 shadow-2xs">
               <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e7a240] to-[#d38e2c] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 shadow-2xs">2</span>
-              <span>Sayfadaki <strong>"Yazdır"</strong> butonunu seçip açılan ekranda <strong>"Save / Kaydet"</strong> tuşuna basarak PDF belgesini indiriniz.</span>
+              <span>Sağ üstteki <strong>"Yazdır"</strong> butonuna, ardından <strong>"Detay Yazdır"</strong> seçeneğine tıklayınız.</span>
             </div>
             <div className="flex items-start gap-2.5 text-xs text-slate-700 bg-white p-3 rounded-lg border border-[#e7a240]/25 shadow-2xs">
               <span className="w-5 h-5 rounded-full bg-gradient-to-br from-[#e7a240] to-[#d38e2c] text-white flex items-center justify-center font-bold text-[11px] shrink-0 mt-0.5 shadow-2xs">3</span>
-              <span>İndirdiğiniz bu <strong>Report.pdf</strong> dosyasını aşağıdaki alana yükleyiniz.</span>
+              <span>Yazıcı penceresinde <strong>Hedef: PDF Olarak Kaydet</strong> seçip indirin ve buraya yükleyin. <em>(Eski USIS çıktıları da desteklenir).</em></span>
             </div>
           </div>
         </div>

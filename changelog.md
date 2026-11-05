@@ -4,6 +4,43 @@ Bu belgede **YTÜ Dostun** projesine yapılan tüm sürüm güncellemeleri, mima
 
 ---
 
+## [v2.5.0] - 2026-11-06
+
+### ✨ Yeni Özellikler & Geliştirmeler
+- **Akıllı OBS Detay Yazdır Çıktısı (`std_time_table.aspx`) Ayrıştırıcı Motoru:**
+  - OBS'nin güncellenen yeni yazdırma arayüzüne tam uyumlu koordinat tabanlı hücre ızgarası çözücü eklendi.
+  - Ders kodu, şube numarası, derslik ve kontenjan (`[119]`, `[20]`, `Online`), çok satırlı ders adları ve öğretim elemanı bilgileri ayrıştırıldı.
+  - Aynı gün ve saatteki ardışık bloklar (örn. 09:00 - 11:50) otomatik birleştirildi.
+  - Sayfa sonuna taşan öğretim elemanı isimleri (Sayfa 2 taşıntıları) ilgili son derse bağlandı.
+  - PDF üst bilgisinden Öğrenci Numarası, Ad Soyad, Bölüm ve Dönem bilgisi otomatik çekildi.
+  - Eski USIS (`Report.pdf`) formatı ile hibrit birlikte çalışma sağlandı.
+- **Katı PDF Doğrulama & Sıfır Sahte Ders:**
+  - Geçersiz veya boş dosyalar anında `HTTP 400` ve anlaşılır Türkçe hata mesajıyla reddedildi.
+  - OCR ve regex eşleşmeme durumlarındaki `code = 'Ders'` uydurma fallback'i tamamen temizlendi.
+- **Cihazlar Arası Senkronizasyon (Device Sync & Ephemeral Transfer):**
+  - **Hızlı Cihaz Eşleştirme (QR & 6 Haneli Kod):** WhatsApp Web tarzı 5 dakika ömürlü tek seferlik transfer kodu ve dinamik SVG QR kod üretimi; mobilde kamerayla okutulduğunda (`?sync=KOD`) program ve lobilerin anında telefona çekilmesi.
+  - **Kalıcı Bulut Yedekleme:** Öğrenci Numarası ve 4 haneli tuzlu (salt) SHA-256 PIN ile buluta yedekleme ve geri çağırma (`sync_accounts` & `ephemeral_transfers`).
+  - **Akıllı Cihaz Tespiti (`DeviceSyncModal.tsx`):** Masaüstünde QR + kod üretimi, mobilde kod giriş kutusu ve tek tıkla geri yükleme.
+- **Arayüz & Tipografi İyileştirmeleri:**
+  - Üst çubuktaki gereksiz "Yazdır" ve "Hazırlık Programı" butonları kaldırılarak sadeleştirildi.
+  - Ders adı fontu öne çıkarıldı (`12px`, `font-semibold`), ders kodu ve derslik boyutları dengelendi.
+  - Sınıfında veya ders adında `LAB` geçen dersler için hücre sağ üstüne saydam gök mavisi erlenmayer (`FlaskConical`) laboratuvar ikonu eklendi.
+
+---
+
+## [v2.4.0] - 2026-11-05
+
+### ✨ Yeni Özellikler & Geliştirmeler
+- **Çoklu Arkadaş Lobisi & Kampüs Müsaitlik Platformu (`/uygun-musun`):**
+  - Arkadaş grupları için 6 haneli kodla oda kurma, odaya katılma ve kayıtlı lobiler çekmecesi.
+  - Tek dokunuşla yerel mobil paylaşım (`navigator.share`), pano kopyalama ve masa başı QR kod kartı (`LobbyShareModal.tsx`).
+  - **Grup Nabzı (Group Pulse):** Müsait, Derste ve Online Ders anlık sayıları ile tam kadro ortak boşluk pencereleri.
+  - **Çoklu Paralel Çizelge:** Gruptaki tüm üyelerin ders bloklarının paralel akışı.
+  - **Kilit Ekranı Web Push:** Erken çıkış bildirimleri ve toplu dürtmeler (Broadcast Ping) için VAPID Web Push bildirimleri.
+  - **Grup Yönetimi:** Gruptan ayrılma, liderlik devri ve lider için odayı kapatma yetkisi.
+
+---
+
 ## [v2.3.0] - 2026-10-12
 
 ### ✨ Yeni Özellikler & Geliştirmeler

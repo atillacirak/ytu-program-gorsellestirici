@@ -12,7 +12,8 @@ Bu belge, **YTÜ Dostun** platformunun mimarisini, dizin yapısını, veri akı�
 | **Proje Amacı** | YTÜ öğrencilerinin USIS/Bologna ders programlarını görselleştirmesi, ortak boş saatleri bulması, devamsızlık takibi yapması, AGNO simülasyonu ve 4 yıllık mezuniyet planlaması gerçekleştirmesini sağlayan hepsi bir arada açık web platformu. |
 | **Mimari Türü** | **Decoupled Client-Server (Ayrık İstemci-Sunucu):** <br>• **Frontend:** Next.js 16 (App Router) + React 19 + Tailwind CSS v4 + PWA <br>• **Backend:** FastAPI (Python 3.10+) + Uvicorn + pdfplumber + PyTesseract <br>• **Veri Katmanı:** SQLite3 (`ytu_courses.db`) + Upstash Redis REST API + Statik/Dinamik JSON Veri Setleri |
 | **Canlı Domainler** | [https://ytudostun.com](https://ytudostun.com) & [https://www.ytudostun.com](https://www.ytudostun.com) *(Eski Vercel adresi `ytuprogram.vercel.app` kalıcı olarak buraya yönlendirilir)* |
-| **Özel Duo Sayfaları** | • Atilla: `https://ytudostun.com/uygun-musun-atilla`<br>• Neva: `https://ytudostun.com/uygun-musun-neva`<br>• Duo Odası: `https://ytudostun.com/uygun-musun` *(Genel siteden gizli & izole)* |
+| **Çoklu Arkadaş Lobisi** | `https://ytudostun.com/uygun-musun` (Herkese Açık Çoklu Arkadaş Odaları & Canlı Kampüs Müsaitlik Platformu) |
+| **Özel Duo Sayfaları** | • Atilla: `https://ytudostun.com/uygun-musun-atilla`<br>• Neva: `https://ytudostun.com/uygun-musun-neva`<br>• Duo Odası: `https://ytudostun.com/uygun-musun` *(Özel parametrelerle izole)* |
 | **GitHub Repo** | `https://github.com/atillacirak/ytu-program-gorsellestirici.git` (Ana Dal: `main`) |
 | **Sunucu (Production)** | **Amazon Web Services (AWS EC2)** • Ubuntu 22.04 LTS • Statik IP: `63.186.15.196` |
 | **Süreç Yöneticisi** | **PM2:** `ytu-frontend` (Port 3001), `ytu-backend` (Port 8001), `kiribot` |
@@ -118,8 +119,8 @@ c:\Projeler\Ytü Görselleştir\
 │   ├── main.py                     # FastAPI ana API rotaları, PDF & OCR ayrıştırıcıları
 │   ├── requirements.txt            # Python kütüphane bağımlılıkları
 │   ├── stats_db.py                 # Upstash Redis pipeline & istatistik analitik motoru
-│   ├── uygun_musun_store.py        # SQLite WAL-backed Duo canlı durum ve oda deposu
-│   ├── uygun_musun.db              # Atilla & Neva canlı durum, ders ve dürtme veritabanı
+│   ├── uygun_musun_store.py        # SQLite WAL-backed Duo, Çoklu Lobi ve Cihaz Senkronizasyonu (Sync) deposu
+│   ├── uygun_musun.db              # Lobi üyeleri, canlı durumlar, dürtmeler, PIN yedekleri ve tek seferlik transferler veritabanı
 │   ├── ytu_courses.db              # SQLite dersler, şubeler, saatler ve bölümler tablosu
 │   ├── ytu_clubs.json              # 69 adet YTÜ öğrenci kulübü ve kategori verileri
 │   ├── prepSchedules.json          # Hazırlık sınıfları A/B/C kuru haftalık programları
@@ -161,6 +162,7 @@ c:\Projeler\Ytü Görselleştir\
         │   ├── CourseSummaryTable.tsx # Ders listesi, sınıf kodları ve hoca özet tablosu
         │   ├── EditCourseModal.tsx # Ders adı, sınıfı, saati ve not düzenleme penceresi
         │   ├── CompareView.tsx     # Ortak boş saatler matrisi (busyMap O(1) hash haritası)
+        │   ├── DeviceSyncModal.tsx # Cihazlar arası tek tıkla QR & 6 haneli kod aktarımı ve PIN yedekleme modalı
         │   ├── WhatsNewModal.tsx   # Sürüm yenilikleri karşılama penceresi
         │   ├── DevColorPanel.tsx   # Geliştirici renk paleti yönetim paneli
         │   ├── PrivacyModal.tsx    # KVKK ve Öğrenci Verisi Gizlilik Politikası modalı
@@ -170,13 +172,14 @@ c:\Projeler\Ytü Görselleştir\
         │   │   ├── PlanlamaToolbar.tsx    # Kredi/AKTS sınır butonları, PDF indir, sıfırla
         │   │   ├── SemesterBucketCard.tsx # Yarıyıl ders kovaları, sürükle-bırak & kartlar
         │   │   └── PlanlamaModals.tsx     # Seçmeli ders havuzu, ders ekleme & detay modalları
-        │   └── uygun-musun/        # Duo Canlı Durum Modül Bileşenleri
+        │   └── uygun-musun/        # Çoklu Lobi & Canlı Müsaitlik Modül Bileşenleri
         │       ├── DuoAppView.tsx          # iOS 18 glassmorphism ana ekranı & Dynamic Island
         │       ├── LiveFriendHeroCard.tsx  # Partner anlık durum, kalan süre & ilerleme çubuğu
         │       ├── DailyParallelTimeline.tsx # Günlük çiftli paralel çizelge & online REC rozeti
         │       ├── MutualMatchBanner.tsx   # İki tarafın aynı anda boş olduğu anı kutlama kartı
         │       ├── StatusCheckInSheet.tsx  # Canlı durum / erken çıkış bildirim menüsü
-        │       └── ProfileScheduleManager.tsx # Program ve ders saatleri düzenleme çekmecesi
+        │       ├── ProfileScheduleManager.tsx # Program ve ders saatleri düzenleme çekmecesi
+        │       └── LobbyShareModal.tsx     # 6 haneli lobi davet linki, mobil yerel paylaşım & masa başı QR kartı
         ├── hooks/
         │   └── useLocalStorageState.ts    # SSR & hydration güvenli reaktif LocalStorage kancası
         ├── types/
@@ -280,14 +283,16 @@ pm2 status
 
 ## ⚙️ 6. Çekirdek Modüller, Veri Akışı & Mimari Özeti
 
-Platform 7 ana modülden (6 genel + 1 özel ikili modül) ve bunları destekleyen ayrık servislerden oluşur:
+Platform 8 ana modülden (7 genel + 1 özel ikili modül) ve bunları destekleyen ayrık servislerden oluşur:
 
 ### 1. Ders Programı Görselleştirici (`/`)
-- **İşlev:** USIS ders programı PDF'i veya YTÜ Yabancı Diller Yüksekokulu hazırlık programlarını modern, A4 baskısına ve PNG çıktısına uygun bir haftalık çizelgeye dönüştürür.
+- **İşlev:** USIS ders programı PDF'i veya OBS'nin güncellenen `std_time_table.aspx` (Detay Yazdır > PDF) çıktısını modern, A4 baskısına ve PNG çıktısına uygun bir haftalık akademik çizelgeye dönüştürür.
 - **Akıllı Özellikler:**
-  - PNG çıktısına `pngMetadata.ts` ile program JSON verisi tEXt chunk olarak gömülür. Kullanıcı daha sonra bu görseli yüklediğinde OCR'a gerek kalmadan 0 ms gecikmeyle programı birebir geri yükler.
-  - Hazırlık sınıfları için binlerce satırlık `prepSchedules.json` statik yüklenmez; sadece kullanıcı hazırlık sekmesini seçtiğinde dinamik `import()` ile istemciye çekilir (Lazy Loading).
-  - Tek tıkla programı `/devamsizlik` ve `/agno` sayfalarına aktaran akıllı köprüler sunar.
+  - **Akıllı Hibrit PDF Ayrıştırıcı Motoru:** Hem eski USIS `Report.pdf` hem de OBS'nin yeni HTML yazdırma çıktısı `std_time_table.aspx` desteklenir; koordinat tabanlı ızgara çözümlemesi ile dersler, şubeler, derslikler ve hocalar eksiksiz okunur.
+  - **Katı PDF Doğrulama & Sıfır Sahte Ders:** Ders programı formatına uymayan veya 0 ders içeren belgeler anında `HTTP 400` ile reddedilir. Eski OCR'daki `code = 'Ders'` uydurma fallback'i tamamen kaldırılmıştır.
+  - **Laboratuvar Algılama & Şık İkon:** Sınıfında veya ders adında `LAB` geçen dersler otomatik tespit edilir; hücre üzerinde hafif saydam mavi erlenmayer (`FlaskConical`) ikonu ile vurgulanır.
+  - **PNG tEXt Chunk Metadata:** PNG çıktısına `pngMetadata.ts` ile program JSON verisi tEXt chunk olarak gömülür. Kullanıcı daha sonra bu görseli yüklediğinde OCR'a gerek kalmadan 0 ms gecikmeyle programı birebir geri yükler.
+  - **Sadeleştirilmiş Üst Çubuk:** Gereksiz yer kaplayan "Yazdır" ve "Hazırlık Programı" butonları kaldırılarak odaklanmış eylemler (`PNG Kaydet`, `Yeni Belge`, `AGNO`, `Devamsızlık`) sunulur. Ders adı fontu öne çıkarılarak hiyerarşi dengelenmiştir.
 
 ### 2. Ortak Boş Saatler (`/ortak`)
 - **İşlev:** Birden fazla öğrencinin PDF veya ekran görüntülerini yükleyerek herkesin aynı anda boş olduğu ders saatlerini renkli ısı matrisiyle tespit eder.
@@ -315,23 +320,25 @@ Platform 7 ana modülden (6 genel + 1 özel ikili modül) ve bunları destekleye
 - **Zaman Pencereleri:** 24 saat, 7 gün, 30 gün ve Tüm Zamanlar bazında yüzdelik değişim trendleri (`+/- %`).
 - **Grafik:** Harici kütüphane bağımlılığı olmadan saf Tailwind CSS ile oluşturulmuş responsive aktivite sütun grafiği.
 
-### 7. Özel Duo Canlı Müsaitlik & Program Eşleştirici ("Uygun Musun?")
-- **İşlev:** Atilla ve Neva için gerçek zamanlı ders durumu, kalan ders süresi sayacı, tek tıkla canlı durum bildirimi ve ortak boş saatleri gösteren özel mobil web uygulaması.
-- **Gizlilik:** Public web sitesinde (Header, Footer vb.) hiçbir bağlantı yer almaz; genel kullanıcılardan tamamen gizlidir. Header bileşeni `/uygun-musun*` rotalarında otomatik gizlenir.
-- **Canlı Rotalar:**
-  - 👨‍💻 **Atilla Paneli:** `https://ytudostun.com/uygun-musun-atilla`
-  - 👩‍🎓 **Neva Paneli:** `https://ytudostun.com/uygun-musun-neva`
-  - 👥 **Duo Test / Oda Arayüzü:** `https://ytudostun.com/uygun-musun`
-- **Öne Çıkan Akıllı Özellikler:**
-  - **Kilit Ekranı Web Push Bildirimleri (PWA Push API & VAPID):**
-    - Telefon kilitliyken veya ekran kapalıyken partnere doğrudan sistem bildirimi (Web Push) fırlatılır.
-    - Bir taraf *"⚡ Dersim Erken Bitti / Çıktım"* butonuna bastığında karşı tarafın kilit ekranına `"⚡ Atilla dersten erken çıktı! Atilla şu an müsait! 🎉"` bildirimi düşer.
-    - Bir taraf *"👉 Dürt"* veya *"☕ Kahve"* pingi yolladığında karşı tarafın kilit ekranına `"👉 Atilla seni dürttü!"` bildirimi düşer.
-    - iOS Safari (PWA) ve Android Chrome tam uyumlu; tek dokunuşla bildirim açma ve `"🔔 Test Et"` butonu mevcuttur.
-  - **Canlı Kendi Durum Kartı:** Sayfada partnerin durumunun hemen altında kendi durumunun (hangi derste olduğun, online ders durumu, kalan süre, ilerleme barı veya serbestlik hali) karşı tarafta nasıl göründüğünü gösteren canlı ayna kartı.
-  - **Online Ders Desteği:** `is_online: true` olarak işaretlenen dersler (ör. BLM1991, TDB1031) sistem tarafından otomatik olarak **"Online Ders (Müsait)"** olarak değerlendirilir ve ortak zaman çizelgesinde kırmızı yanıp sönen `REC` kamera rozetiyle gösterilir.
-  - **Erken Çıkış / Durum Bildirimi:** `⚡ Dersim Erken Bitti / Çıktım` butonuyla tek dokunuşta haftalık program geçersiz kılınarak partnerine anında müsaitlik durumu bildirilir.
-  - **Duo Paralel Çizelge:** Günün her saatinde iki kişinin durumunu alt alta senkronize gösteren görsel çizelge matrisi.
+### 7. Çoklu Arkadaş Lobisi & Kampüs Sosyal Müsaitlik Platformu ("Uygun Musun?")
+- **İşlev:** Kampüsteki arkadaş gruplarının (N-Kişi) anlık müsaitliklerini, kimin hangi derste olduğunu, kalan sürelerini ve ortak boş pencerelerini tek ekranda senkronize eden sosyal web uygulaması.
+- **Öne Çıkan Özellikler:**
+  - **Lobi Mimarisi:** 6 haneli benzersiz kod veya davet linkiyle odaya katılma, oda kurma ve yönetici yetkisi (`admin_token`).
+  - **Gelişmiş Davet & Paylaşım (`LobbyShareModal.tsx`):** Mobilde `navigator.share` ile tek dokunuşla WhatsApp/Instagram paylaşımı; masaüstünde pano kopyalama ve masa başı QR kod kartı.
+  - **Grup Nabzı (Group Pulse):** Müsait, Derste ve Online Ders anlık sayıları ile tam kadro ortak boşluk sayaçları.
+  - **Çoklu Paralel Çizelge:** Gruptaki tüm üyelerin ders bloklarının alt alta paralel akışı.
+  - **Gruba Genel Seslen (Broadcast Ping):** Tek tıkla kahve, kütüphane veya yemek çağrısı fırlatma.
+  - **Grup Yönetimi:** Gruptan çıkma, liderlik devri ve lider için odayı kapatma yetkisi.
+  - **Kilit Ekranı Web Push:** Erken çıkışlarda ve grup pinglerinde kilit ekranına bildirim düşmesi.
+  - **Özel İkili (Duo) Rotaları:** Atilla (`/uygun-musun-atilla`) ve Neva (`/uygun-musun-neva`) için özel glassmorphism arayüzleri ve anlık ayna durumu.
+
+### 8. Cihazlar Arası Senkronizasyon & Bulut Yedekleme (Device Sync)
+- **İşlev:** Bilgisayar (Desktop) ile telefon (PWA/Mobil) arasında kullanıcı adı ve şifreye gerek kalmadan programı, notları ve kayıtlı lobileri senkronize eder.
+- **Bileşen:** [DeviceSyncModal.tsx](file:///Users/atillacirak/Documents/Antigravity/Uygun%20musun/frontend/src/components/DeviceSyncModal.tsx)
+- **Akıllı Cihaz Tespiti:**
+  - **Bilgisayarda Açıldığında:** Tek tıkla WhatsApp Web tarzı tek kullanımlık 6 haneli kod ve dinamik SVG **QR Kod** üretir (5 dakika TTL).
+  - **Telefonda Açıldığında:** Telefon kamerasıyla QR okutulduğunda (`/uygun-musun?sync=KOD`) tüm program ve lobiler anında telefona çekilir; alternatif olarak 6 haneli kod girilebilir.
+- **Kalıcı Bulut Yedekleme:** Yeni OBS PDF'inden otomatik okunan Öğrenci Numarası ve 4 haneli PIN şifresi ile veriler SQLite WAL veritabanında tuzlanmış (salted SHA-256) olarak güvenle saklanır ve herhangi bir cihazdan geri çağrılabilir.
 - **Backend Mimarisi:**
   - `backend/uygun_musun_store.py`: SQLite WAL modunda `uygun_musun.db` (`rooms` ve `push_subscriptions` tabloları).
   - VAPID Anahtarları: `backend/vapid_private_key.pem` ve `backend/vapid_public_key.pem`.
@@ -402,6 +409,13 @@ graph LR
 | `POST` | `/api/stats/gano-scenario` | - | Simüle edilen not senaryosu sayısını artırır. |
 | `POST` | `/api/stats/devamsizlik-visit` | - | Devamsızlık sayfası ziyaret sayısını artırır. |
 | `POST` | `/api/stats/planlama-visit` | - | Akademik planlama sayfası ziyaret sayısını artırır. |
+| `POST` | `/api/sync/save` | `{ student_id, pin, payload }` | Öğrenci numarası ve 4 haneli PIN ile buluta program/lobi yedeği kaydeder/günceller. |
+| `POST` | `/api/sync/load` | `{ student_id, pin }` | Öğrenci numarası ve PIN doğrulamasıyla bulut yedeğini döner. |
+| `POST` | `/api/sync/transfer/create` | `{ payload }` | Bilgisayar verisini yükler; 5 dakika ömürlü tek seferlik 6 haneli transfer kodu döner. |
+| `GET` | `/api/sync/transfer/{code}` | `code: str` | Transfer kodunu sorgular, veriyi teslim eder ve güvenlik gereği anında siler (Tek Kullanımlık). |
+| `POST` | `/api/uygun-musun/create-room` | `{ title, creator_profile }` | Çoklu arkadaş lobisi kurar; 6 haneli kod ve admin_token döner. |
+| `POST` | `/api/uygun-musun/join` | `{ room_code, profile }` | Var olan lobiye katılır ve üyeyi odaya kaydeder. |
+| `POST` | `/api/uygun-musun/my-rooms` | `{ room_codes: string[] }` | Kullanıcının kayıtlı lobilerinin canlı üye ve başlık özetlerini döner. |
 
 ---
 

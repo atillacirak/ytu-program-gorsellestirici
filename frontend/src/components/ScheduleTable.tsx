@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, FlaskConical } from 'lucide-react';
 import { getInstructorAbbreviation } from '../utils/instructors';
 
 const CLEAN_OFFICE_PALETTES = [
@@ -275,12 +275,18 @@ export default function ScheduleTable({
 
                           const palette = getCourseColor(it.code, it.instructor);
 
-                          const formatClassroomLabel = (cr: string, isLab: boolean) => {
+                          const isLab = Boolean(
+                            it.is_lab ||
+                            (it.classroom && /lab|laboratuvar/i.test(it.classroom)) ||
+                            (it.name && /laboratuvarı?|lab\b/i.test(it.name)) ||
+                            (it.code && /lab/i.test(it.code))
+                          );
+
+                          const formatClassroomLabel = (cr: string) => {
                             if (!cr) return 'Derslik';
-                            const clean = cr
+                            return cr
                               .replace(/Davutpaşa Diğer/gi, 'D.Paşa Diğer')
                               .replace(/Davutpaşa/gi, 'D.Paşa');
-                            return isLab ? `LAB (${clean})` : clean;
                           };
 
                           const isOnline = Boolean(
@@ -315,16 +321,29 @@ export default function ScheduleTable({
                                 }`}
                               >
                                 <div className="space-y-1 min-w-0">
-                                  {/* Başlık, Şube Bilgisi, Düzenle ve Online Simgeleri */}
+                                  {/* Başlık, Şube Bilgisi, LAB Rozeti ve Online Simgeleri */}
                                   <div className="flex items-center justify-between gap-1 min-w-0">
                                     <span
-                                      style={{ fontSize: `${Math.round(12 * scheduleFontScale)}px` }}
-                                      className={`font-mono font-bold whitespace-nowrap ${palette.accent}`}
+                                      style={{ fontSize: `${Math.round(10.5 * scheduleFontScale)}px` }}
+                                      className={`font-mono font-medium tracking-tight whitespace-nowrap opacity-90 ${palette.accent}`}
                                     >
                                       {it.code} {showSection && it.section ? `(Şb. ${it.section})` : ''}
                                     </span>
 
                                     <div className="flex items-center gap-1 shrink-0">
+                                      {isLab && (
+                                        <span
+                                          className={`inline-flex items-center justify-center p-1 rounded-md border text-[9px] shrink-0 shadow-2xs ${
+                                            isMonochrome
+                                              ? 'bg-white/80 border-slate-300/60 text-slate-700'
+                                              : 'bg-sky-500/[0.08] border-sky-400/20 text-sky-600 backdrop-blur-xs'
+                                          }`}
+                                          title="Laboratuvar Dersi"
+                                        >
+                                          <FlaskConical className="w-3 h-3 text-sky-600/90 shrink-0" />
+                                        </span>
+                                      )}
+
                                       {isEditMode && (
                                         <span
                                           className="p-0.5 rounded bg-amber-400 text-slate-950 text-[9px] shadow-2xs font-bold leading-none"
@@ -356,10 +375,10 @@ export default function ScheduleTable({
                                     </div>
                                   </div>
 
-                                  {/* Ders Adı */}
+                                  {/* Ders Adı (Bold Olmayan, Dengeli Büyütülmüş ve Akıcı Metin) */}
                                   <h4
-                                    style={{ fontSize: `${Math.round(11 * scheduleFontScale)}px`, lineHeight: 1.25 }}
-                                    className={`font-semibold ${palette.text} break-words whitespace-normal leading-snug`}
+                                    style={{ fontSize: `${Math.round(12 * scheduleFontScale)}px`, lineHeight: 1.25 }}
+                                    className={`font-semibold ${palette.text} break-words whitespace-normal leading-snug tracking-tight`}
                                   >
                                     {it.name}
                                   </h4>
@@ -407,8 +426,8 @@ export default function ScheduleTable({
                                 {/* Alt Bilgi: Saat, Derslik Rozeti ve Hoca Kısaltması */}
                                 <div className="pt-1 border-t border-slate-200/80 text-slate-600 space-y-1 min-w-0">
                                   <p
-                                    style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
-                                    className="font-mono text-slate-500 font-medium whitespace-nowrap"
+                                    style={{ fontSize: `${Math.round(9 * scheduleFontScale)}px` }}
+                                    className="font-mono text-slate-500 font-normal whitespace-nowrap"
                                   >
                                     {it.start_time} - {displayEndTime}
                                   </p>
@@ -416,21 +435,26 @@ export default function ScheduleTable({
                                   <div className="flex items-center gap-1 flex-wrap">
                                     {it.classroom ? (
                                       <div
-                                        style={{ fontSize: `${Math.round(10.5 * scheduleFontScale)}px` }}
-                                        className={`inline-block px-1.5 py-0.5 rounded-md border font-mono font-bold shadow-2xs whitespace-nowrap shrink-0 ${palette.badge}`}
+                                        style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
+                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono font-bold shadow-2xs whitespace-nowrap shrink-0 ${
+                                          isLab
+                                            ? 'bg-sky-50/90 border-sky-200 text-sky-950'
+                                            : palette.badge
+                                        }`}
                                       >
+                                        {isLab && <FlaskConical className="w-2.5 h-2.5 text-sky-600 shrink-0" />}
                                         <span>
-                                          {formatClassroomLabel(it.classroom, it.is_lab)}
+                                          {formatClassroomLabel(it.classroom)}
                                         </span>
                                       </div>
                                     ) : null}
 
                                     {showInstructor && it.instructor ? (
                                       <div
-                                        style={{ fontSize: `${Math.round(10.5 * scheduleFontScale)}px` }}
-                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono font-bold shadow-2xs whitespace-nowrap shrink-0 ${palette.badge}`}
+                                        style={{ fontSize: `${Math.round(9.5 * scheduleFontScale)}px` }}
+                                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border font-mono font-medium shadow-2xs whitespace-nowrap shrink-0 ${palette.badge}`}
                                       >
-                                        <span className="text-[9.5px]">👤</span>
+                                        <span className="text-[9px]">👤</span>
                                         <span>{it.instructor.trim()}</span>
                                       </div>
                                     ) : null}

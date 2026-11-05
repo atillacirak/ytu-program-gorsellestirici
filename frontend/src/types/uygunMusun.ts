@@ -28,6 +28,9 @@ export interface CustomStatusOverride {
 }
 
 export interface ProfileSchedulePayload {
+  student_id?: string;
+  student_name?: string;
+  department?: string;
   term?: string;
   title?: string;
   schedule: Record<string, any[]>;

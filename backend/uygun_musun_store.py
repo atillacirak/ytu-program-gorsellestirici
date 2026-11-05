@@ -14,6 +14,7 @@ import random
 import secrets
 import sqlite3
 import threading
+import hashlib
 from typing import Dict, Any, Optional, List
 
 STORE_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uygun_musun.db')
@@ -104,6 +105,31 @@ def _init_db() -> None:
             conn.execute(
                 '''
                 CREATE INDEX IF NOT EXISTS idx_push_subs ON push_subscriptions (room_code, profile_id)
+                '''
+            )
+            conn.execute(
+                '''
+                CREATE TABLE IF NOT EXISTS sync_accounts (
+                    student_id TEXT PRIMARY KEY,
+                    pin_hash TEXT NOT NULL,
+                    payload TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+                '''
+            )
+            conn.execute(
+                '''
+                CREATE TABLE IF NOT EXISTS ephemeral_transfers (
+                    transfer_code TEXT PRIMARY KEY,
+                    payload TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    expires_at INTEGER NOT NULL
+                )
+                '''
+            )
+            conn.execute(
+                '''
+                CREATE INDEX IF NOT EXISTS idx_transfers_expires ON ephemeral_transfers (expires_at)
                 '''
             )
             conn.commit()
@@ -1130,5 +1156,156 @@ def send_push_notification_to_room(
 
     t = threading.Thread(target=_dispatch_push_worker, args=(subs, payload_json), daemon=True)
     t.start()
+
+
+# ---------------------------------------------------------------------------
+# Cihazlar Arası Eşleştirme & Bulut Yedekleme (Device Sync & Ephemeral Transfer)
+# ---------------------------------------------------------------------------
+
+def _hash_sync_pin(student_id: str, pin: str) -> str:
+    clean_id = re.sub(r'\D', '', str(student_id).strip())
+    clean_pin = str(pin).strip()
+    salt = f"ytu_sync_salt_2026_{clean_id}"
+    return hashlib.sha256(f"{salt}_{clean_pin}".encode('utf-8')).hexdigest()
+
+
+def save_sync_account(student_id: str, pin: str, payload: dict) -> dict:
+    clean_id = re.sub(r'\D', '', str(student_id).strip())
+    if len(clean_id) < 5 or len(clean_id) > 12:
+        raise ValueError('Geçersiz öğrenci numarası.')
+
+    clean_pin = str(pin).strip()
+    if len(clean_pin) < 4:
+        raise ValueError('PIN kodu en az 4 haneli olmalıdır.')
+
+    pin_hash = _hash_sync_pin(clean_id, clean_pin)
+    now = int(time.time())
+    payload_json = json.dumps(payload, ensure_ascii=False)
+
+    with _DB_LOCK:
+        conn = _get_conn()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT pin_hash FROM sync_accounts WHERE student_id = ?', (clean_id,))
+            row = cursor.fetchone()
+            if row:
+                if row[0] != pin_hash:
+                    raise PermissionError('Bu öğrenci numarası için girilen PIN hatalı.')
+                cursor.execute(
+                    'UPDATE sync_accounts SET payload = ?, updated_at = ? WHERE student_id = ?',
+                    (payload_json, now, clean_id)
+                )
+            else:
+                cursor.execute(
+                    'INSERT INTO sync_accounts (student_id, pin_hash, payload, updated_at) VALUES (?, ?, ?, ?)',
+                    (clean_id, pin_hash, payload_json, now)
+                )
+            conn.commit()
+            return {
+                'status': 'success',
+                'student_id': clean_id,
+                'updated_at': now,
+                'message': 'Verileriniz başarıyla buluta yedeklendi.'
+            }
+        finally:
+            conn.close()
+
+
+def load_sync_account(student_id: str, pin: str) -> dict:
+    clean_id = re.sub(r'\D', '', str(student_id).strip())
+    clean_pin = str(pin).strip()
+    pin_hash = _hash_sync_pin(clean_id, clean_pin)
+
+    with _DB_LOCK:
+        conn = _get_conn()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('SELECT pin_hash, payload, updated_at FROM sync_accounts WHERE student_id = ?', (clean_id,))
+            row = cursor.fetchone()
+            if not row:
+                raise KeyError('Bu öğrenci numarasına ait yedek bulunamadı.')
+            if row[0] != pin_hash:
+                raise PermissionError('Hatalı PIN kodu.')
+
+            payload = json.loads(row[1])
+            return {
+                'status': 'success',
+                'student_id': clean_id,
+                'payload': payload,
+                'updated_at': row[2]
+            }
+        finally:
+            conn.close()
+
+
+def create_ephemeral_transfer(payload: dict) -> dict:
+    now = int(time.time())
+    expires_at = now + 300  # 5 dakika TTL
+    payload_json = json.dumps(payload, ensure_ascii=False)
+
+    with _DB_LOCK:
+        conn = _get_conn()
+        try:
+            cursor = conn.cursor()
+            # Süresi dolmuş eski kayıtları temizle
+            cursor.execute('DELETE FROM ephemeral_transfers WHERE expires_at < ?', (now,))
+
+            # 6 haneli benzersiz kod üret
+            for _ in range(10):
+                code = f"{random.randint(100000, 999999)}"
+                cursor.execute('SELECT 1 FROM ephemeral_transfers WHERE transfer_code = ?', (code,))
+                if not cursor.fetchone():
+                    break
+            else:
+                code = f"{int(time.time()) % 1000000:06d}"
+
+            cursor.execute(
+                'INSERT INTO ephemeral_transfers (transfer_code, payload, created_at, expires_at) VALUES (?, ?, ?, ?)',
+                (code, payload_json, now, expires_at)
+            )
+            conn.commit()
+            return {
+                'status': 'success',
+                'transfer_code': code,
+                'expires_in': 300,
+                'expires_at': expires_at
+            }
+        finally:
+            conn.close()
+
+
+def claim_ephemeral_transfer(code: str) -> dict:
+    clean_code = re.sub(r'\s+', '', str(code).strip())
+    now = int(time.time())
+
+    with _DB_LOCK:
+        conn = _get_conn()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                'SELECT payload, expires_at FROM ephemeral_transfers WHERE transfer_code = ?',
+                (clean_code,)
+            )
+            row = cursor.fetchone()
+            if not row:
+                raise KeyError('Geçersiz veya süresi dolmuş transfer kodu.')
+
+            if row[1] < now:
+                cursor.execute('DELETE FROM ephemeral_transfers WHERE transfer_code = ?', (clean_code,))
+                conn.commit()
+                raise KeyError('Bu transfer kodunun süresi (5 dk) dolmuş.')
+
+            # Tek seferlik kullanım: Aktarılan veriyi sil
+            cursor.execute('DELETE FROM ephemeral_transfers WHERE transfer_code = ?', (clean_code,))
+            conn.commit()
+
+            payload = json.loads(row[0])
+            return {
+                'status': 'success',
+                'payload': payload
+            }
+        finally:
+            conn.close()
+
 
 

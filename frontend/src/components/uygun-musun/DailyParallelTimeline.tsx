@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Calendar, Coffee, MapPin, Zap, Video } from 'lucide-react';
+import { Calendar, Coffee, MapPin, Zap, Video, FlaskConical } from 'lucide-react';
 import { UygunMusunProfile } from '../../types/uygunMusun';
 import {
   WEEKDAYS_TR,
@@ -283,8 +283,16 @@ export default function DailyParallelTimeline({
                                     {slot.code}
                                   </span>
                                   {slot.classroom && (
-                                    <span className="text-[10px] font-bold text-slate-600 bg-white/80 px-1.5 py-0.2 rounded inline-flex items-center gap-0.5 truncate max-w-[90px]">
-                                      <MapPin className="w-2.5 h-2.5 shrink-0" />
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded inline-flex items-center gap-0.5 truncate max-w-[95px] ${
+                                      (slot.is_lab || /lab/i.test(slot.classroom || '') || /lab/i.test(slot.name || ''))
+                                        ? 'bg-sky-500/[0.08] text-sky-950 border border-sky-300/30'
+                                        : 'text-slate-600 bg-white/80 border'
+                                    }`}>
+                                      {(slot.is_lab || /lab/i.test(slot.classroom || '') || /lab/i.test(slot.name || '')) ? (
+                                        <FlaskConical className="w-2.5 h-2.5 text-sky-600 shrink-0" />
+                                      ) : (
+                                        <MapPin className="w-2.5 h-2.5 shrink-0" />
+                                      )}
                                       {slot.classroom}
                                     </span>
                                   )}

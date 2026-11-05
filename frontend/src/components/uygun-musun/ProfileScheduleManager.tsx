@@ -95,6 +95,9 @@ export default function ProfileScheduleManager({
     }
 
     return {
+      student_id: parsedData.student_id,
+      student_name: parsedData.student_name,
+      department: parsedData.department,
       term: parsedData.term || 'Aktif Dönem',
       title: parsedData.title || file.name,
       schedule: parsedData.schedule,

@@ -70,6 +70,7 @@ import {
 import StatusCheckInSheet from '../../components/uygun-musun/StatusCheckInSheet';
 import DailyParallelTimeline from '../../components/uygun-musun/DailyParallelTimeline';
 import LobbyShareModal from '../../components/uygun-musun/LobbyShareModal';
+import DeviceSyncModal from '../../components/DeviceSyncModal';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -168,6 +169,7 @@ export default function UygunMusunLobbyPage() {
   const [pushPermission, setPushPermission] = useState<string>('default');
   const [pushLoading, setPushLoading] = useState(false);
   const [iosNeedsHomeScreen, setIosNeedsHomeScreen] = useState(false);
+  const [isDeviceSyncOpen, setIsDeviceSyncOpen] = useState(false);
 
   // Canlı Saat & Simülatör State'i
   const [nowDate, setNowDate] = useState<Date>(() => new Date());
@@ -238,6 +240,9 @@ export default function UygunMusunLobbyPage() {
     }
 
     return {
+      student_id: parsedData.student_id,
+      student_name: parsedData.student_name,
+      department: parsedData.department,
       term: parsedData.term || 'Aktif Dönem',
       title: parsedData.title || file.name,
       schedule: parsedData.schedule,
@@ -245,10 +250,46 @@ export default function UygunMusunLobbyPage() {
     };
   };
 
-  // URL ?join=KOD veya ?oda=KOD kontrolü ve İlk Yükleme
+  // URL ?join=KOD, ?oda=KOD veya ?sync=KOD kontrolü ve İlk Yükleme
   useEffect(() => {
     if (!isMounted || typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
+    const syncParam = (params.get('sync') || '').trim();
+
+    if (syncParam) {
+      fetch(`${API_BASE}/api/sync/transfer/${encodeURIComponent(syncParam)}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject()))
+        .then((d) => {
+          if (d && d.payload) {
+            if (d.payload.schedule) {
+              const mainData = {
+                term: d.payload.term || 'Aktif Dönem',
+                student_id: d.payload.student_id || '',
+                student_name: d.payload.student_name || '',
+                department: d.payload.department || '',
+                schedule: d.payload.schedule,
+                courses_summary: d.payload.courses_summary || [],
+              };
+              localStorage.setItem('ytu_schedule_data', JSON.stringify(mainData));
+            }
+            if (d.payload.saved_lobbies && Array.isArray(d.payload.saved_lobbies)) {
+              try {
+                const existingRaw = localStorage.getItem('ytu_saved_lobbies_v1');
+                const existing = existingRaw ? JSON.parse(existingRaw) : [];
+                const mergedMap = new Map();
+                existing.forEach((l: any) => mergedMap.set(l.room_code, l));
+                d.payload.saved_lobbies.forEach((l: any) => mergedMap.set(l.room_code, l));
+                localStorage.setItem('ytu_saved_lobbies_v1', JSON.stringify(Array.from(mergedMap.values())));
+              } catch {}
+            }
+            showToast(`Cihaz eşlendi! ${d.payload.student_name || 'Program'} başarıyla aktarıldı 🎉`);
+            window.history.replaceState({}, '', window.location.pathname);
+            setTimeout(() => window.location.reload(), 1200);
+          }
+        })
+        .catch(() => {});
+    }
+
     const joinParam = (params.get('join') || params.get('oda') || '').trim().toLowerCase();
 
     if (joinParam && joinParam !== 'atilla-neva') {
@@ -1127,16 +1168,27 @@ export default function UygunMusunLobbyPage() {
                     Kayıtlı Lobilerim ({savedLobbies.length})
                   </h3>
                 </div>
-                {savedLobbies.length > 0 && (
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={fetchMyLobbiesSummary}
-                    className="text-xs font-extrabold text-[#0c3f79] hover:underline flex items-center gap-1 cursor-pointer"
+                    onClick={() => setIsDeviceSyncOpen(true)}
+                    className="text-xs font-bold text-[#0c3f79] hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Bilgisayar veya telefonla programı eşle"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Yenile</span>
+                    <Smartphone className="w-3.5 h-3.5 text-[#0c3f79]" />
+                    <span>Cihaz Eşle</span>
                   </button>
-                )}
+                  {savedLobbies.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={fetchMyLobbiesSummary}
+                      className="text-xs font-extrabold text-[#0c3f79] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Yenile</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {savedLobbies.length === 0 ? (
@@ -1506,7 +1558,10 @@ export default function UygunMusunLobbyPage() {
                       try {
                         const sched = await parseScheduleFile(f);
                         setWizardSchedule(sched);
-                        showToast('Ders programın başarıyla okundu! ✅');
+                        if (sched.student_name && (!wizardName || wizardName === 'Ben' || wizardName.trim() === '')) {
+                          setWizardName(sched.student_name);
+                        }
+                        showToast(`Ders programın okundu: ${sched.student_name || 'Başarılı'} ✅`);
                       } catch (err: any) {
                         setWizardError(err.message || 'Dosya okunamadı.');
                       } finally {
@@ -2802,6 +2857,12 @@ export default function UygunMusunLobbyPage() {
         onClose={() => setShareModalOpen(false)}
         roomCode={activeRoomCode}
         roomTitle={currentRoomTitle}
+      />
+
+      {/* Cihaz Senkronizasyonu & Yedekleme Modalı */}
+      <DeviceSyncModal
+        isOpen={isDeviceSyncOpen}
+        onClose={() => setIsDeviceSyncOpen(false)}
       />
 
       {/* Kendi Durum / Konum Güncelleme Çekmecesi */}

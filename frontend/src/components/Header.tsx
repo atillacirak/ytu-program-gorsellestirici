@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio } from 'lucide-react';
+import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio, Smartphone } from 'lucide-react';
 import WhatsNewModal from './WhatsNewModal';
+import DeviceSyncModal from './DeviceSyncModal';
 
 const WHATS_NEW_STORAGE_KEY = 'ytudostun_whats_new_v2_4_seen';
 const PWA_ACTIVE_TAB_KEY = 'ytu_pwa_active_tab';
@@ -26,6 +27,7 @@ export default function Header() {
   const router = useRouter();
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const [hasUnseenNews, setHasUnseenNews] = useState(false);
+  const [isDeviceSyncOpen, setIsDeviceSyncOpen] = useState(false);
 
   // Mobil PWA (Ana Ekrana Ekle) için aktif sekmeyi ve manifest start_url'ini senkronize et
   useEffect(() => {
@@ -253,6 +255,16 @@ export default function Header() {
 
             <button
               type="button"
+              onClick={() => setIsDeviceSyncOpen(true)}
+              className="relative px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/90 border border-slate-200/90 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
+              title="Bilgisayar ve telefon arasında programı eşle"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-[#0c3f79]" />
+              <span className="hidden sm:inline">Cihaz Eşle</span>
+            </button>
+
+            <button
+              type="button"
               onClick={handleOpenWhatsNew}
               className="relative px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200/90 text-amber-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-2xs"
               title="Siteye eklenen yeni özellikleri gör"
@@ -268,6 +280,7 @@ export default function Header() {
       </header>
 
       <WhatsNewModal isOpen={isWhatsNewOpen} onClose={handleCloseWhatsNew} />
+      <DeviceSyncModal isOpen={isDeviceSyncOpen} onClose={() => setIsDeviceSyncOpen(false)} />
     </>
   );
 }

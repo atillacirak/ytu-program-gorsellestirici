@@ -287,7 +287,8 @@ export async function parseScheduleImageWithOcr(imageFile: File): Promise<Parsed
 
         const cardText = card.words.map(w => w.text).join(' ');
         const cm = COURSE_CODE_RE.exec(cardText);
-        const code = cm ? cm[1].replace(/\s+/g, '').toUpperCase() : 'Ders';
+        if (!cm) return;
+        const code = cm[1].replace(/\s+/g, '').toUpperCase();
 
         schedule[day].push({
           section: '1',
