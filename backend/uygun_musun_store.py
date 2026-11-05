@@ -755,12 +755,43 @@ def update_profile_status(
 
 def delete_profile(room_code: str, profile_id: str) -> Dict[str, Any]:
     code = _sanitize_room_code(room_code)
-    room = get_room(code)
+    if code == 'atilla-neva':
+        room = get_room(code)
+        profiles = room.get('profiles', [])
+        if len(profiles) <= 2:
+            raise ValueError('Bu özel odada en az 2 profil kalmalıdır.')
+        room['profiles'] = [p for p in profiles if p.get('id') != profile_id]
+        return save_room(code, room)
+
+    room = get_room(code, create_if_missing=False)
     profiles = room.get('profiles', [])
-    min_profiles = 2 if code == 'atilla-neva' else 1
-    if len(profiles) <= min_profiles:
-        raise ValueError(f'Lobide en az {min_profiles} profil kalmalıdır.')
-    room['profiles'] = [p for p in profiles if p.get('id') != profile_id]
+    remaining = [p for p in profiles if p.get('id') != profile_id]
+
+    # Eğer lobide kimse kalmadıysa lobiyi tamamen sil
+    if len(remaining) == 0:
+        with _DB_LOCK:
+            conn = _get_conn()
+            try:
+                conn.execute('DELETE FROM rooms WHERE room_code = ?', (code,))
+                conn.execute('DELETE FROM room_members WHERE room_code = ?', (code,))
+                conn.execute('DELETE FROM push_subscriptions WHERE room_code = ?', (code,))
+                conn.commit()
+            finally:
+                conn.close()
+        return {'room_code': code, 'deleted': True, 'profiles': []}
+
+    # Eğer ayrılan kişi liderse (owner), sıradaki ilk üyeyi otomatik yeni lider yap
+    was_owner = (
+        room.get('owner_profile_id') == profile_id
+        or any(p.get('id') == profile_id and p.get('role') == 'owner' for p in profiles)
+    )
+    new_owner_id = None
+    if was_owner or not any(p.get('role') == 'owner' for p in remaining):
+        remaining[0]['role'] = 'owner'
+        new_owner_id = remaining[0].get('id')
+        room['owner_profile_id'] = new_owner_id
+
+    room['profiles'] = remaining
     with _DB_LOCK:
         conn = _get_conn()
         try:
@@ -772,10 +803,84 @@ def delete_profile(room_code: str, profile_id: str) -> Dict[str, Any]:
                 'DELETE FROM push_subscriptions WHERE room_code = ? AND profile_id = ?',
                 (code, profile_id),
             )
+            if new_owner_id:
+                conn.execute(
+                    "UPDATE room_members SET role = 'owner' WHERE room_code = ? AND profile_id = ?",
+                    (code, new_owner_id),
+                )
             conn.commit()
         finally:
             conn.close()
     return save_room(code, room)
+
+
+def delete_room(
+    room_code: str,
+    admin_token: Optional[str] = None,
+    requester_profile_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    code = _sanitize_room_code(room_code)
+    if code == 'atilla-neva':
+        raise ValueError('Bu özel oda kapatılamaz.')
+
+    room = get_room(code, create_if_missing=False)
+    profiles = room.get('profiles', [])
+    owner_id = (
+        room.get('owner_profile_id')
+        or next((p.get('id') for p in profiles if p.get('role') == 'owner'), None)
+        or (profiles[0].get('id') if profiles else None)
+    )
+
+    with _DB_LOCK:
+        conn = _get_conn()
+        try:
+            row = conn.execute(
+                'SELECT admin_token, title FROM rooms WHERE room_code = ?',
+                (code,),
+            ).fetchone()
+            if not row:
+                raise KeyError(f'Lobi bulunamadı: {code}')
+            db_token = row[0] or ''
+            room_title = row[1] or room.get('title') or f'Lobi #{code.upper()}'
+
+            # Yetki kontrolü: admin_token eşleşmeli VEYA requester_profile_id kurucu olmalı
+            is_authorized = False
+            if admin_token and db_token and secrets.compare_digest(str(admin_token), str(db_token)):
+                is_authorized = True
+            elif requester_profile_id and owner_id and str(requester_profile_id) == str(owner_id):
+                is_authorized = True
+            elif len(profiles) <= 1:
+                is_authorized = True
+
+            if not is_authorized:
+                raise PermissionError('Sadece grup lideri (kurucu) lobiyi tamamen kapatabilir.')
+        finally:
+            conn.close()
+
+    # Lobideki diğer üyelere bildirim gönder (silmeden önce)
+    if requester_profile_id:
+        try:
+            send_push_notification_to_room(
+                code,
+                requester_profile_id,
+                '🗑️ Lobi Kapatıldı',
+                f"'{room_title}' lobisi grup lideri tarafından kapatıldı.",
+                '/uygun-musun',
+            )
+        except Exception:
+            pass
+
+    with _DB_LOCK:
+        conn = _get_conn()
+        try:
+            conn.execute('DELETE FROM rooms WHERE room_code = ?', (code,))
+            conn.execute('DELETE FROM room_members WHERE room_code = ?', (code,))
+            conn.execute('DELETE FROM push_subscriptions WHERE room_code = ?', (code,))
+            conn.commit()
+        finally:
+            conn.close()
+
+    return {'status': 'deleted', 'room_code': code, 'title': room_title}
 
 
 def send_ping(

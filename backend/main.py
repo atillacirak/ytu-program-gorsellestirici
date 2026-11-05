@@ -1216,10 +1216,34 @@ def update_uygun_musun_status(
 def delete_uygun_musun_profile(room_code: str, profile_id: str):
     try:
         return uygun_musun_store.delete_profile(room_code, profile_id)
+    except KeyError as ke:
+        raise HTTPException(status_code=404, detail=str(ke))
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Profil silinemedi: {str(e)}')
+
+
+@app.delete('/api/uygun-musun/room/{room_code}')
+def delete_uygun_musun_room(
+    room_code: str,
+    profile_id: Optional[str] = None,
+    admin_token: Optional[str] = None,
+):
+    try:
+        return uygun_musun_store.delete_room(
+            room_code,
+            admin_token=admin_token,
+            requester_profile_id=profile_id,
+        )
+    except KeyError as ke:
+        raise HTTPException(status_code=404, detail=str(ke))
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Lobi kapatılamadı: {str(e)}')
 
 
 @app.post('/api/uygun-musun/room/{room_code}/ping')

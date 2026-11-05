@@ -34,6 +34,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Smartphone,
+  LogOut,
+  Crown,
   X,
 } from 'lucide-react';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
@@ -345,10 +347,34 @@ export default function UygunMusunLobbyPage() {
     if (!code) return;
     try {
       setSyncing(true);
-      const res = await fetch(`${API_BASE}/api/uygun-musun/room/${encodeURIComponent(code)}`);
+      const res = await fetch(
+        `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(code)}?strict=true`
+      );
+      if (res.status === 404) {
+        setSavedLobbies((prev) => prev.filter((x) => x.room_code !== code));
+        setActiveRoomCode('');
+        setRoomState(null);
+        setViewMode('hub');
+        showToast('Bu lobi grup lideri tarafından kapatıldı.');
+        return;
+      }
       if (!res.ok) return;
       const data: UygunMusunRoomState = await res.json();
       if (data && Array.isArray(data.profiles)) {
+        const savedEntry = savedLobbies.find((l) => l.room_code === code);
+        if (
+          savedEntry?.my_profile_id &&
+          data.profiles.length > 0 &&
+          !data.profiles.some((p) => p.id === savedEntry.my_profile_id)
+        ) {
+          setSavedLobbies((prev) => prev.filter((x) => x.room_code !== code));
+          setActiveRoomCode('');
+          setRoomState(null);
+          setViewMode('hub');
+          showToast('Gruptan çıkarıldın veya kaydın silindi.');
+          return;
+        }
+
         setRoomState(data);
         if (data.title) {
           setSavedLobbies((prev) =>
@@ -365,7 +391,7 @@ export default function UygunMusunLobbyPage() {
     } finally {
       setSyncing(false);
     }
-  }, [setSavedLobbies]);
+  }, [savedLobbies, setSavedLobbies]);
 
   useEffect(() => {
     if (!isMounted || viewMode !== 'room' || !activeRoomCode) return;
@@ -423,6 +449,23 @@ export default function UygunMusunLobbyPage() {
     }
     return profiles[0];
   }, [profiles, activeSavedEntry]);
+
+  // Grup Lideri (Kurucu) Tespiti
+  const ownerProfileId = useMemo(() => {
+    if (roomState?.owner_profile_id) return roomState.owner_profile_id;
+    const explicitOwner = profiles.find((p) => p.role === 'owner');
+    if (explicitOwner) return explicitOwner.id;
+    return profiles[0]?.id || null;
+  }, [roomState, profiles]);
+
+  const isRoomLeader = useMemo(() => {
+    if (!myProfile) return Boolean(activeSavedEntry?.admin_token);
+    return (
+      myProfile.id === ownerProfileId ||
+      myProfile.role === 'owner' ||
+      Boolean(activeSavedEntry?.admin_token)
+    );
+  }, [myProfile, ownerProfileId, activeSavedEntry]);
 
   // Efektif Gün & Dakika
   const realDayName = getTurkishDayNameFromDate(nowDate);
@@ -874,6 +917,93 @@ export default function UygunMusunLobbyPage() {
     }
   };
 
+  // Gruptan Çık (Kendi Profilimi Lobiden Sil ve Ayrıl)
+  const handleLeaveRoom = async (targetCode?: string, targetProfileId?: string, targetTitle?: string) => {
+    const code = targetCode || activeRoomCode;
+    const pid = targetProfileId || myProfile?.id;
+    const rTitle = targetTitle || currentRoomTitle;
+    if (!code) return;
+
+    const isCurrentActive = code === activeRoomCode;
+    const isSoleMember = isCurrentActive && profiles.length <= 1;
+    const nextLeader = isCurrentActive
+      ? profiles.find((p) => p.id !== pid)?.name
+      : undefined;
+
+    const confirmMsg = isSoleMember
+      ? `"${rTitle}" lobisindeki tek üye sensin. Çıkarsan lobi tamamen kapatılacak. Onaylıyor musun?`
+      : isCurrentActive && isRoomLeader && nextLeader
+      ? `"${rTitle}" grubundan çıkmak istiyor musun? Grup liderliği otomatik olarak "${nextLeader}" adlı üyeye devredilecek.`
+      : `"${rTitle}" grubundan çıkmak istediğine emin misin?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    if (pid) {
+      try {
+        await fetch(
+          `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(
+            code
+          )}/profile/${encodeURIComponent(pid)}`,
+          { method: 'DELETE' }
+        );
+      } catch {
+        // Offline olsa da yerel listeden kaldır
+      }
+    }
+
+    setSavedLobbies((prev) => prev.filter((x) => x.room_code !== code));
+    if (activeRoomCode === code) {
+      setActiveRoomCode('');
+      setRoomState(null);
+      setViewMode('hub');
+    }
+    showToast(`"${rTitle}" grubundan ayrıldın.`);
+  };
+
+  // Lider Olarak Grubu Tamamen Kapat (Tüm Lobiyi Sil)
+  const handleCloseRoom = async (targetCode?: string, targetTitle?: string) => {
+    const code = targetCode || activeRoomCode;
+    const rTitle = targetTitle || currentRoomTitle;
+    if (!code) return;
+
+    const savedItem = savedLobbies.find((x) => x.room_code === code);
+    const pid = (code === activeRoomCode ? myProfile?.id : savedItem?.my_profile_id) || '';
+    const token = savedItem?.admin_token || '';
+
+    if (
+      !window.confirm(
+        `👑 Grup Lideri olarak "${rTitle}" lobisini tamamen kapatmak istiyor musun?\n\nBu işlem geri alınamaz ve tüm üyeler için grup silinir.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const qs = new URLSearchParams();
+      if (pid) qs.set('profile_id', pid);
+      if (token) qs.set('admin_token', token);
+      const res = await fetch(
+        `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(code)}?${qs.toString()}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok && res.status === 403) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.detail || 'Sadece grup lideri lobiyi kapatabilir.');
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
+    setSavedLobbies((prev) => prev.filter((x) => x.room_code !== code));
+    if (activeRoomCode === code) {
+      setActiveRoomCode('');
+      setRoomState(null);
+      setViewMode('hub');
+    }
+    showToast(`🗑️ "${rTitle}" grubu tamamen kapatıldı.`);
+  };
+
   const currentRoomTitle =
     roomState?.title || activeSavedEntry?.title || `Lobi #${activeRoomCode.toUpperCase()}`;
   const myLiveStatus = myProfile ? liveStatuses[myProfile.id] : null;
@@ -999,34 +1129,50 @@ export default function UygunMusunLobbyPage() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 text-[#0c3f79] border border-slate-200">
                                 #{item.room_code.toUpperCase()}
                               </span>
                               <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                                 {memberCount} Üye
                               </span>
+                              {item.admin_token && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-900 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
+                                  <Crown className="w-3 h-3 text-amber-600" />
+                                  <span>Lider</span>
+                                </span>
+                              )}
                             </div>
                             <h4 className="mt-1.5 text-base font-black text-slate-900 truncate">
                               {title}
                             </h4>
                           </div>
 
-                          <button
-                            type="button"
-                            title="Lobiyi Listemden Kaldır"
-                            onClick={() => {
-                              setSavedLobbies((prev) =>
-                                prev.filter((x) => x.room_code !== item.room_code)
-                              );
-                              if (activeRoomCode === item.room_code) {
-                                setActiveRoomCode('');
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {item.admin_token ? (
+                              <button
+                                type="button"
+                                title="Grubu Tamamen Kapat"
+                                onClick={() => handleCloseRoom(item.room_code, title)}
+                                className="px-2 py-1 rounded-lg text-[11px] font-extrabold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 flex items-center gap-1 transition-colors cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Grubu Kapat</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                title="Gruptan Çık"
+                                onClick={() =>
+                                  handleLeaveRoom(item.room_code, item.my_profile_id, title)
+                                }
+                                className="px-2 py-1 rounded-lg text-[11px] font-extrabold text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 flex items-center gap-1 transition-colors cursor-pointer"
+                              >
+                                <LogOut className="w-3.5 h-3.5" />
+                                <span>Çık</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* Üye Avatarları */}
@@ -1432,6 +1578,13 @@ export default function UygunMusunLobbyPage() {
                       <span>#{activeRoomCode.toUpperCase()}</span>
                       <Copy className="w-3 h-3 text-slate-400" />
                     </button>
+
+                    {isRoomLeader && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-900 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-lg">
+                        <Crown className="w-3 h-3 text-amber-600" />
+                        <span>Grup Lideri</span>
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-[11px] text-slate-500 font-semibold">
@@ -1441,8 +1594,8 @@ export default function UygunMusunLobbyPage() {
                 </div>
               </div>
 
-              {/* Sağ Paylaşım & Davet Aksiyonları */}
-              <div className="flex items-center gap-2">
+              {/* Sağ Paylaşım, Davet & Ayrılma Aksiyonları */}
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => handleQuickNativeShare(activeRoomCode, currentRoomTitle)}
@@ -1460,6 +1613,42 @@ export default function UygunMusunLobbyPage() {
                   <QrCode className="w-3.5 h-3.5 text-amber-700" />
                   <span className="hidden sm:inline">QR &amp; Davet</span>
                 </button>
+
+                {/* Gruptan Çık / Liderse Grubu Kapat Butonları */}
+                {isRoomLeader ? (
+                  <>
+                    {profiles.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleLeaveRoom()}
+                        title="Gruptan çık ve liderliği sıradaki üyeye devret"
+                        className="px-2.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-extrabold flex items-center gap-1 transition-all cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Gruptan Çık</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleCloseRoom()}
+                      title="Grup lideri olarak bu lobiyi herkes için tamamen kapat"
+                      className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Grubu Kapat</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleLeaveRoom()}
+                    title="Bu lobiden ayrıl"
+                    className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Gruptan Çık</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1979,6 +2168,12 @@ export default function UygunMusunLobbyPage() {
                                         Sen
                                       </span>
                                     )}
+                                    {(member.id === ownerProfileId || member.role === 'owner') && (
+                                      <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-900 border border-amber-200">
+                                        <Crown className="w-2.5 h-2.5 text-amber-600" />
+                                        <span>Lider</span>
+                                      </span>
+                                    )}
                                   </div>
                                   <p className="text-[11px] font-bold text-slate-500 truncate">
                                     {status?.headline}
@@ -2349,6 +2544,7 @@ export default function UygunMusunLobbyPage() {
                   <div className="divide-y divide-slate-100">
                     {profiles.map((p) => {
                       const isMe = myProfile?.id === p.id;
+                      const isMemberOwner = p.id === ownerProfileId || p.role === 'owner';
                       const hasSched = Boolean(p.schedule && p.schedule.schedule);
                       return (
                         <div
@@ -2360,13 +2556,19 @@ export default function UygunMusunLobbyPage() {
                               {p.avatar}
                             </span>
                             <div>
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="text-sm font-black text-slate-900">
                                   {p.name}
                                 </span>
                                 {isMe && (
                                   <span className="text-[10px] font-black px-2 py-0.2 rounded-full bg-blue-100 text-[#0c3f79]">
                                     Bu Sensin
+                                  </span>
+                                )}
+                                {isMemberOwner && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.2 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                                    <Crown className="w-3 h-3 text-amber-600" />
+                                    <span>Grup Lideri</span>
                                   </span>
                                 )}
                               </div>
@@ -2396,11 +2598,12 @@ export default function UygunMusunLobbyPage() {
                               </button>
                             )}
 
-                            {profiles.length > 1 && (
+                            {/* Lider diğer üyeleri çıkarabilir */}
+                            {!isMe && isRoomLeader && (
                               <button
                                 type="button"
                                 onClick={async () => {
-                                  if (!confirm(`${p.name} profilini lobiden çıkarmak istiyor musun?`))
+                                  if (!window.confirm(`${p.name} adlı üyeyi gruptan çıkarmak istiyor musun?`))
                                     return;
                                   try {
                                     const res = await fetch(
@@ -2411,33 +2614,74 @@ export default function UygunMusunLobbyPage() {
                                     );
                                     if (res.ok) {
                                       const data = await res.json();
-                                      if (isMe) {
-                                        setSavedLobbies((prev) =>
-                                          prev.filter((x) => x.room_code !== activeRoomCode)
-                                        );
-                                        setActiveRoomCode('');
-                                        setRoomState(null);
-                                        setViewMode('hub');
-                                        showToast('Lobiden ayrıldın.');
-                                      } else {
-                                        setRoomState(data);
-                                        showToast(`${p.name} lobiden çıkarıldı.`);
-                                      }
+                                      setRoomState(data);
+                                      showToast(`${p.name} gruptan çıkarıldı.`);
                                     }
                                   } catch {
                                     // ignore
                                   }
                                 }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
-                                title={isMe ? 'Lobiden Ayrıl' : 'Üyeyi Çıkar'}
+                                className="px-2.5 py-1.5 rounded-xl text-xs font-extrabold text-rose-600 hover:bg-rose-50 border border-rose-200 flex items-center gap-1 cursor-pointer"
+                                title="Üyeyi Gruptan Çıkar"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Çıkar</span>
                               </button>
                             )}
                           </div>
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* Gruptan Çık & Liderse Grubu Kapat Yönetim Kartı */}
+                <div className="rounded-2xl border border-rose-200/80 bg-rose-50/40 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                      {isRoomLeader ? (
+                        <>
+                          <Crown className="w-4 h-4 text-amber-600" />
+                          <span>Grup Lideri Yönetimi &amp; Ayrılma</span>
+                        </>
+                      ) : (
+                        <>
+                          <LogOut className="w-4 h-4 text-rose-600" />
+                          <span>Gruptan Ayrıl</span>
+                        </>
+                      )}
+                    </h3>
+                    <p className="text-xs text-slate-600">
+                      {isRoomLeader
+                        ? profiles.length > 1
+                          ? 'Gruptan çıkarsan liderlik sıradaki üyeye devredilir. Grubu kapatırsan lobi tüm üyeler için kalıcı olarak silinir.'
+                          : 'Bu gruptaki tek üye sensin. Grubu kapattığında lobi tamamen silinir.'
+                        : 'Gruptan çıktığında ders programın ve profilin bu lobiden kaldırılır.'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+                    {(!isRoomLeader || profiles.length > 1) && (
+                      <button
+                        type="button"
+                        onClick={() => handleLeaveRoom()}
+                        className="px-4 py-2.5 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>{isRoomLeader ? 'Gruptan Çık (Devret)' : 'Gruptan Çık'}</span>
+                      </button>
+                    )}
+
+                    {isRoomLeader && (
+                      <button
+                        type="button"
+                        onClick={() => handleCloseRoom()}
+                        className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-black flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Grubu Tamamen Kapat</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
