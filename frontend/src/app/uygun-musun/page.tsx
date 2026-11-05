@@ -311,11 +311,17 @@ export default function UygunMusunLobbyPage() {
     };
   }, [wizardJoinCode, viewMode]);
 
+  const savedLobbiesRef = useRef<SavedLobbyItem[]>(savedLobbies);
+  useEffect(() => {
+    savedLobbiesRef.current = savedLobbies;
+  }, [savedLobbies]);
+
   // "Lobilerim" özetlerini sunucudan çek
   const fetchMyLobbiesSummary = useCallback(async () => {
-    if (!savedLobbies.length) return;
+    const currentSaved = savedLobbiesRef.current;
+    if (!currentSaved.length) return;
     try {
-      const codes = savedLobbies.map((l) => l.room_code);
+      const codes = currentSaved.map((l) => l.room_code);
       const res = await fetch(`${API_BASE}/api/uygun-musun/my-rooms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -329,11 +335,28 @@ export default function UygunMusunLobbyPage() {
           map[r.room_code] = r;
         }
         setLobbySummaries(map);
+
+        // Sunucuda kapatılmış veya kullanıcının çıkarıldığı lobileri yerel listeden temizle
+        setSavedLobbies((prev) => {
+          const filtered = prev.filter((item) => {
+            const roomSum = map[item.room_code];
+            if (!roomSum) return false;
+            if (
+              item.my_profile_id &&
+              roomSum.members.length > 0 &&
+              !roomSum.members.some((m) => m.id === item.my_profile_id)
+            ) {
+              return false;
+            }
+            return true;
+          });
+          return filtered.length === prev.length ? prev : filtered;
+        });
       }
     } catch {
       // Offline fallback
     }
-  }, [savedLobbies]);
+  }, [setSavedLobbies]);
 
   useEffect(() => {
     if (!isMounted) return;
@@ -361,7 +384,7 @@ export default function UygunMusunLobbyPage() {
       if (!res.ok) return;
       const data: UygunMusunRoomState = await res.json();
       if (data && Array.isArray(data.profiles)) {
-        const savedEntry = savedLobbies.find((l) => l.room_code === code);
+        const savedEntry = savedLobbiesRef.current.find((l) => l.room_code === code);
         if (
           savedEntry?.my_profile_id &&
           data.profiles.length > 0 &&
@@ -377,13 +400,16 @@ export default function UygunMusunLobbyPage() {
 
         setRoomState(data);
         if (data.title) {
-          setSavedLobbies((prev) =>
-            prev.map((item) =>
+          setSavedLobbies((prev) => {
+            if (!prev.some((item) => item.room_code === code && item.title !== data.title)) {
+              return prev;
+            }
+            return prev.map((item) =>
               item.room_code === code && item.title !== data.title
                 ? { ...item, title: data.title! }
                 : item
-            )
-          );
+            );
+          });
         }
       }
     } catch {
@@ -391,7 +417,7 @@ export default function UygunMusunLobbyPage() {
     } finally {
       setSyncing(false);
     }
-  }, [savedLobbies, setSavedLobbies]);
+  }, [setSavedLobbies]);
 
   useEffect(() => {
     if (!isMounted || viewMode !== 'room' || !activeRoomCode) return;
@@ -1121,6 +1147,12 @@ export default function UygunMusunLobbyPage() {
                     const title = summary?.title || item.title;
                     const memberCount = summary?.member_count ?? 1;
                     const members = summary?.members || [];
+                    const isHubCardLeader = Boolean(
+                      item.admin_token ||
+                        (summary?.owner_profile_id &&
+                          item.my_profile_id &&
+                          summary.owner_profile_id === item.my_profile_id)
+                    );
 
                     return (
                       <div
@@ -1136,7 +1168,7 @@ export default function UygunMusunLobbyPage() {
                               <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                                 {memberCount} Üye
                               </span>
-                              {item.admin_token && (
+                              {isHubCardLeader && (
                                 <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-900 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
                                   <Crown className="w-3 h-3 text-amber-600" />
                                   <span>Lider</span>
@@ -1149,16 +1181,31 @@ export default function UygunMusunLobbyPage() {
                           </div>
 
                           <div className="flex items-center gap-1 shrink-0">
-                            {item.admin_token ? (
-                              <button
-                                type="button"
-                                title="Grubu Tamamen Kapat"
-                                onClick={() => handleCloseRoom(item.room_code, title)}
-                                className="px-2 py-1 rounded-lg text-[11px] font-extrabold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 flex items-center gap-1 transition-colors cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Grubu Kapat</span>
-                              </button>
+                            {isHubCardLeader ? (
+                              <>
+                                {memberCount > 1 && (
+                                  <button
+                                    type="button"
+                                    title="Gruptan Çık (Liderliği Devret)"
+                                    onClick={() =>
+                                      handleLeaveRoom(item.room_code, item.my_profile_id, title)
+                                    }
+                                    className="px-2 py-1 rounded-lg text-[11px] font-extrabold text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center gap-1 transition-colors cursor-pointer"
+                                  >
+                                    <LogOut className="w-3.5 h-3.5" />
+                                    <span>Çık</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  title="Grubu Tamamen Kapat"
+                                  onClick={() => handleCloseRoom(item.room_code, title)}
+                                  className="px-2 py-1 rounded-lg text-[11px] font-extrabold text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 flex items-center gap-1 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Grubu Kapat</span>
+                                </button>
+                              </>
                             ) : (
                               <button
                                 type="button"
@@ -1169,7 +1216,7 @@ export default function UygunMusunLobbyPage() {
                                 className="px-2 py-1 rounded-lg text-[11px] font-extrabold text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 flex items-center gap-1 transition-colors cursor-pointer"
                               >
                                 <LogOut className="w-3.5 h-3.5" />
-                                <span>Çık</span>
+                                <span>Gruptan Çık</span>
                               </button>
                             )}
                           </div>

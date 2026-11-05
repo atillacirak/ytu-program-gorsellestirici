@@ -661,10 +661,16 @@ def get_my_rooms_summary(room_codes: List[str]) -> List[Dict[str, Any]]:
                 except Exception:
                     data = {}
                 profiles = data.get('profiles', [])
+                owner_id = (
+                    data.get('owner_profile_id')
+                    or next((p.get('id') for p in profiles if p.get('role') == 'owner'), None)
+                    or (profiles[0].get('id') if profiles else None)
+                )
                 title = r[1] or data.get('title') or f'Lobi #{c.upper()}'
                 out.append({
                     'room_code': c,
                     'title': title,
+                    'owner_profile_id': owner_id,
                     'member_count': len(profiles),
                     'members': [
                         {
@@ -673,7 +679,7 @@ def get_my_rooms_summary(room_codes: List[str]) -> List[Dict[str, Any]]:
                             'avatar': p.get('avatar'),
                             'color': p.get('color'),
                         }
-                        for p in profiles[:8]
+                        for p in profiles[:16]
                     ],
                     'updated_at': r[3] or data.get('updated_at') or 0,
                 })

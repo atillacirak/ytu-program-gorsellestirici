@@ -79,6 +79,7 @@ export interface SavedLobbyItem {
 export interface LobbySummaryItem {
   room_code: string;
   title: string;
+  owner_profile_id?: string;
   member_count: number;
   members: {
     id: string;
