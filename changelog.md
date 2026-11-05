@@ -21,7 +21,15 @@ Bu belgede **YTÜ Dostun** projesine yapılan tüm sürüm güncellemeleri, mima
   - **Hızlı Cihaz Eşleştirme (QR & 6 Haneli Kod):** WhatsApp Web tarzı 5 dakika ömürlü tek seferlik transfer kodu ve dinamik SVG QR kod üretimi; mobilde kamerayla okutulduğunda (`?sync=KOD`) program ve lobilerin anında telefona çekilmesi.
   - **Kalıcı Bulut Yedekleme:** Öğrenci Numarası ve 4 haneli tuzlu (salt) SHA-256 PIN ile buluta yedekleme ve geri çağırma (`sync_accounts` & `ephemeral_transfers`).
   - **Akıllı Cihaz Tespiti (`DeviceSyncModal.tsx`):** Masaüstünde QR + kod üretimi, mobilde kod giriş kutusu ve tek tıkla geri yükleme.
+- **Evrensel Bulut Yedekleme & Cihaz Eşleme (Universal Sync & Backup):**
+  - Sadece ders programı değil; **AGNO Simülatörü**, **4 Yıllık Akademik Plan**, **Arkadaş Lobileri & Grupları**, **Devamsızlık Takibi** ve **Ders Notları** tek bir şemsiye altında toplandı.
+  - Sadece ders programı olma zorunluluğu kaldırıldı; modüllerden herhangi birine sahip kullanıcı anında QR / 6 haneli kod transferi veya PIN bulut yedeği alabilir hale getirildi.
+  - Cihazdaki aktif modülleri ve ders sayılarını gösteren dinamik envanter durum çipleri (`DeviceSyncModal.tsx`) eklendi.
 - **Arayüz & Tipografi İyileştirmeleri:**
+  - Hoca kartlarındaki yer kaplayan akademik unvanlar (`Prof. Dr.`, `Doç. Dr.`, `Dr. Öğr. Üyesi`, `Arş. Gör.` vb.) temizlenerek `cleanInstructorTitle` ile doğrudan ad-soyad gösterimine geçildi; taşma koruması eklendi.
+  - Sınıf yazı boyutu büyütüldü (`11px font-bold`).
+  - Online dersler için sınıf alanında kırmızı temalı rozet (`bg-rose-50/90 border-rose-200 text-rose-700`) ve video kamera ikonu entegre edildi.
+  - Ders kutularının sağ üst köşesindeki yanıp sönen zarif online rozeti de korunarak geri getirildi.
   - Üst çubuktaki gereksiz "Yazdır" ve "Hazırlık Programı" butonları kaldırılarak sadeleştirildi.
   - Ders adı fontu öne çıkarıldı (`12px`, `font-semibold`), ders kodu ve derslik boyutları dengelendi.
   - Sınıfında veya ders adında `LAB` geçen dersler için hücre sağ üstüne saydam gök mavisi erlenmayer (`FlaskConical`) laboratuvar ikonu eklendi.
