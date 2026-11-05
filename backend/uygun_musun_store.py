@@ -35,12 +35,18 @@ def _sanitize_room_code(code: str) -> str:
     return cleaned[:32] or 'atilla-neva'
 
 
+def _get_conn() -> sqlite3.Connection:
+    conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+    conn.execute('PRAGMA synchronous = NORMAL;')
+    conn.execute('PRAGMA busy_timeout = 5000;')
+    return conn
+
+
 def _init_db() -> None:
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             conn.execute('PRAGMA journal_mode = WAL;')
-            conn.execute('PRAGMA synchronous = NORMAL;')
             conn.execute(
                 '''
                 CREATE TABLE IF NOT EXISTS rooms (
@@ -74,6 +80,11 @@ def _init_db() -> None:
                     joined_at INTEGER NOT NULL,
                     PRIMARY KEY (room_code, profile_id)
                 )
+                '''
+            )
+            conn.execute(
+                '''
+                CREATE INDEX IF NOT EXISTS idx_room_members ON room_members (room_code)
                 '''
             )
             conn.execute(
@@ -385,7 +396,7 @@ def _generate_unique_room_code(conn: sqlite3.Connection) -> str:
 def get_room(room_code: str, create_if_missing: bool = True) -> Dict[str, Any]:
     code = _sanitize_room_code(room_code)
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             cur = conn.cursor()
             cur.execute('SELECT data_json, title, created_at FROM rooms WHERE room_code = ?', (code,))
@@ -433,7 +444,7 @@ def save_room(room_code: str, room_data: Dict[str, Any], admin_token: Optional[s
     created_ms = int(room_data.get('created_at') or now_ms)
 
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             if admin_token:
                 conn.execute(
@@ -499,7 +510,7 @@ def create_room(
     }
 
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             code = _generate_unique_room_code(conn)
             room_data = {
@@ -584,7 +595,7 @@ def join_room(
     saved_room = save_room(code, room)
 
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             conn.execute(
                 '''
@@ -632,7 +643,7 @@ def get_my_rooms_summary(room_codes: List[str]) -> List[Dict[str, Any]]:
     placeholders = ','.join('?' for _ in cleaned_codes)
     out = []
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
@@ -751,10 +762,14 @@ def delete_profile(room_code: str, profile_id: str) -> Dict[str, Any]:
         raise ValueError(f'Lobide en az {min_profiles} profil kalmalıdır.')
     room['profiles'] = [p for p in profiles if p.get('id') != profile_id]
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             conn.execute(
                 'DELETE FROM room_members WHERE room_code = ? AND profile_id = ?',
+                (code, profile_id),
+            )
+            conn.execute(
+                'DELETE FROM push_subscriptions WHERE room_code = ? AND profile_id = ?',
                 (code, profile_id),
             )
             conn.commit()
@@ -791,18 +806,27 @@ def send_ping(
         'emoji': emoji[:8],
         'created_at': now_ms,
         'dismissed': False,
+        'dismissed_by': [],
     }
     pings.append(new_ping)
     room['pings'] = pings[-15:]
     return save_room(room_code, room)
 
 
-def dismiss_ping(room_code: str, ping_id: str) -> Dict[str, Any]:
+def dismiss_ping(room_code: str, ping_id: str, profile_id: Optional[str] = None) -> Dict[str, Any]:
     room = get_room(room_code)
     pings = room.get('pings', [])
     for p in pings:
         if p.get('id') == ping_id:
-            p['dismissed'] = True
+            if profile_id and p.get('to_id') == 'all' and p.get('from_id') != profile_id:
+                dismissed_by = p.get('dismissed_by')
+                if not isinstance(dismissed_by, list):
+                    dismissed_by = []
+                if profile_id not in dismissed_by:
+                    dismissed_by.append(profile_id)
+                p['dismissed_by'] = dismissed_by
+            else:
+                p['dismissed'] = True
     room['pings'] = pings
     return save_room(room_code, room)
 
@@ -824,7 +848,7 @@ def save_push_subscription(room_code: str, profile_id: str, sub: Dict[str, Any])
     now_ms = int(time.time() * 1000)
 
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             conn.execute(
                 '''
@@ -851,7 +875,7 @@ def remove_push_subscription(endpoint: str) -> None:
     if not endpoint_clean:
         return
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         try:
             conn.execute('DELETE FROM push_subscriptions WHERE endpoint = ?', (endpoint_clean,))
             conn.commit()
@@ -862,7 +886,7 @@ def remove_push_subscription(endpoint: str) -> None:
 def get_push_subscriptions(room_code: str, profile_id: str) -> list:
     clean_code = _sanitize_room_code(room_code)
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         conn.row_factory = sqlite3.Row
         try:
             rows = conn.execute(
@@ -880,7 +904,7 @@ def get_push_subscriptions(room_code: str, profile_id: str) -> list:
 def get_room_push_subscriptions(room_code: str, exclude_profile_id: Optional[str] = None) -> list:
     clean_code = _sanitize_room_code(room_code)
     with _DB_LOCK:
-        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn = _get_conn()
         conn.row_factory = sqlite3.Row
         try:
             if exclude_profile_id:

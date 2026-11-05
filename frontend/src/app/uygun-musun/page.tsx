@@ -372,9 +372,19 @@ export default function UygunMusunLobbyPage() {
     if (!isMounted || viewMode !== 'room' || !activeRoomCode) return;
     fetchActiveRoom(activeRoomCode);
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       fetchActiveRoom(activeRoomCode);
     }, 12000);
-    return () => clearInterval(interval);
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        fetchActiveRoom(activeRoomCode);
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [isMounted, viewMode, activeRoomCode, fetchActiveRoom]);
 
   // Web Push durumunu kontrol et
@@ -440,13 +450,15 @@ export default function UygunMusunLobbyPage() {
   const activePings = useMemo(() => {
     const raw = roomState?.pings || [];
     const twoHoursAgo = nowEpochMs - 2 * 3600 * 1000;
+    const myId = myProfile?.id;
     return raw
-      .filter(
-        (p) =>
-          !p.dismissed &&
-          p.created_at > twoHoursAgo &&
-          (p.to_id === 'all' || (myProfile && p.to_id === myProfile.id))
-      )
+      .filter((p) => {
+        if (p.dismissed || p.created_at <= twoHoursAgo) return false;
+        if (myId && Array.isArray(p.dismissed_by) && p.dismissed_by.includes(myId)) {
+          return false;
+        }
+        return p.to_id === 'all' || (myId && p.to_id === myId);
+      })
       .sort((a, b) => b.created_at - a.created_at);
   }, [roomState, nowEpochMs, myProfile]);
 
@@ -748,13 +760,19 @@ export default function UygunMusunLobbyPage() {
   // Çağrı Bildirimini Kapat
   const handleDismissPing = async (pingId: string) => {
     if (!activeRoomCode) return;
+    const myId = myProfile?.id;
     setRoomState((prev) =>
       prev
         ? {
             ...prev,
-            pings: (prev.pings || []).map((p) =>
-              p.id === pingId ? { ...p, dismissed: true } : p
-            ),
+            pings: (prev.pings || []).map((p) => {
+              if (p.id !== pingId) return p;
+              if (myId && p.to_id === 'all' && p.from_id !== myId) {
+                const db = Array.isArray(p.dismissed_by) ? [...p.dismissed_by, myId] : [myId];
+                return { ...p, dismissed_by: db };
+              }
+              return { ...p, dismissed: true };
+            }),
           }
         : prev
     );
@@ -763,7 +781,11 @@ export default function UygunMusunLobbyPage() {
         `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(
           activeRoomCode
         )}/ping/${encodeURIComponent(pingId)}/dismiss`,
-        { method: 'POST' }
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile_id: myId || '' }),
+        }
       );
     } catch {
       // ignore
@@ -1053,6 +1075,9 @@ export default function UygunMusunLobbyPage() {
                           <button
                             type="button"
                             onClick={() => {
+                              if (activeRoomCode !== item.room_code) {
+                                setRoomState(null);
+                              }
                               setActiveRoomCode(item.room_code);
                               setViewMode('room');
                             }}
@@ -2215,14 +2240,127 @@ export default function UygunMusunLobbyPage() {
                ================================================================= */}
             {roomTab === 'settings' && (
               <div className="space-y-4">
+                {/* Kendi Profilimi & Programımı Düzenle Kartı */}
+                {myProfile && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <h3 className="text-sm font-black text-slate-900">
+                          Senin Profilin ({myProfile.name})
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Avatarını, kart rengini veya ders programını buradan anında değiştirebilirsin.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          disabled={uploadingMySchedule}
+                          onClick={() => fileInputRoomRef.current?.click()}
+                          className="px-3.5 py-2 rounded-xl bg-[#0c3f79] hover:bg-[#002855] text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-amber-400" />
+                          <span>
+                            {uploadingMySchedule ? 'Yükleniyor...' : 'USIS PDF / PNG Yükle'}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const raw = window.localStorage.getItem('ytu_visualizer_data');
+                              if (!raw) {
+                                showToast('Ana sayfada kayıtlı program bulunamadı.');
+                                return;
+                              }
+                              const parsed = JSON.parse(raw);
+                              if (!parsed || !parsed.schedule) {
+                                showToast('Ana sayfadaki program verisi geçersiz.');
+                                return;
+                              }
+                              await handleUpdateMemberProfile({
+                                ...myProfile,
+                                schedule: {
+                                  term: parsed.term || 'Aktif Dönem',
+                                  title: parsed.title || 'Ana Sayfa Programım',
+                                  schedule: parsed.schedule,
+                                  courses_summary: parsed.courses_summary || [],
+                                },
+                              });
+                              showToast('Ana sayfadaki programın lobiye aktarıldı! 🎉');
+                            } catch {
+                              showToast('Program aktarılırken hata oluştu.');
+                            }
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-950 text-xs font-extrabold flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Ana Sayfadan Aktar</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                      {/* Avatar Seçici */}
+                      <div className="space-y-1.5">
+                        <span className="text-[11px] font-bold text-slate-500">Avatarın:</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {AVATAR_OPTIONS.map((av) => (
+                            <button
+                              key={av}
+                              type="button"
+                              onClick={() =>
+                                handleUpdateMemberProfile({ ...myProfile, avatar: av })
+                              }
+                              className={`w-8 h-8 rounded-xl text-sm flex items-center justify-center transition-all cursor-pointer ${
+                                myProfile.avatar === av
+                                  ? 'bg-[#0c3f79] text-white ring-2 ring-[#0c3f79]/30 scale-105'
+                                  : 'bg-slate-100 hover:bg-slate-200'
+                              }`}
+                            >
+                              {av}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Renk Seçici */}
+                      <div className="space-y-1.5">
+                        <span className="text-[11px] font-bold text-slate-500">Kart Rengin:</span>
+                        <div className="flex items-center gap-2 pt-1">
+                          {COLOR_KEYS.map((ck) => {
+                            const t = PROFILE_THEMES[ck];
+                            return (
+                              <button
+                                key={ck}
+                                type="button"
+                                onClick={() =>
+                                  handleUpdateMemberProfile({ ...myProfile, color: ck })
+                                }
+                                className={`w-7 h-7 rounded-full ${t.bg} transition-transform cursor-pointer ${
+                                  myProfile.color === ck
+                                    ? 'scale-110 ring-2 ring-offset-2 ring-slate-900'
+                                    : 'opacity-70 hover:opacity-100'
+                                }`}
+                                title={t.name}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div>
                       <h3 className="text-sm font-black text-slate-900">
-                        Lobi Üyeleri ve Ders Programları
+                        Lobi Üyeleri ({profiles.length})
                       </h3>
                       <p className="text-xs text-slate-500">
-                        Bu lobideki kendi profilini düzenleyebilir veya eksik ders programlarını yükleyebilirsin.
+                        Lobideki tüm üyeleri görüntüleyebilir veya yeni arkadaş davet edebilirsin.
                       </p>
                     </div>
                     <button
@@ -2300,15 +2438,25 @@ export default function UygunMusunLobbyPage() {
                                     );
                                     if (res.ok) {
                                       const data = await res.json();
-                                      setRoomState(data);
-                                      showToast(`${p.name} lobiden çıkarıldı.`);
+                                      if (isMe) {
+                                        setSavedLobbies((prev) =>
+                                          prev.filter((x) => x.room_code !== activeRoomCode)
+                                        );
+                                        setActiveRoomCode('');
+                                        setRoomState(null);
+                                        setViewMode('hub');
+                                        showToast('Lobiden ayrıldın.');
+                                      } else {
+                                        setRoomState(data);
+                                        showToast(`${p.name} lobiden çıkarıldı.`);
+                                      }
                                     }
                                   } catch {
                                     // ignore
                                   }
                                 }}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
-                                title="Üyeyi Çıkar"
+                                title={isMe ? 'Lobiden Ayrıl' : 'Üyeyi Çıkar'}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>

@@ -55,6 +55,7 @@ export interface DuoPing {
   emoji: string;
   created_at: number;
   dismissed: boolean;
+  dismissed_by?: string[];
 }
 
 export interface UygunMusunRoomState {

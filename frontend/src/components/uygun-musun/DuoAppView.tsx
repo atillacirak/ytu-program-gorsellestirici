@@ -220,8 +220,20 @@ export default function DuoAppView({
   useEffect(() => {
     if (!isMounted) return;
     fetchRoomData();
-    const interval = setInterval(fetchRoomData, 15000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      fetchRoomData();
+    }, 15000);
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        fetchRoomData();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [isMounted, fetchRoomData]);
 
   // Efektif gün ve dakika

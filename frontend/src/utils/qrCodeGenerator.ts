@@ -232,12 +232,14 @@ export function generateQrMatrix(text: string): boolean[][] {
   const formatBits = 0x77c4;
   const getFmtBit = (i: number) => ((formatBits >> i) & 1) === 1;
 
-  for (let i = 0; i <= 5; i++) setFunctionModule(8, i, getFmtBit(i));
-  setFunctionModule(8, 7, getFmtBit(6));
+  // 1. Kopya (Sol-Üst Finder çevresi: dikey c=8 ve yatay r=8)
+  for (let i = 0; i <= 5; i++) setFunctionModule(i, 8, getFmtBit(i));
+  setFunctionModule(7, 8, getFmtBit(6));
   setFunctionModule(8, 8, getFmtBit(7));
-  setFunctionModule(7, 8, getFmtBit(8));
-  for (let i = 9; i < 15; i++) setFunctionModule(14 - i, 8, getFmtBit(i));
+  setFunctionModule(8, 7, getFmtBit(8));
+  for (let i = 9; i < 15; i++) setFunctionModule(8, 14 - i, getFmtBit(i));
 
+  // 2. Kopya (Sağ-Üst yatay r=8 ve Sol-Alt dikey c=8)
   for (let i = 0; i < 8; i++) setFunctionModule(8, size - 1 - i, getFmtBit(i));
   for (let i = 8; i < 15; i++) setFunctionModule(size - 15 + i, 8, getFmtBit(i));
 

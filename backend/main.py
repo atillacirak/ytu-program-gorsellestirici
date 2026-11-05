@@ -1284,9 +1284,15 @@ def send_uygun_musun_ping(room_code: str, payload: Dict[str, Any] = Body(...)):
 
 
 @app.post('/api/uygun-musun/room/{room_code}/ping/{ping_id}/dismiss')
-def dismiss_uygun_musun_ping(room_code: str, ping_id: str):
+def dismiss_uygun_musun_ping(
+    room_code: str,
+    ping_id: str,
+    profile_id: Optional[str] = None,
+    payload: Optional[Dict[str, Any]] = Body(default=None)
+):
+    pid = str((payload or {}).get('profile_id') or profile_id or '').strip() or None
     try:
-        return uygun_musun_store.dismiss_ping(room_code, ping_id)
+        return uygun_musun_store.dismiss_ping(room_code, ping_id, pid)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Ping kapatılamadı: {str(e)}')
 
