@@ -34,6 +34,7 @@ interface ScheduleToolbarProps {
   handleChangeFontScale: (scale: number) => void;
   handleResetChanges: () => void;
   getTotalWeeklyHours: (summary?: any[]) => number;
+  onOpenPrepModal?: () => void;
 }
 
 export default function ScheduleToolbar({
@@ -61,7 +62,8 @@ export default function ScheduleToolbar({
   scheduleFontScale,
   handleChangeFontScale,
   handleResetChanges,
-  getTotalWeeklyHours
+  getTotalWeeklyHours,
+  onOpenPrepModal
 }: ScheduleToolbarProps) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-4 no-print text-slate-900">
@@ -128,6 +130,18 @@ export default function ScheduleToolbar({
             <Printer className="w-3.5 h-3.5" />
             <span>Yazdır</span>
           </button>
+
+          {onOpenPrepModal && (
+            <button
+              type="button"
+              onClick={onOpenPrepModal}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold rounded-lg border border-amber-300 transition-all cursor-pointer shadow-2xs"
+              title="Hazırlık sınıfı seç veya değiştir"
+            >
+              <GraduationCap className="w-3.5 h-3.5 text-amber-600" />
+              <span>Hazırlık Programı</span>
+            </button>
+          )}
 
           <label className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-all cursor-pointer shadow-2xs">
             <Upload className="w-3.5 h-3.5 text-slate-500" />

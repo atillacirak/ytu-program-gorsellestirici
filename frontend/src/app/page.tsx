@@ -24,6 +24,8 @@ import ScheduleTable from '../components/ScheduleTable';
 import CourseSummaryTable from '../components/CourseSummaryTable';
 import EditCourseModal from '../components/EditCourseModal';
 import ScheduleToolbar from '../components/ScheduleToolbar';
+import PrepScheduleModal from '../components/PrepScheduleModal';
+import prepData from '../data/prepSchedules.json';
 // Bir ders slotunun süresini saat cinsinden hesaplar (örn: 09:00 - 10:50 -> 2 saat, 09:00 - 11:50 -> 3 saat, 09:00 - 09:50 -> 1 saat)
 const getSlotDurationHours = (startTime?: string, endTime?: string): number => {
   if (!startTime || !endTime) return 0;
@@ -55,14 +57,8 @@ const getTotalWeeklyHours = (coursesSummary?: any[]): number => {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
 export default function Home() {
-  const [prepData, setPrepData] = useState<Record<string, any>>({});
-  useEffect(() => {
-    import('../data/prepSchedules.json').then((module) => {
-      setPrepData(module.default || module);
-    });
-  }, []);
-
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showPrepModal, setShowPrepModal] = useState(false);
   const [showInstructorWarningModal, setShowInstructorWarningModal] = useState(false);
   const [visualizerPdfUploading, setVisualizerPdfUploading] = useState(false);
   const router = useRouter();
@@ -121,8 +117,8 @@ export default function Home() {
   const [scheduleFontFamily, setScheduleFontFamily] = useLocalStorageState<'default' | 'inter' | 'lora' | 'mono'>('ytu_schedule_font', 'default');
   const [scheduleFontScale, setScheduleFontScale] = useLocalStorageState<number>('ytu_schedule_scale', 1.0);
 
-  const [selectedPrepLevel, setSelectedPrepLevel] = useState<string>('');
-  const [selectedPrepClass, setSelectedPrepClass] = useState<string>('');
+  const [selectedPrepLevel, setSelectedPrepLevel] = useLocalStorageState<string>('ytu_selected_prep_level', '');
+  const [selectedPrepClass, setSelectedPrepClass] = useLocalStorageState<string>('ytu_selected_prep_class', '');
 
   const [editingCourse, setEditingCourse] = useState<any | null>(null);
   const [editingCourseForm, setEditingCourseForm] = useState<{
@@ -182,13 +178,15 @@ export default function Home() {
       });
   }, [selectedPrepLevel]);
 
-  const handlePrepClassSelect = () => {
-    if (!selectedPrepClass || !prepData[selectedPrepClass]) return;
-    const classData = prepData[selectedPrepClass];
+  const handlePrepClassSelect = (classKey?: string) => {
+    const targetClass = classKey || selectedPrepClass;
+    const allPrep = prepData as Record<string, any>;
+    if (!targetClass || !allPrep[targetClass]) return;
+    const classData = allPrep[targetClass];
     
     // Extract section from label: e.g., P1-01/D-201 -> 01
     let sectionNo = '';
-    const parts = selectedPrepClass.split('/');
+    const parts = targetClass.split('/');
     if (parts.length > 0) {
       const mainPart = parts[0]; // P1-01
       if (mainPart.includes('-')) {
@@ -200,7 +198,7 @@ export default function Home() {
       student_id: "-",
       student_name: "Hazırlık Öğrencisi",
       term: "2026-2027 Güz",
-      title: `Hazırlık Ders Programı (${selectedPrepClass})`,
+      title: `Hazırlık Ders Programı (${targetClass})`,
       schedule: classData.schedule,
       courses_summary: [
         {
@@ -227,14 +225,15 @@ export default function Home() {
     });
     mockData.courses_summary[0].time_slots = summarySlots;
     
+    setSelectedPrepClass(targetClass);
     setVisualizerData(mockData);
     setOriginalVisualizerData(JSON.parse(JSON.stringify(mockData)));
     setVisualizerError(null);
+    setShowPrepModal(false);
     incrementGenerateStat('prep');
     
     // Hazırlık programında hocalar çok kritik olduğu için varsayılan olarak aç
     setShowInstructor(true);
-    
   };
 
   
@@ -655,6 +654,7 @@ export default function Home() {
                   handleChangeFontScale={handleChangeFontScale}
                   handleResetChanges={handleResetChanges}
                   getTotalWeeklyHours={getTotalWeeklyHours}
+                  onOpenPrepModal={() => setShowPrepModal(true)}
                 />
 
                 <ScheduleTable
@@ -726,6 +726,17 @@ export default function Home() {
         </div>
       </footer>
       <PrivacyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
+      <PrepScheduleModal
+        isOpen={showPrepModal}
+        onClose={() => setShowPrepModal(false)}
+        selectedPrepLevel={selectedPrepLevel}
+        setSelectedPrepLevel={setSelectedPrepLevel}
+        selectedPrepClass={selectedPrepClass}
+        setSelectedPrepClass={setSelectedPrepClass}
+        prepLevels={prepLevels}
+        prepClassesForLevel={prepClassesForLevel}
+        handlePrepClassSelect={handlePrepClassSelect}
+      />
 
       {/* Hoca Bilgisi Güncellik Uyarısı Modal */}
       {showInstructorWarningModal && (

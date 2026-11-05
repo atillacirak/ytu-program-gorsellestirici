@@ -221,7 +221,8 @@ export default function UploadScreen({
                   })}
                 </select>
                 <button
-                  onClick={handlePrepClassSelect}
+                  type="button"
+                  onClick={() => handlePrepClassSelect()}
                   disabled={!selectedPrepClass}
                   className="px-5 py-2.5 bg-[#0c3f79] hover:bg-[#00306a] disabled:bg-slate-300 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-xs disabled:cursor-not-allowed"
                 >
