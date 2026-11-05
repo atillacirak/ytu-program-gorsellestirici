@@ -12,6 +12,7 @@ Bu belge, **YTÜ Dostun** platformunun mimarisini, dizin yapısını, veri akı�
 | **Proje Amacı** | YTÜ öğrencilerinin USIS/Bologna ders programlarını görselleştirmesi, ortak boş saatleri bulması, devamsızlık takibi yapması, AGNO simülasyonu ve 4 yıllık mezuniyet planlaması gerçekleştirmesini sağlayan hepsi bir arada açık web platformu. |
 | **Mimari Türü** | **Decoupled Client-Server (Ayrık İstemci-Sunucu):** <br>• **Frontend:** Next.js 16 (App Router) + React 19 + Tailwind CSS v4 + PWA <br>• **Backend:** FastAPI (Python 3.10+) + Uvicorn + pdfplumber + PyTesseract <br>• **Veri Katmanı:** SQLite3 (`ytu_courses.db`) + Upstash Redis REST API + Statik/Dinamik JSON Veri Setleri |
 | **Canlı Domainler** | [https://ytudostun.com](https://ytudostun.com) & [https://www.ytudostun.com](https://www.ytudostun.com) *(Eski Vercel adresi `ytuprogram.vercel.app` kalıcı olarak buraya yönlendirilir)* |
+| **Özel Duo Sayfaları** | • Atilla: `https://ytudostun.com/uygun-musun-atilla`<br>• Neva: `https://ytudostun.com/uygun-musun-neva`<br>• Duo Odası: `https://ytudostun.com/uygun-musun` *(Genel siteden gizli & izole)* |
 | **GitHub Repo** | `https://github.com/atillacirak/ytu-program-gorsellestirici.git` (Ana Dal: `main`) |
 | **Sunucu (Production)** | **Amazon Web Services (AWS EC2)** • Ubuntu 22.04 LTS • Statik IP: `63.186.15.196` |
 | **Süreç Yöneticisi** | **PM2:** `ytu-frontend` (Port 3001), `ytu-backend` (Port 8001), `kiribot` |
@@ -117,6 +118,8 @@ c:\Projeler\Ytü Görselleştir\
 │   ├── main.py                     # FastAPI ana API rotaları, PDF & OCR ayrıştırıcıları
 │   ├── requirements.txt            # Python kütüphane bağımlılıkları
 │   ├── stats_db.py                 # Upstash Redis pipeline & istatistik analitik motoru
+│   ├── uygun_musun_store.py        # SQLite WAL-backed Duo canlı durum ve oda deposu
+│   ├── uygun_musun.db              # Atilla & Neva canlı durum, ders ve dürtme veritabanı
 │   ├── ytu_courses.db              # SQLite dersler, şubeler, saatler ve bölümler tablosu
 │   ├── ytu_clubs.json              # 69 adet YTÜ öğrenci kulübü ve kategori verileri
 │   ├── prepSchedules.json          # Hazırlık sınıfları A/B/C kuru haftalık programları
@@ -145,12 +148,16 @@ c:\Projeler\Ytü Görselleştir\
         │   ├── devamsizlik/page.tsx# [/devamsizlik] Devamsızlık Takibi & Aylık Yoklama Takvimi
         │   ├── agno/page.tsx       # [/agno] AGNO Hesaplayıcı & Dönem Not Senaryoları
         │   ├── planlama/page.tsx   # [/planlama] 4 Yıllık Akademik Planlama & Mezuniyet Simülatörü
-        │   └── stats/page.tsx      # [/stats] Upstash Redis Gerçek Zamanlı İstatistik Paneli
+        │   ├── stats/page.tsx      # [/stats] Upstash Redis Gerçek Zamanlı İstatistik Paneli
+        │   ├── uygun-musun/page.tsx        # [/uygun-musun] Duo Canlı Durum ve Eşleşme Odası
+        │   ├── uygun-musun-atilla/page.tsx # [/uygun-musun-atilla] Atilla Özel Canlı Durum Sayfası
+        │   └── uygun-musun-neva/page.tsx   # [/uygun-musun-neva] Neva Özel Canlı Durum Sayfası
         ├── components/             # Yeniden Kullanılabilir UI Bileşenleri
         │   ├── Header.tsx          # Üst navigasyon çubuğu, modül linkleri ve yenilikler butonu
         │   ├── UploadScreen.tsx    # PDF/Görsel yükleme alanı ve Araç Tanıtım Vitrini
         │   ├── ScheduleToolbar.tsx # Program filtreleme, indirme, mod ve aktarım butonları
         │   ├── ScheduleTable.tsx   # A4 yatay/dikey ders çizelge matrisi ve renkli kartlar
+        │   ├── PrepScheduleModal.tsx # Hazırlık sınıfları kur ve şube seçim modalı
         │   ├── CourseSummaryTable.tsx # Ders listesi, sınıf kodları ve hoca özet tablosu
         │   ├── EditCourseModal.tsx # Ders adı, sınıfı, saati ve not düzenleme penceresi
         │   ├── CompareView.tsx     # Ortak boş saatler matrisi (busyMap O(1) hash haritası)
@@ -158,11 +165,18 @@ c:\Projeler\Ytü Görselleştir\
         │   ├── DevColorPanel.tsx   # Geliştirici renk paleti yönetim paneli
         │   ├── PrivacyModal.tsx    # KVKK ve Öğrenci Verisi Gizlilik Politikası modalı
         │   ├── AnimatedCounter.tsx # İstatistik sayacı akıcı sayı animatörü
-        │   └── planlama/           # Akademik Planlama Modülüne Özel Bileşenler
-        │       ├── PlanlamaHero.tsx       # Fakülte/bölüm seçimi, transkript yükleme & özet
-        │       ├── PlanlamaToolbar.tsx    # Kredi/AKTS sınır butonları, PDF indir, sıfırla
-        │       ├── SemesterBucketCard.tsx # Yarıyıl ders kovaları, sürükle-bırak & kartlar
-        │       └── PlanlamaModals.tsx     # Seçmeli ders havuzu, ders ekleme & detay modalları
+        │   ├── planlama/           # Akademik Planlama Modülüne Özel Bileşenler
+        │   │   ├── PlanlamaHero.tsx       # Fakülte/bölüm seçimi, transkript yükleme & özet
+        │   │   ├── PlanlamaToolbar.tsx    # Kredi/AKTS sınır butonları, PDF indir, sıfırla
+        │   │   ├── SemesterBucketCard.tsx # Yarıyıl ders kovaları, sürükle-bırak & kartlar
+        │   │   └── PlanlamaModals.tsx     # Seçmeli ders havuzu, ders ekleme & detay modalları
+        │   └── uygun-musun/        # Duo Canlı Durum Modül Bileşenleri
+        │       ├── DuoAppView.tsx          # iOS 18 glassmorphism ana ekranı & Dynamic Island
+        │       ├── LiveFriendHeroCard.tsx  # Partner anlık durum, kalan süre & ilerleme çubuğu
+        │       ├── DailyParallelTimeline.tsx # Günlük çiftli paralel çizelge & online REC rozeti
+        │       ├── MutualMatchBanner.tsx   # İki tarafın aynı anda boş olduğu anı kutlama kartı
+        │       ├── StatusCheckInSheet.tsx  # Canlı durum / erken çıkış bildirim menüsü
+        │       └── ProfileScheduleManager.tsx # Program ve ders saatleri düzenleme çekmecesi
         ├── hooks/
         │   └── useLocalStorageState.ts    # SSR & hydration güvenli reaktif LocalStorage kancası
         ├── types/
@@ -266,7 +280,7 @@ pm2 status
 
 ## ⚙️ 6. Çekirdek Modüller, Veri Akışı & Mimari Özeti
 
-Platform 6 ana kullanıcı modülünden ve bunları destekleyen ayrık servislerden oluşur:
+Platform 7 ana modülden (6 genel + 1 özel ikili modül) ve bunları destekleyen ayrık servislerden oluşur:
 
 ### 1. Ders Programı Görselleştirici (`/`)
 - **İşlev:** USIS ders programı PDF'i veya YTÜ Yabancı Diller Yüksekokulu hazırlık programlarını modern, A4 baskısına ve PNG çıktısına uygun bir haftalık çizelgeye dönüştürür.
@@ -300,6 +314,22 @@ Platform 6 ana kullanıcı modülünden ve bunları destekleyen ayrık servisler
 - **İşlev:** Upstash Redis tabanlı anlık ziyaretçi, program oluşturma ve modül etkileşim sayaçları.
 - **Zaman Pencereleri:** 24 saat, 7 gün, 30 gün ve Tüm Zamanlar bazında yüzdelik değişim trendleri (`+/- %`).
 - **Grafik:** Harici kütüphane bağımlılığı olmadan saf Tailwind CSS ile oluşturulmuş responsive aktivite sütun grafiği.
+
+### 7. Özel Duo Canlı Müsaitlik & Program Eşleştirici ("Uygun Musun?")
+- **İşlev:** Atilla ve Neva için gerçek zamanlı ders durumu, kalan ders süresi sayacı, tek tıkla canlı durum bildirimi ve ortak boş saatleri gösteren özel mobil web uygulaması.
+- **Gizlilik:** Public web sitesinde (Header, Footer vb.) hiçbir bağlantı yer almaz; genel kullanıcılardan tamamen gizlidir. Header bileşeni `/uygun-musun*` rotalarında otomatik gizlenir.
+- **Canlı Rotalar:**
+  - 👨‍💻 **Atilla Paneli:** `https://ytudostun.com/uygun-musun-atilla`
+  - 👩‍🎓 **Neva Paneli:** `https://ytudostun.com/uygun-musun-neva`
+  - 👥 **Duo Test / Oda Arayüzü:** `https://ytudostun.com/uygun-musun`
+- **Öne Çıkan Akıllı Özellikler:**
+  - **Online Ders Desteği:** `is_online: true` olarak işaretlenen dersler (ör. BLM1991, TDB1031) sistem tarafından otomatik olarak **"Online Ders (Müsait)"** olarak değerlendirilir ve ortak zaman çizelgesinde kırmızı yanıp sönen `REC` kamera rozetiyle gösterilir.
+  - **Erken Çıkış / Durum Bildirimi:** `⚡ Dersim Erken Bitti / Çıktım` butonuyla tek dokunuşta haftalık program geçersiz kılınarak partnerine anında müsaitlik durumu bildirilir. Ayrıca kütüphane, kahve molası ve özel durum notları bırakılabilir.
+  - **Anlık Dürtme (Ping):** Tek dokunuşla partnere titreşimli/sesli bildirim ve dikkat çekme rozeti gönderilir.
+  - **Duo Paralel Çizelge:** Günün her saatinde iki kişinin durumunu alt alta senkronize gösteren görsel çizelge matrisi.
+- **Backend Mimarisi:**
+  - `backend/uygun_musun_store.py`: SQLite WAL modunda `uygun_musun.db` veritabanı.
+  - API Uç Noktaları: `/api/uygun-musun/room/{code}`, `/profile`, `/status`, `/ping`, `/dismiss`.
 
 ---
 
