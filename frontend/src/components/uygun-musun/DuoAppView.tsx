@@ -26,6 +26,8 @@ import {
   AlertCircle,
   Volume2,
   Video,
+  User,
+  GraduationCap
 } from 'lucide-react';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import {
@@ -107,7 +109,6 @@ export default function DuoAppView({
   const [syncing, setSyncing] = useState(false);
 
   // Sekmeler / Görünüm modları
-  const [activeTab, setActiveTab] = useState<'main' | 'timeline' | 'manage'>('main');
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTimelineCourses, setShowTimelineCourses] = useState(false);
 
@@ -121,7 +122,7 @@ export default function DuoAppView({
   // Kendi Durum Formu
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [statusNote, setStatusNote] = useState<string>('');
-  const [statusDuration, setStatusDuration] = useState<'next_class' | '60m' | 'today'>('next_class');
+  const [statusDuration, setStatusDuration] = useState<number | 'auto'>('auto');
   const [isEarlyExitActive, setIsEarlyExitActive] = useState<boolean>(false);
   const [statusSaveToast, setStatusSaveToast] = useState(false);
   const [pingSentToast, setPingSentToast] = useState<string | null>(null);
@@ -229,17 +230,105 @@ export default function DuoAppView({
     }
   }, [me.custom_status]);
 
-  // Bana gelen aktif pingleme var mı? (Son 2 saat içinde atılmış ve kapatılmamış)
-  const incomingPing = useMemo(() => {
-    const twoHoursAgo = nowEpochMs - 2 * 3600 * 1000;
-    return pings.find(
-      (p) => p.to_id === myId && !p.dismissed && p.created_at > twoHoursAgo
-    );
-  }, [pings, myId, nowEpochMs]);
+  // Kendi durumunu kaydet
+  const handleSaveMyStatus = async (overrideEarlyExit?: boolean) => {
+    const isEarly = overrideEarlyExit !== undefined ? overrideEarlyExit : isEarlyExitActive;
+    let expiresAt: number | null = null;
+    if (statusDuration !== 'auto') {
+      expiresAt = Date.now() + (statusDuration as number) * 60 * 1000;
+    } else if (isEarly && myStatus.currentClass) {
+      const parts = myStatus.currentClass.end_time.split(':');
+      const endH = parseInt(parts[0], 10);
+      const endM = parseInt(parts[1], 10);
+      const targetDate = new Date(nowDate);
+      targetDate.setHours(endH, endM, 0, 0);
+      expiresAt = targetDate.getTime();
+    }
 
-  // Ping Kapatma
+    const preset = STATUS_PRESETS.find((p) => p.id === selectedPresetId);
+
+    const payload: CustomStatusOverride = {
+      type: isEarly ? 'early_exit' : selectedPresetId ? 'preset' : 'custom',
+      preset_id: selectedPresetId || (isEarly ? 'early_exit' : undefined),
+      note: statusNote.trim() || (isEarly ? 'Dersim erken bitti / çıktım ⚡' : preset?.defaultNote || ''),
+      emoji: preset?.emoji || (isEarly ? '⚡' : '📍'),
+      label: isEarly ? 'Dersim Erken Bitti' : preset?.label || 'Özel Durum',
+      early_exit: isEarly,
+      created_at: Date.now(),
+      expires_at: expiresAt,
+    };
+
+    const nextProfiles = profiles.map((p) => (p.id === myId ? { ...p, custom_status: payload } : p));
+    setProfiles(nextProfiles);
+
+    try {
+      await fetch(
+        `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(roomCode)}/status?profile_id=${encodeURIComponent(myId)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+    } catch {}
+
+    setStatusSaveToast(true);
+    setTimeout(() => setStatusSaveToast(false), 2500);
+  };
+
+  // Kendi durumunu sıfırla
+  const handleClearMyStatus = async () => {
+    setSelectedPresetId('');
+    setStatusNote('');
+    setIsEarlyExitActive(false);
+
+    const nextProfiles = profiles.map((p) => (p.id === myId ? { ...p, custom_status: null } : p));
+    setProfiles(nextProfiles);
+
+    try {
+      await fetch(
+        `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(roomCode)}/status?profile_id=${encodeURIComponent(myId)}`,
+        { method: 'DELETE' }
+      );
+    } catch {}
+  };
+
+  // Partnere Ping Gönder
+  const handleSendPing = async (type: string, message: string, emoji: string) => {
+    const newPing: DuoPing = {
+      id: `ping_${Date.now()}`,
+      from_id: myId,
+      to_id: partnerId,
+      type,
+      message,
+      emoji,
+      created_at: Date.now(),
+      dismissed: false,
+    };
+
+    setPings((prev) => [newPing, ...prev]);
+
+    try {
+      await fetch(`${API_BASE}/api/uygun-musun/room/${encodeURIComponent(roomCode)}/ping`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from_id: myId,
+          to_id: partnerId,
+          type,
+          message,
+          emoji,
+        }),
+      });
+    } catch {}
+
+    setPingSentToast(`${partnerName}'ya "${emoji} ${type === 'poke' ? 'Dürtme' : type}" bildirimi gönderildi!`);
+    setTimeout(() => setPingSentToast(null), 3000);
+  };
+
+  // Ping'i kapat (Dismiss)
   const handleDismissPing = async (pingId: string) => {
-    setPings((prev) => prev.map((p) => (p.id === pingId ? { ...p, dismissed: true } : p)));
+    setPings((prev) => prev.filter((p) => p.id !== pingId));
     try {
       await fetch(
         `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(roomCode)}/ping/${encodeURIComponent(pingId)}/dismiss`,
@@ -248,105 +337,11 @@ export default function DuoAppView({
     } catch {}
   };
 
-  // Partner'a Ping Gönderme (Kahveye gel, neredesin vb.)
-  const handleSendPing = async (type: string, message: string, emoji: string) => {
-    try {
-      setPingSentToast(`${partner.name}'ya iletildi! ${emoji}`);
-      setTimeout(() => setPingSentToast(null), 2500);
+  const incomingPing = useMemo(() => {
+    return pings.find((p) => p.to_id === myId && !p.dismissed);
+  }, [pings, myId]);
 
-      const res = await fetch(
-        `${API_BASE}/api/uygun-musun/room/${encodeURIComponent(roomCode)}/ping`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from_id: myId,
-            to_id: partnerId,
-            type,
-            message,
-            emoji,
-          }),
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data && Array.isArray(data.pings)) setPings(data.pings);
-      }
-    } catch {}
-  };
-
-  // Kendi durumunu kaydetme
-  const handleSaveMyStatus = async (overrideEarly?: boolean) => {
-    const early = overrideEarly !== undefined ? overrideEarly : isEarlyExitActive;
-    let expiresAt: number | null = null;
-    const now = Date.now();
-
-    if (statusDuration === '60m') {
-      expiresAt = now + 60 * 60 * 1000;
-    } else if (statusDuration === 'next_class') {
-      if (myStatus.currentClass) {
-        expiresAt = now + Math.max(15, myStatus.currentClass.end_minutes - activeMinutes) * 60 * 1000;
-      } else if (myStatus.nextClass) {
-        expiresAt = now + Math.max(15, myStatus.nextClass.start_minutes - activeMinutes) * 60 * 1000;
-      } else {
-        expiresAt = now + 90 * 60 * 1000;
-      }
-    } else {
-      const eod = new Date();
-      eod.setHours(23, 59, 59, 999);
-      expiresAt = eod.getTime();
-    }
-
-    const preset = STATUS_PRESETS.find((p) => p.id === selectedPresetId);
-
-    const payload: CustomStatusOverride = {
-      type: early ? 'early_exit' : preset ? 'preset' : 'custom',
-      preset_id: selectedPresetId || undefined,
-      emoji: early ? '⚡' : preset?.emoji || '💬',
-      label: early ? 'Ders Erken Bitti' : preset?.label || 'Durum Notu',
-      note: statusNote.trim() || (early ? 'Hoca dersi erken bıraktı, şu an boşum!' : preset?.defaultNote || ''),
-      early_exit: early,
-      early_exit_until: myStatus.currentClass?.end_time || '',
-      early_exit_day: activeDayName,
-      created_at: now,
-      expires_at: expiresAt,
-    };
-
-    const nextProfiles = profiles.map((p) => (p.id === myId ? { ...p, custom_status: payload } : p));
-    setProfiles(nextProfiles);
-
-    setStatusSaveToast(true);
-    setTimeout(() => setStatusSaveToast(false), 2000);
-
-    try {
-      await fetch(`${API_BASE}/api/uygun-musun/room/${encodeURIComponent(roomCode)}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          profile_id: myId,
-          custom_status: payload,
-        }),
-      });
-    } catch {}
-  };
-
-  // Kendi durumunu sıfırlama
-  const handleClearMyStatus = async () => {
-    const nextProfiles = profiles.map((p) => (p.id === myId ? { ...p, custom_status: null } : p));
-    setProfiles(nextProfiles);
-    setIsEarlyExitActive(false);
-    setSelectedPresetId('');
-    setStatusNote('');
-    try {
-      await fetch(`${API_BASE}/api/uygun-musun/room/${encodeURIComponent(roomCode)}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile_id: myId, custom_status: null }),
-      });
-    } catch {}
-  };
-
-  // Program Yükleme Fonksiyonu
+  // Dosya Yükleme (PDF veya Görsel)
   const handleFileUpload = async (targetId: 'atilla' | 'neva', file: File) => {
     setUploadingFor(targetId);
     setUploadError(null);
@@ -436,9 +431,9 @@ export default function DuoAppView({
 
   if (!isMounted) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-6">
-        <div className="flex items-center gap-3 font-bold text-slate-400">
-          <RefreshCw className="w-5 h-5 animate-spin text-amber-400" />
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex items-center justify-center p-6">
+        <div className="flex items-center gap-3 font-bold text-slate-600">
+          <RefreshCw className="w-5 h-5 animate-spin text-[#0c3f79]" />
           <span>Özel Duo Alanı Yükleniyor...</span>
         </div>
       </div>
@@ -449,19 +444,25 @@ export default function DuoAppView({
   const isPartnerBusy = partnerStatus.state === 'IN_CLASS';
   const partnerCS = partnerStatus.activeCustomStatus;
 
+  const isMyBusy = myStatus.state === 'IN_CLASS';
+  const isMyOnline = myStatus.state === 'ONLINE_CLASS';
+  const myCS = myStatus.activeCustomStatus;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100 pb-28 select-none">
-      {/* 1. ÜST BAR & DYNAMIC ISLAND BADGE */}
-      <header className="sticky top-0 z-40 bg-slate-950/85 backdrop-blur-xl border-b border-white/10 px-4 py-3">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-28 select-none font-sans">
+      {/* 1. ÜST BAR & DYNAMIC ISLAND BADGE (YTÜ DOSTUN UYUMLU) */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 px-4 py-3 shadow-xs">
         <div className="max-w-md mx-auto space-y-2.5">
           {/* Üst Başlık & İsim */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <h1 className="text-sm font-black tracking-tight text-white flex items-center gap-1.5">
-                <span>{partnerName} &amp; {myName}</span>
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center gap-0.5">
-                  <Lock className="w-2.5 h-2.5" />
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h1 className="text-sm font-black tracking-tight text-slate-900 flex items-center gap-1.5">
+                <span className="text-[#0c3f79]">{partnerName}</span>
+                <span className="text-slate-400 font-light">&amp;</span>
+                <span className="text-[#0c3f79]">{myName}</span>
+                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-0.5 shadow-2xs">
+                  <Lock className="w-2.5 h-2.5 text-amber-600" />
                   Özel
                 </span>
               </h1>
@@ -471,10 +472,10 @@ export default function DuoAppView({
               <button
                 type="button"
                 onClick={() => setIsSimulatingTime(!isSimulatingTime)}
-                className={`px-2 py-1 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold flex items-center gap-1 transition-all cursor-pointer ${
                   isSimulatingTime
-                    ? 'bg-amber-400 text-slate-950 font-black'
-                    : 'bg-white/10 hover:bg-white/15 text-slate-300'
+                    ? 'bg-amber-400 text-slate-950 font-black shadow-2xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                 }`}
                 title="Saat simülatörü"
               >
@@ -485,16 +486,16 @@ export default function DuoAppView({
               <button
                 type="button"
                 onClick={fetchRoomData}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-slate-300 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
                 title="Şimdi Yenile"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-amber-400' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-[#0c3f79]' : ''}`} />
               </button>
 
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(true)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-slate-300 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
                 title="Program & Ayarlar"
               >
                 <Settings className="w-3.5 h-3.5" />
@@ -502,27 +503,27 @@ export default function DuoAppView({
             </div>
           </div>
 
-          {/* DYNAMIC ISLAND CAPSULE (Apple Stili Canlı Hap) */}
-          <div className="w-full bg-black/90 border border-white/15 rounded-full px-4 py-2 flex items-center justify-between gap-3 shadow-xl shadow-black/50">
+          {/* DYNAMIC ISLAND CAPSULE (YTÜ Laciverti & Altın Hap) */}
+          <div className="w-full bg-[#0c3f79] border border-[#00306a] rounded-full px-4 py-2 flex items-center justify-between gap-3 shadow-md shadow-[#0c3f79]/20">
             <div className="flex items-center gap-2.5 min-w-0">
               <span className="text-base shrink-0">{partner.avatar}</span>
               <div className="min-w-0">
                 <p className="text-xs font-black text-white truncate flex items-center gap-1.5">
-                  <span>{partner.name}:</span>
+                  <span className="text-amber-300">{partner.name}:</span>
                   {partnerStatus.state === 'ONLINE_CLASS' ? (
                     <span className="text-cyan-300 font-extrabold truncate">
                       💻 Online Ders (Müsait)
                     </span>
                   ) : isPartnerBusy ? (
-                    <span className="text-rose-400 font-extrabold truncate">
+                    <span className="text-rose-200 font-extrabold truncate">
                       {partnerStatus.currentClass?.name} ({partnerStatus.remainingMinutes} dk)
                     </span>
                   ) : partnerStatus.isEarlyExitActive ? (
-                    <span className="text-amber-300 font-extrabold truncate">
+                    <span className="text-amber-200 font-extrabold truncate">
                       ⚡ Erken çıktı (Müsait)
                     </span>
                   ) : (
-                    <span className="text-emerald-400 font-extrabold truncate">
+                    <span className="text-emerald-200 font-extrabold truncate">
                       Müsait {partnerStatus.freeUntilTime ? `(${partnerStatus.freeUntilTime}'a dek)` : ''}
                     </span>
                   )}
@@ -530,7 +531,7 @@ export default function DuoAppView({
               </div>
             </div>
 
-            <div className="shrink-0 flex items-center gap-1 font-mono text-[11px] font-bold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+            <div className="shrink-0 flex items-center gap-1 font-mono text-[11px] font-bold text-amber-300 bg-white/15 px-2 py-0.5 rounded-full border border-white/20">
               <Clock className="w-3 h-3 text-amber-400" />
               <span>{minutesToTimeStr(activeMinutes)}</span>
             </div>
@@ -538,15 +539,15 @@ export default function DuoAppView({
 
           {/* Simülatör Açıldıysa */}
           {isSimulatingTime && (
-            <div className="rounded-2xl bg-amber-500/15 border border-amber-400/30 p-3 space-y-2 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between text-xs font-extrabold text-amber-300">
+            <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3.5 space-y-2 animate-in fade-in duration-150 text-slate-800 shadow-xs">
+              <div className="flex items-center justify-between text-xs font-extrabold text-amber-900">
                 <span className="flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                   Saat Simülatörü
                 </span>
                 <button
                   onClick={() => setIsSimulatingTime(false)}
-                  className="text-[11px] text-amber-200 hover:underline flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] text-amber-700 hover:text-amber-900 font-bold underline flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCcw className="w-3 h-3" />
                   Gerçek Saate Dön
@@ -562,10 +563,10 @@ export default function DuoAppView({
                       setSimulatedDay(d);
                       setTimelineDay(d);
                     }}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer transition-all ${
                       simulatedDay === d
-                        ? 'bg-amber-400 text-slate-950 font-black'
-                        : 'bg-white/10 text-slate-300'
+                        ? 'bg-[#0c3f79] text-white shadow-2xs'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     {d}
@@ -574,9 +575,9 @@ export default function DuoAppView({
               </div>
 
               <div className="space-y-1">
-                <div className="flex justify-between text-xs font-mono text-amber-200">
+                <div className="flex justify-between text-xs font-mono text-slate-700">
                   <span>Simüle Saat:</span>
-                  <span className="font-bold bg-black/40 px-2 py-0.5 rounded border border-amber-400/30">
+                  <span className="font-bold bg-white px-2 py-0.5 rounded border border-amber-300 text-amber-900">
                     {minutesToTimeStr(simulatedMinutes)}
                   </span>
                 </div>
@@ -587,7 +588,7 @@ export default function DuoAppView({
                   step={5}
                   value={simulatedMinutes}
                   onChange={(e) => setSimulatedMinutes(parseInt(e.target.value, 10))}
-                  className="w-full accent-amber-400 cursor-pointer"
+                  className="w-full accent-[#0c3f79] cursor-pointer"
                 />
               </div>
             </div>
@@ -595,11 +596,11 @@ export default function DuoAppView({
         </div>
       </header>
 
-      {/* 2. ANA İÇERİK ALANI */}
+      {/* 2. ANA İÇERİK ALANI (MOBİL ÖNCELİKLİ & FERAH) */}
       <main className="max-w-md mx-auto px-4 pt-4 space-y-4">
         {/* BANA GELEN CANLI PİNG (TOAST) */}
         {incomingPing && (
-          <div className="rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 p-4 shadow-xl shadow-amber-500/20 flex items-start justify-between gap-3 animate-bounce">
+          <div className="rounded-2xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-slate-950 p-4 shadow-lg shadow-amber-500/20 flex items-start justify-between gap-3 animate-bounce border border-amber-300">
             <div className="flex items-start gap-3 min-w-0">
               <span className="text-2xl leading-none mt-0.5 shrink-0">{incomingPing.emoji || '☕'}</span>
               <div className="min-w-0">
@@ -627,39 +628,32 @@ export default function DuoAppView({
 
         {/* PİNG GÖNDERİLDİ TOAST BİLDİRİMİ */}
         {pingSentToast && (
-          <div className="rounded-xl bg-emerald-500 text-slate-950 font-black text-xs px-3.5 py-2.5 flex items-center gap-2 shadow-lg animate-in fade-in">
+          <div className="rounded-xl bg-emerald-600 text-white font-black text-xs px-3.5 py-2.5 flex items-center gap-2 shadow-md animate-in fade-in">
             <Check className="w-4 h-4" />
             <span>{pingSentToast}</span>
           </div>
         )}
 
         {/* 🌟 1. HERO KART: PARTNER ŞU AN NE YAPIYOR? (Neva / Atilla) */}
-        <div className="rounded-3xl bg-gradient-to-br from-slate-900/90 via-slate-900 to-slate-950 border border-white/15 p-5 shadow-2xl relative overflow-hidden space-y-4">
-          {/* Arka Plan Glow */}
-          <div
-            className={`absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-30 pointer-events-none ${
-              isPartnerBusy ? 'bg-rose-500' : 'bg-emerald-500'
-            }`}
-          />
-
+        <div className="rounded-3xl bg-white border border-slate-200/90 p-5 shadow-xs relative overflow-hidden space-y-4">
           {/* Kart Üst Bilgisi */}
           <div className="flex items-center justify-between gap-3 relative z-10">
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className={`w-12 h-12 rounded-2xl ${partnerTheme.bg} text-white flex items-center justify-center text-2xl shadow-lg ring-2 ring-white/20 shrink-0`}
+                className={`w-12 h-12 rounded-2xl ${partnerTheme.bg} text-white flex items-center justify-center text-2xl shadow-sm ring-2 ring-slate-100 shrink-0`}
               >
                 {partner.avatar}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg font-black text-white truncate">
+                  <h2 className="text-lg font-black text-slate-900 truncate">
                     {partner.name}
                   </h2>
-                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/10 text-slate-300">
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                     Arkadaşın
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 font-medium">
+                <p className="text-xs text-slate-500 font-medium">
                   {activeDayName} Canlı Kampüs Durumu
                 </p>
               </div>
@@ -668,23 +662,23 @@ export default function DuoAppView({
             {/* Durum Rozeti */}
             <div className="shrink-0">
               {partnerStatus.state === 'ONLINE_CLASS' ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-xs">
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-sky-50 text-sky-800 border border-sky-300 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
                   💻 ONLİNE DERS (MÜSAİT)
                 </span>
               ) : isPartnerBusy ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-xs">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-rose-50 text-rose-800 border border-rose-300 shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
                   DERSTE
                 </span>
               ) : partnerStatus.isEarlyExitActive ? (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-amber-400/20 text-amber-300 border border-amber-400/40 shadow-xs">
-                  <Zap className="w-3.5 h-3.5 fill-current text-amber-400" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-amber-50 text-amber-900 border border-amber-300 shadow-2xs">
+                  <Zap className="w-3.5 h-3.5 fill-current text-amber-500" />
                   ERKEN ÇIKTI
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   MÜSAİT
                 </span>
               )}
@@ -693,21 +687,21 @@ export default function DuoAppView({
 
           {/* Partner'ın Bıraktığı Canlı Not / Konum Balonu */}
           {partnerCS && (
-            <div className="rounded-2xl bg-amber-400/10 border border-amber-400/25 p-3 flex items-start gap-2.5 relative z-10">
+            <div className="rounded-2xl bg-amber-50/80 border border-amber-200/90 p-3.5 flex items-start gap-2.5 relative z-10">
               <span className="text-2xl leading-none mt-0.5 shrink-0">{partnerCS.emoji || '💬'}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-amber-300">
+                  <span className="text-xs font-black text-amber-900">
                     {partnerCS.label || 'Durum Notu'}
                   </span>
                   {partnerCS.early_exit && (
-                    <span className="text-[10px] font-black bg-amber-400/30 text-amber-200 px-1.5 py-0.2 rounded">
+                    <span className="text-[10px] font-black bg-amber-200/60 text-amber-900 px-1.5 py-0.5 rounded">
                       ⚡ Dersi Erken Bitti
                     </span>
                   )}
                 </div>
                 {partnerCS.note && (
-                  <p className="text-xs font-bold text-amber-100 mt-1 break-words">
+                  <p className="text-xs font-bold text-amber-950 mt-1 break-words">
                     “{partnerCS.note}”
                   </p>
                 )}
@@ -715,70 +709,70 @@ export default function DuoAppView({
             </div>
           )}
 
-            {/* Partner Durum Detayı: Derste / Boş / Online */}
-            <div className="relative z-10 space-y-3">
-              {partnerStatus.state === 'ONLINE_CLASS' && partnerStatus.currentClass && (
-                <div className="rounded-2xl bg-cyan-950/40 border border-cyan-500/30 p-4 space-y-2.5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400 flex items-center gap-1">
-                        💻 Şu An Online Derste (Fiziksel Olarak Müsait)
-                      </span>
-                      <h3 className="text-base font-black text-white mt-0.5 leading-snug">
-                        {partnerStatus.currentClass.name}
-                      </h3>
-                      <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-slate-300">
-                        <span className="font-mono font-bold bg-white/10 px-2 py-0.5 rounded text-[11px]">
-                          {partnerStatus.currentClass.code}
-                        </span>
-                        <span>
-                          🕒 {partnerStatus.currentClass.start_time} - {partnerStatus.currentClass.end_time}
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-cyan-300 bg-cyan-900/40 px-2 py-0.5 rounded border border-cyan-500/30">
-                          💻 {partnerStatus.currentClass.classroom || 'Online'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-cyan-200/80 mt-1.5 font-medium">
-                        ✨ Online ders olduğu için müsait kabul edilir, dilediğin gibi yazabilir veya çağırabilirsin.
-                      </p>
-                    </div>
-
-                    <div className="bg-black/60 border border-cyan-500/40 rounded-2xl px-3.5 py-2 text-center shrink-0">
-                      <span className="text-[10px] font-bold uppercase text-cyan-400">
-                        Durum
-                      </span>
-                      <p className="text-sm font-black text-cyan-300 leading-tight mt-0.5">
-                        Müsait
-                      </p>
-                      <span className="text-[10px] text-slate-400">
-                        Online
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {isPartnerBusy && partnerStatus.currentClass && (
-              <div className="rounded-2xl bg-rose-950/40 border border-rose-500/30 p-4 space-y-3">
+          {/* Partner Durum Detayı: Derste / Boş / Online */}
+          <div className="relative z-10 space-y-3">
+            {partnerStatus.state === 'ONLINE_CLASS' && partnerStatus.currentClass && (
+              <div className="rounded-2xl bg-sky-50/80 border border-sky-200 p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-rose-400 flex items-center gap-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-sky-800 flex items-center gap-1">
+                      💻 Şu An Online Derste (Fiziksel Olarak Müsait)
+                    </span>
+                    <h3 className="text-base font-black text-slate-900 mt-0.5 leading-snug">
+                      {partnerStatus.currentClass.name}
+                    </h3>
+                    <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-slate-600">
+                      <span className="font-mono font-bold bg-white px-2 py-0.5 rounded text-[11px] border border-sky-200 text-sky-900">
+                        {partnerStatus.currentClass.code}
+                      </span>
+                      <span>
+                        🕒 {partnerStatus.currentClass.start_time} - {partnerStatus.currentClass.end_time}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-sky-900 bg-white px-2 py-0.5 rounded border border-sky-200 font-medium">
+                        💻 {partnerStatus.currentClass.classroom || 'Online'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-sky-950/80 mt-1.5 font-medium">
+                      ✨ Online ders olduğu için müsait kabul edilir, dilediğin gibi yazabilir veya çağırabilirsin.
+                    </p>
+                  </div>
+
+                  <div className="bg-white border border-sky-200 rounded-2xl px-3.5 py-2 text-center shrink-0 shadow-2xs">
+                    <span className="text-[10px] font-bold uppercase text-sky-700">
+                      Durum
+                    </span>
+                    <p className="text-sm font-black text-sky-900 leading-tight mt-0.5">
+                      Müsait
+                    </p>
+                    <span className="text-[10px] text-slate-500">
+                      Online
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isPartnerBusy && partnerStatus.currentClass && (
+              <div className="rounded-2xl bg-rose-50/80 border border-rose-200 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-rose-800 flex items-center gap-1">
                       <BookOpen className="w-3.5 h-3.5" />
                       Şu An Devam Eden Ders
                     </span>
-                    <h3 className="text-base font-black text-white mt-0.5 leading-snug">
+                    <h3 className="text-base font-black text-slate-900 mt-0.5 leading-snug">
                       {partnerStatus.currentClass.name}
                     </h3>
-                    <div className="flex items-center flex-wrap gap-2 mt-1.5 text-xs text-slate-300">
-                      <span className="font-mono font-bold bg-white/10 px-2 py-0.5 rounded text-[11px]">
+                    <div className="flex items-center flex-wrap gap-2 mt-1.5 text-xs text-slate-600">
+                      <span className="font-mono font-bold bg-white px-2 py-0.5 rounded text-[11px] border border-rose-200 text-rose-900">
                         {partnerStatus.currentClass.code}
                       </span>
                       <span>
                         🕒 {partnerStatus.currentClass.start_time} - {partnerStatus.currentClass.end_time}
                       </span>
                       {partnerStatus.currentClass.classroom && (
-                        <span className="inline-flex items-center gap-1 text-slate-200 bg-white/10 px-2 py-0.5 rounded">
-                          <MapPin className="w-3 h-3 text-rose-400" />
+                        <span className="inline-flex items-center gap-1 text-slate-800 bg-white px-2 py-0.5 rounded border border-rose-200">
+                          <MapPin className="w-3 h-3 text-rose-600" />
                           {partnerStatus.currentClass.classroom}
                         </span>
                       )}
@@ -786,14 +780,14 @@ export default function DuoAppView({
                   </div>
 
                   {/* Geri Sayım Kutusu */}
-                  <div className="bg-black/60 border border-rose-500/40 rounded-2xl px-3.5 py-2 text-center shrink-0">
-                    <span className="text-[10px] font-bold uppercase text-rose-400 tracking-wider">
+                  <div className="bg-white border border-rose-200 rounded-2xl px-3.5 py-2 text-center shrink-0 shadow-2xs">
+                    <span className="text-[10px] font-bold uppercase text-rose-700 tracking-wider">
                       Bitmesine
                     </span>
-                    <p className="text-xl font-black text-white leading-tight mt-0.5">
+                    <p className="text-xl font-black text-rose-900 leading-tight mt-0.5 font-mono">
                       {formatDurationTr(partnerStatus.remainingMinutes)}
                     </p>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-500 font-medium">
                       {partnerStatus.currentClass.end_time}&apos;de
                     </span>
                   </div>
@@ -801,13 +795,13 @@ export default function DuoAppView({
 
                 {/* İlerleme Çubuğu */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-[11px] font-bold text-slate-400">
+                  <div className="flex justify-between text-[11px] font-bold text-slate-600">
                     <span>Ders Tamamlanma</span>
-                    <span className="text-rose-400 font-mono">%{partnerStatus.progressPercent}</span>
+                    <span className="text-rose-700 font-mono">%{partnerStatus.progressPercent}</span>
                   </div>
-                  <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-rose-500 to-orange-400 rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full transition-all duration-500"
                       style={{ width: `${partnerStatus.progressPercent}%` }}
                     />
                   </div>
@@ -816,34 +810,34 @@ export default function DuoAppView({
             )}
 
             {!isPartnerBusy && (
-              <div className="rounded-2xl bg-emerald-950/40 border border-emerald-500/30 p-4 space-y-2.5">
+              <div className="rounded-2xl bg-emerald-50/80 border border-emerald-200 p-4 space-y-2.5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       {partnerStatus.isEarlyExitActive ? 'Ders Erken Bitti' : 'Şu An Müsait'}
                     </span>
-                    <h3 className="text-base font-black text-white mt-0.5">
-                      {partnerStatus.freeUntilTime}&apos;a kadar boş!
+                    <h3 className="text-base font-black text-slate-900 mt-0.5">
+                      {partnerStatus.freeUntilTime ? `${partnerStatus.freeUntilTime}'a kadar boş!` : 'Bugün dersi yok!'}
                     </h3>
                     {partnerStatus.nextClass ? (
-                      <p className="text-xs text-slate-300 mt-1">
-                        Sıradaki: <strong className="text-white">{partnerStatus.nextClass.start_time}</strong> -{' '}
+                      <p className="text-xs text-slate-600 mt-1">
+                        Sıradaki: <strong className="text-slate-900 font-semibold">{partnerStatus.nextClass.start_time}</strong> -{' '}
                         {partnerStatus.nextClass.name}
                         {partnerStatus.nextClass.classroom ? ` (${partnerStatus.nextClass.classroom})` : ''}
                       </p>
                     ) : (
-                      <p className="text-xs text-emerald-300 font-bold mt-1">
+                      <p className="text-xs text-emerald-800 font-bold mt-1">
                         🎉 Bugün başka dersi kalmadı, tamamen serbest!
                       </p>
                     )}
                   </div>
 
-                  <div className="bg-black/60 border border-emerald-500/40 rounded-2xl px-3.5 py-2 text-center shrink-0">
-                    <span className="text-[10px] font-bold uppercase text-emerald-400">
+                  <div className="bg-white border border-emerald-200 rounded-2xl px-3.5 py-2 text-center shrink-0 shadow-2xs">
+                    <span className="text-[10px] font-bold uppercase text-emerald-700">
                       Boş Süre
                     </span>
-                    <p className="text-lg font-black text-white leading-tight mt-0.5">
+                    <p className="text-lg font-black text-emerald-900 leading-tight mt-0.5 font-mono">
                       {partnerStatus.remainingMinutes ? formatDurationTr(partnerStatus.remainingMinutes) : 'Gün Boyu'}
                     </p>
                   </div>
@@ -853,9 +847,9 @@ export default function DuoAppView({
           </div>
 
           {/* TEK TIKLA PARTNER'A ÇAĞRI / DÜRTME BUTONLARI (DUO PINGS) */}
-          <div className="pt-2 border-t border-white/10 space-y-2 relative z-10">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-              <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+          <div className="pt-3 border-t border-slate-100 space-y-2 relative z-10">
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+              <Volume2 className="w-3.5 h-3.5 text-amber-500" />
               <span>{partner.name}&apos;ya Hızlı Bildirim Bırak:</span>
             </span>
 
@@ -863,36 +857,36 @@ export default function DuoAppView({
               <button
                 type="button"
                 onClick={() => handleSendPing('coffee', 'Kahveye gel, seni bekliyorum ☕', '☕')}
-                className="p-2.5 rounded-2xl bg-white/10 hover:bg-amber-400 hover:text-slate-950 text-white border border-white/10 text-center transition-all cursor-pointer group"
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-amber-50 text-slate-800 hover:text-amber-900 border border-slate-200 hover:border-amber-300 text-center transition-all cursor-pointer shadow-2xs active:scale-95 group"
               >
-                <span className="text-xl block">☕</span>
+                <span className="text-xl block group-hover:scale-110 transition-transform">☕</span>
                 <span className="text-[10px] font-extrabold block mt-0.5">Kahve</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSendPing('location', 'Neredesin? Kampüste misin?', '📍')}
-                className="p-2.5 rounded-2xl bg-white/10 hover:bg-emerald-400 hover:text-slate-950 text-white border border-white/10 text-center transition-all cursor-pointer group"
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-emerald-50 text-slate-800 hover:text-emerald-900 border border-slate-200 hover:border-emerald-300 text-center transition-all cursor-pointer shadow-2xs active:scale-95 group"
               >
-                <span className="text-xl block">📍</span>
+                <span className="text-xl block group-hover:scale-110 transition-transform">📍</span>
                 <span className="text-[10px] font-extrabold block mt-0.5">Neredesin?</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSendPing('library', 'Kütüphanedeyim, yanıma gel 📚', '📚')}
-                className="p-2.5 rounded-2xl bg-white/10 hover:bg-blue-400 hover:text-slate-950 text-white border border-white/10 text-center transition-all cursor-pointer group"
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-blue-50 text-slate-800 hover:text-blue-900 border border-slate-200 hover:border-blue-300 text-center transition-all cursor-pointer shadow-2xs active:scale-95 group"
               >
-                <span className="text-xl block">📚</span>
+                <span className="text-xl block group-hover:scale-110 transition-transform">📚</span>
                 <span className="text-[10px] font-extrabold block mt-0.5">Kütüphane</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleSendPing('poke', 'Seni dürttü! 👋', '👋')}
-                className="p-2.5 rounded-2xl bg-white/10 hover:bg-purple-400 hover:text-slate-950 text-white border border-white/10 text-center transition-all cursor-pointer group"
+                className="p-2.5 rounded-2xl bg-slate-50 hover:bg-purple-50 text-slate-800 hover:text-purple-900 border border-slate-200 hover:border-purple-300 text-center transition-all cursor-pointer shadow-2xs active:scale-95 group"
               >
-                <span className="text-xl block">👋</span>
+                <span className="text-xl block group-hover:scale-110 transition-transform">👋</span>
                 <span className="text-[10px] font-extrabold block mt-0.5">Dürt</span>
               </button>
             </div>
@@ -901,43 +895,43 @@ export default function DuoAppView({
 
         {/* ☕ 2. ORTAK UYGUNLUK & KAHVE BULUŞMA VAKTİ */}
         <div
-          className={`rounded-3xl border p-4 shadow-xl transition-all space-y-2.5 ${
+          className={`rounded-3xl border p-4 shadow-xs transition-all space-y-2.5 ${
             mutual.allAvailableNow
-              ? 'bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border-amber-400/40'
-              : 'bg-slate-900/60 border-white/10'
+              ? 'bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border-amber-300'
+              : 'bg-white border-slate-200/90'
           }`}
         >
           <div className="flex items-center gap-3">
             <div
               className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
                 mutual.allAvailableNow
-                  ? 'bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-400/30'
-                  : 'bg-white/10 text-slate-400'
+                  ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                  : 'bg-slate-100 text-[#0c3f79]'
               }`}
             >
               <Coffee className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h4 className="text-xs font-black uppercase tracking-wider text-amber-300">
+              <h4 className="text-xs font-black uppercase tracking-wider text-amber-800">
                 {mutual.allAvailableNow ? '🎉 İkiniz De Şu An Boşsunuz!' : 'Ortak Zaman Kesişimi'}
               </h4>
-              <p className="text-sm font-extrabold text-white leading-tight mt-0.5">
+              <p className="text-sm font-extrabold text-slate-900 leading-tight mt-0.5">
                 {mutual.headline}
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">{mutual.detail}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{mutual.detail}</p>
             </div>
           </div>
 
           {/* Günün Ortak Boşlukları */}
           {mutual.todayMutualWindows.length > 0 && (
-            <div className="pt-2 border-t border-white/10 flex flex-wrap gap-1.5">
+            <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-1.5">
               {mutual.todayMutualWindows.map((win, idx) => (
                 <span
                   key={idx}
                   className={`text-xs font-bold px-2.5 py-1 rounded-xl font-mono ${
                     win.is_current
-                      ? 'bg-amber-400 text-slate-950 font-black ring-2 ring-amber-300/50'
-                      : 'bg-white/10 text-slate-300'
+                      ? 'bg-amber-400 text-slate-950 font-black ring-2 ring-amber-300 shadow-2xs'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'
                   }`}
                 >
                   {win.start_time} - {win.end_time} ({formatDurationTr(win.duration_minutes)})
@@ -947,19 +941,21 @@ export default function DuoAppView({
           )}
         </div>
 
-        {/* ⚡ 3. BENİM DURUM KUMANDAM (KENDİ DURUMUNU GÜNCELLE) */}
-        <div className="rounded-3xl bg-slate-900/90 border border-white/15 p-5 shadow-2xl space-y-4">
+        {/* ⚡ 3. BENİM DURUMUM KARTI (KULLANICININ İSTEDİĞİ CANLI DURUM & KUMANDA) */}
+        <div className="rounded-3xl bg-white border border-slate-200/90 p-5 shadow-xs space-y-4">
+          {/* Kart Başlığı */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-[#0c3f79] text-white flex items-center justify-center text-xl shadow-lg">
+              <div className="w-10 h-10 rounded-2xl bg-[#0c3f79] text-white flex items-center justify-center text-xl shadow-xs">
                 {me.avatar}
               </div>
               <div>
-                <h3 className="text-sm font-black text-white">
-                  Benim Durumum ({myName})
+                <h3 className="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                  <span>Senin Durumun</span>
+                  <span className="text-xs font-bold text-slate-500 font-mono">({myName})</span>
                 </h3>
-                <p className="text-xs text-slate-400">
-                  {partnerName}&apos;nın ekranında nasıl görüneceksin?
+                <p className="text-xs text-slate-500 font-medium">
+                  {partnerName}&apos;nın ekranında şu an nasıl görünüyorsun?
                 </p>
               </div>
             </div>
@@ -968,14 +964,169 @@ export default function DuoAppView({
               <button
                 type="button"
                 onClick={handleClearMyStatus}
-                className="text-[11px] font-extrabold text-rose-400 hover:text-rose-300 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20 cursor-pointer"
+                className="text-[11px] font-extrabold text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg border border-rose-200 cursor-pointer transition-colors"
               >
                 Durumu Sıfırla
               </button>
             )}
           </div>
 
-          {/* ⚡ DEV "DERSİM ERKEN BİTTİ" BUTONU */}
+          {/* 🔥 CANLI ÖNİZLEME: KARŞI TARAF SENİ NASIL GÖRÜYOR? */}
+          <div className="space-y-2.5">
+            {/* Durum A: Online Derste */}
+            {myStatus.state === 'ONLINE_CLASS' && myStatus.currentClass && (
+              <div className="rounded-2xl bg-sky-50 border border-sky-200 p-4 space-y-2 text-left">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-sky-100 text-sky-800 border border-sky-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                    💻 ONLİNE DERS (MÜSAİT GÖRÜNÜYORSUN)
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-sky-900">
+                    🕒 {myStatus.currentClass.start_time} - {myStatus.currentClass.end_time}
+                  </span>
+                </div>
+
+                <div className="space-y-0.5">
+                  <h4 className="text-sm font-black text-slate-900">
+                    {myStatus.currentClass.name}
+                  </h4>
+                  <p className="text-xs text-slate-600 font-medium flex items-center gap-2">
+                    <span className="font-mono font-bold bg-white px-1.5 py-0.2 rounded border border-sky-200 text-sky-900 text-[10.5px]">
+                      {myStatus.currentClass.code}
+                    </span>
+                    <span>Derslik: {myStatus.currentClass.classroom || 'Online'}</span>
+                  </p>
+                </div>
+
+                <p className="text-[11.5px] text-sky-900 font-medium pt-1 border-t border-sky-200/60">
+                  ✨ Bu ders online olduğu için {partnerName} seni <strong>fiziksel olarak müsait</strong> olarak görüyor.
+                </p>
+              </div>
+            )}
+
+            {/* Durum B: Erken Çıkış Aktif */}
+            {isEarlyExitActive && (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 space-y-2 text-left">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                    <Zap className="w-3.5 h-3.5 fill-current text-amber-500" />
+                    ⚡ DERSTEN ERKEN ÇIKTIN (MÜSAİT)
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-800 bg-white px-2 py-0.5 rounded border border-amber-200">
+                    Müsait
+                  </span>
+                </div>
+                <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                  Normalde ders programında ders saati olmasına rağmen &quot;Erken Çıktım&quot; bildirdiğin için {partnerName} seni şu an <strong>MÜSAİT</strong> olarak görüyor.
+                </p>
+                {myStatus.earlyDismissedClass && (
+                  <p className="text-[11px] font-mono text-amber-900 bg-white/80 p-2 rounded-xl border border-amber-200/80">
+                    Erken çıkılan ders: <strong>{myStatus.earlyDismissedClass.code}</strong> - {myStatus.earlyDismissedClass.name}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Durum C: Fiziksel Derste (ve erken çıkış yapmamış) */}
+            {isMyBusy && !isEarlyExitActive && myStatus.currentClass && (
+              <div className="rounded-2xl bg-rose-50 border border-rose-200 p-4 space-y-3 text-left">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 space-y-1">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-rose-100 text-rose-800 border border-rose-300">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                      🔴 ŞU AN DERSTESİN
+                    </span>
+                    <h4 className="text-sm font-black text-slate-900 leading-snug">
+                      {myStatus.currentClass.name}
+                    </h4>
+                    <div className="flex items-center flex-wrap gap-2 text-xs text-slate-600">
+                      <span className="font-mono font-bold bg-white px-2 py-0.5 rounded text-[11px] border border-rose-200 text-rose-900">
+                        {myStatus.currentClass.code}
+                      </span>
+                      <span>🕒 {myStatus.currentClass.start_time} - {myStatus.currentClass.end_time}</span>
+                      {myStatus.currentClass.classroom && (
+                        <span className="inline-flex items-center gap-1 text-slate-800 bg-white px-2 py-0.5 rounded border border-rose-200">
+                          <MapPin className="w-3 h-3 text-rose-600" />
+                          {myStatus.currentClass.classroom}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-rose-200 rounded-2xl px-3 py-2 text-center shrink-0 shadow-2xs">
+                    <span className="text-[10px] font-bold uppercase text-rose-700">Bitmesine</span>
+                    <p className="text-lg font-black text-rose-900 font-mono leading-tight mt-0.5">
+                      {formatDurationTr(myStatus.remainingMinutes)}
+                    </p>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      {myStatus.currentClass.end_time}&apos;de
+                    </span>
+                  </div>
+                </div>
+
+                {/* İlerleme Çubuğu */}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[11px] font-bold text-slate-600">
+                    <span>Ders İlerlemesi</span>
+                    <span className="text-rose-700 font-mono">%{myStatus.progressPercent}</span>
+                  </div>
+                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full transition-all duration-500"
+                      style={{ width: `${myStatus.progressPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-slate-600 font-medium pt-1 border-t border-rose-200/60">
+                  {partnerName} şu an seni <strong>derste</strong> görüyor. Eğer ders erken bittiyse aşağıdaki sarı butona basarak durumunu güncelleyebilirsin.
+                </p>
+              </div>
+            )}
+
+            {/* Durum D: Şu an Müsait / Boşta */}
+            {!isMyBusy && !isEarlyExitActive && myStatus.state !== 'ONLINE_CLASS' && (
+              <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 space-y-2 text-left">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    🟢 ŞU AN BOŞTASIN (MÜSAİT GÖRÜNÜYORSUN)
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200">
+                    {myStatus.freeUntilTime ? `${myStatus.freeUntilTime}'a dek` : 'Gün Boyu'}
+                  </span>
+                </div>
+
+                <h4 className="text-sm font-black text-slate-900">
+                  {myStatus.freeUntilTime ? `${myStatus.freeUntilTime}'a kadar dersin yok!` : 'Bugün başka dersin yok!'}
+                </h4>
+
+                {myStatus.nextClass ? (
+                  <p className="text-xs text-slate-600">
+                    Sıradaki dersin: <strong className="text-slate-900 font-semibold">{myStatus.nextClass.start_time}</strong> - {myStatus.nextClass.name} ({myStatus.nextClass.classroom || 'Online'})
+                  </p>
+                ) : (
+                  <p className="text-xs text-emerald-800 font-bold">
+                    🎉 Bugünün tüm dersleri bitti veya bugün programın yok.
+                  </p>
+                )}
+
+                <p className="text-[11px] text-slate-600 font-medium pt-1 border-t border-emerald-200/60">
+                  {partnerName} seni şu an <strong>müsait</strong> olarak görüyor.
+                </p>
+              </div>
+            )}
+
+            {/* Yayınlanan Canlı Not Varsa Göster */}
+            {me.custom_status?.note && (
+              <div className="rounded-xl bg-amber-50/80 border border-amber-200/90 p-2.5 flex items-center gap-2 text-xs text-amber-950 font-bold">
+                <span className="text-base">{me.custom_status.emoji || '💬'}</span>
+                <span className="truncate">Yayınlanan Notun: &ldquo;{me.custom_status.note}&rdquo;</span>
+              </div>
+            )}
+          </div>
+
+          {/* ⚡ DEV "DERSİM ERKEN BİTTİ" BUTONU (MOBILE ERGONOMİK) */}
           <button
             type="button"
             onClick={() => {
@@ -983,16 +1134,16 @@ export default function DuoAppView({
               setIsEarlyExitActive(nextVal);
               handleSaveMyStatus(nextVal);
             }}
-            className={`w-full p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 ${
+            className={`w-full p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 shadow-xs active:scale-[0.99] ${
               isEarlyExitActive
-                ? 'bg-gradient-to-r from-amber-500 to-orange-500 border-amber-300 text-slate-950 shadow-xl shadow-amber-500/30'
-                : 'bg-white/5 hover:bg-white/10 border-white/15 text-white'
+                ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 border-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-900'
             }`}
           >
             <div className="flex items-center gap-3 text-left">
               <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                  isEarlyExitActive ? 'bg-black text-amber-400' : 'bg-white/10 text-amber-400'
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${
+                  isEarlyExitActive ? 'bg-slate-950 text-amber-400' : 'bg-white text-amber-500 border border-slate-200'
                 }`}
               >
                 <Zap className="w-5 h-5 fill-current" />
@@ -1003,19 +1154,19 @@ export default function DuoAppView({
                 </p>
                 <p
                   className={`text-[11px] font-medium mt-0.5 ${
-                    isEarlyExitActive ? 'text-amber-950 font-bold' : 'text-slate-400'
+                    isEarlyExitActive ? 'text-amber-950 font-bold' : 'text-slate-500'
                   }`}
                 >
                   {isEarlyExitActive
-                    ? 'Aktif! Neva seni şu an MÜSAİT olarak görüyor.'
-                    : 'Tek tıkla ders saatini bitti sayar ve seni Müsait yapar.'}
+                    ? `Aktif! ${partnerName} seni şu an MÜSAİT olarak görüyor.`
+                    : 'Tek dokunuşla ders saatini bitti sayar ve seni Müsait yapar.'}
                 </p>
               </div>
             </div>
 
             <div
               className={`w-6 h-6 rounded-lg flex items-center justify-center border shrink-0 ${
-                isEarlyExitActive ? 'bg-black text-amber-400 border-black' : 'border-white/30'
+                isEarlyExitActive ? 'bg-slate-950 text-amber-400 border-slate-950' : 'border-slate-300 bg-white'
               }`}
             >
               {isEarlyExitActive && <Check className="w-4 h-4 stroke-[3]" />}
@@ -1023,8 +1174,8 @@ export default function DuoAppView({
           </button>
 
           {/* HIZLI KONUM VE DURUM ROZETLERİ */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+          <div className="space-y-1.5 pt-1">
+            <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
               Neredesin? Hızlı Seç:
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -1042,10 +1193,10 @@ export default function DuoAppView({
                         if (!statusNote) setStatusNote(preset.defaultNote);
                       }
                     }}
-                    className={`p-2 rounded-xl border text-left transition-all flex items-center gap-2 cursor-pointer ${
+                    className={`p-2 rounded-xl border text-left transition-all flex items-center gap-2 cursor-pointer shadow-2xs active:scale-95 ${
                       active
-                        ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold shadow-md'
-                        : 'bg-white/5 hover:bg-white/10 text-slate-300 border-white/10'
+                        ? 'bg-[#0c3f79] text-white border-[#0c3f79] font-bold shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                     }`}
                   >
                     <span className="text-base shrink-0">{preset.emoji}</span>
@@ -1058,7 +1209,7 @@ export default function DuoAppView({
 
           {/* SERBEST NOT GİRİŞİ */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+            <label className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
               {partnerName}&apos;ya Not Bırak:
             </label>
             <textarea
@@ -1067,7 +1218,7 @@ export default function DuoAppView({
               onChange={(e) => setStatusNote(e.target.value)}
               placeholder="Örn: Kütüphane -1 sessiz alandayım, kahveye beklerim ☕"
               maxLength={120}
-              className="w-full rounded-2xl bg-black/40 border border-white/15 focus:border-amber-400 px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 outline-none transition-all resize-none"
+              className="w-full rounded-2xl bg-slate-50 border border-slate-200 focus:border-[#0c3f79] focus:bg-white px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 outline-none transition-all resize-none"
             />
           </div>
 
@@ -1076,47 +1227,48 @@ export default function DuoAppView({
             <select
               value={statusDuration}
               onChange={(e: any) => setStatusDuration(e.target.value)}
-              className="bg-white/10 border border-white/15 text-slate-200 text-xs font-bold rounded-xl px-3 py-2.5 outline-none cursor-pointer"
+              className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl px-3 py-2.5 outline-none cursor-pointer focus:border-[#0c3f79]"
             >
-              <option value="next_class" className="bg-slate-900 text-white">Sonraki Derse Kadar</option>
-              <option value="60m" className="bg-slate-900 text-white">1 Saat Geçerli</option>
-              <option value="today" className="bg-slate-900 text-white">Bugün Boyu</option>
+              <option value="auto">Otomatik (Ders Bitimine Kadar)</option>
+              <option value={30}>30 Dakika</option>
+              <option value={60}>1 Saat</option>
+              <option value={120}>2 Saat</option>
+              <option value={240}>4 Saat</option>
             </select>
 
             <button
               type="button"
               onClick={() => handleSaveMyStatus()}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-400/20 transition-all cursor-pointer"
+              className="flex-1 py-2.5 px-4 rounded-xl bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
             >
-              {statusSaveToast ? (
-                <>
-                  <Check className="w-4 h-4 stroke-[3]" />
-                  <span>Durum İletildi!</span>
-                </>
-              ) : (
-                <>
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Durumu {partnerName}&apos;ya İlet</span>
-                </>
-              )}
+              <Send className="w-3.5 h-3.5" />
+              <span>Durumu Yayınla</span>
             </button>
           </div>
+
+          {statusSaveToast && (
+            <div className="rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-2 text-center animate-in fade-in">
+              ✓ Durumun {partnerName}&apos;ya anında iletildi!
+            </div>
+          )}
         </div>
 
-        {/* 📅 4. İKİLİ GÜNLÜK PARALEL ÇİZELGE */}
-        <div className="rounded-3xl bg-slate-900/90 border border-white/15 p-5 shadow-2xl space-y-3.5">
+        {/* 4. GÜNLÜK İKİLİ PARALEL ÇİZELGE (TIMELINE) */}
+        <div className="rounded-3xl bg-white border border-slate-200/90 p-5 shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-white flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-amber-400" />
-              <span>Günün Paralel Çizelgesi</span>
-            </h3>
-            <span className="text-[11px] font-mono text-slate-400">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#0c3f79]" />
+              <h3 className="text-sm font-black text-slate-900">
+                Günün Paralel Zaman Akışı
+              </h3>
+            </div>
+            <span className="text-xs font-bold text-slate-500 font-mono">
               {timelineDay}
             </span>
           </div>
 
-          {/* Gün Seçici Haplar */}
-          <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pb-1">
+          {/* Gün Seçici Butonlar */}
+          <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar pb-1">
             {WEEKDAYS_TR.map((day) => {
               const active = timelineDay === day;
               const isToday = day === activeDayName;
@@ -1127,13 +1279,13 @@ export default function DuoAppView({
                   onClick={() => setTimelineDay(day)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all shrink-0 flex items-center gap-1 cursor-pointer ${
                     active
-                      ? 'bg-amber-400 text-slate-950 font-black shadow-md'
-                      : 'bg-white/10 text-slate-300 hover:bg-white/15'
+                      ? 'bg-[#0c3f79] text-white shadow-2xs font-black'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   <span>{day}</span>
                   {isToday && (
-                    <span className="text-[8px] font-black uppercase px-1 rounded bg-black/20">
+                    <span className="text-[8px] font-black uppercase px-1 rounded bg-amber-400 text-slate-950">
                       Bugün
                     </span>
                   )}
@@ -1143,14 +1295,14 @@ export default function DuoAppView({
           </div>
 
           {/* Sütun Başlıkları */}
-          <div className="grid grid-cols-[55px_1fr_1fr] gap-2 pt-2 border-t border-white/10 text-[11px] font-black uppercase text-slate-400">
+          <div className="grid grid-cols-[55px_1fr_1fr] gap-2 pt-2 border-t border-slate-100 text-[11px] font-black uppercase text-slate-500">
             <span className="text-center">Saat</span>
-            <span className="text-center text-blue-300">{myName} (Sen)</span>
-            <span className="text-center text-violet-300">{partnerName}</span>
+            <span className="text-center text-[#0c3f79]">{myName} (Sen)</span>
+            <span className="text-center text-purple-700">{partnerName}</span>
           </div>
 
           {/* Saatlik Akış */}
-          <div className="space-y-1.5 divide-y divide-white/5 max-h-80 overflow-y-auto pr-1">
+          <div className="space-y-1.5 divide-y divide-slate-100 max-h-80 overflow-y-auto pr-1">
             {TIMELINE_HOURS.map((hrStr) => {
               const hrStart = toMinutes(hrStr);
               const isCurrent = timelineDay === activeDayName && activeMinutes >= hrStart && activeMinutes < hrStart + 60;
@@ -1164,17 +1316,15 @@ export default function DuoAppView({
               const myEarly = myMatch && timelineDay === activeDayName ? isCourseEarlyDismissed(myMatch, myStatus.activeCustomStatus, timelineDay) : false;
               const partnerEarly = partnerMatch && timelineDay === activeDayName ? isCourseEarlyDismissed(partnerMatch, partnerStatus.activeCustomStatus, timelineDay) : false;
 
-              const bothFree = (!myMatch || myEarly) && (!partnerMatch || partnerEarly);
-
               return (
                 <div
                   key={hrStr}
                   className={`grid grid-cols-[55px_1fr_1fr] gap-2 pt-1.5 items-center text-xs rounded-xl px-1 ${
-                    isCurrent ? 'bg-amber-400/10 ring-1 ring-amber-400/30' : ''
+                    isCurrent ? 'bg-amber-50 ring-1 ring-amber-300' : ''
                   }`}
                 >
-                  <div className="text-center font-mono text-[11px] text-slate-400">
-                    <span className={isCurrent ? 'text-amber-400 font-bold' : ''}>{hrStr}</span>
+                  <div className="text-center font-mono text-[11px] text-slate-500">
+                    <span className={isCurrent ? 'text-amber-700 font-bold' : ''}>{hrStr}</span>
                   </div>
 
                   {/* Benim Kolonum */}
@@ -1182,29 +1332,29 @@ export default function DuoAppView({
                     {myMatch && !myEarly ? (
                       myMatch.is_online ? (
                         <div
-                          className="bg-rose-500/15 text-rose-200 border border-rose-500/40 px-2 py-1 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs"
+                          className="bg-rose-50 text-rose-800 border border-rose-300 px-2 py-1 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs"
                           title="Online Ders (Fiziksel Olarak Müsait)"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
-                          <Video className="w-3 h-3 text-rose-400 shrink-0" />
+                          <Video className="w-3 h-3 text-rose-600 shrink-0" />
                           <span className="font-mono font-bold text-[10.5px] truncate">
                             {myMatch.code}
                           </span>
-                          <span className="text-[8.5px] font-black uppercase tracking-wider text-rose-300 bg-rose-950/80 px-1 py-0.2 rounded shrink-0">
+                          <span className="text-[8.5px] font-black uppercase tracking-wider text-white bg-rose-600 px-1 py-0.2 rounded shrink-0">
                             Rec
                           </span>
                         </div>
                       ) : (
-                        <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-1 rounded-lg block truncate font-bold text-[11px]">
+                        <span className="bg-blue-50 text-blue-900 border border-blue-200 px-2 py-1 rounded-lg block truncate font-bold text-[11px]">
                           {myMatch.code}
                         </span>
                       )
                     ) : myEarly ? (
-                      <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded block text-[10px] font-bold truncate">
+                      <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded block text-[10px] font-bold truncate border border-amber-300">
                         ⚡ Çıktı
                       </span>
                     ) : (
-                      <span className="text-slate-500 text-[11px]">Boş</span>
+                      <span className="text-slate-400 text-[11px]">Boş</span>
                     )}
                   </div>
 
@@ -1213,29 +1363,29 @@ export default function DuoAppView({
                     {partnerMatch && !partnerEarly ? (
                       partnerMatch.is_online ? (
                         <div
-                          className="bg-rose-500/15 text-rose-200 border border-rose-500/40 px-2 py-1 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs"
+                          className="bg-rose-50 text-rose-800 border border-rose-300 px-2 py-1 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs"
                           title="Online Ders (Fiziksel Olarak Müsait)"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
-                          <Video className="w-3 h-3 text-rose-400 shrink-0" />
+                          <Video className="w-3 h-3 text-rose-600 shrink-0" />
                           <span className="font-mono font-bold text-[10.5px] truncate">
                             {partnerMatch.code}
                           </span>
-                          <span className="text-[8.5px] font-black uppercase tracking-wider text-rose-300 bg-rose-950/80 px-1 py-0.2 rounded shrink-0">
+                          <span className="text-[8.5px] font-black uppercase tracking-wider text-white bg-rose-600 px-1 py-0.2 rounded shrink-0">
                             Rec
                           </span>
                         </div>
                       ) : (
-                        <span className="bg-violet-500/20 text-violet-300 border border-violet-500/30 px-2 py-1 rounded-lg block truncate font-bold text-[11px]">
+                        <span className="bg-purple-50 text-purple-900 border border-purple-200 px-2 py-1 rounded-lg block truncate font-bold text-[11px]">
                           {partnerMatch.code}
                         </span>
                       )
                     ) : partnerEarly ? (
-                      <span className="bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded block text-[10px] font-bold truncate">
+                      <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded block text-[10px] font-bold truncate border border-amber-300">
                         ⚡ Çıktı
                       </span>
                     ) : (
-                      <span className="text-slate-500 text-[11px]">Boş</span>
+                      <span className="text-slate-400 text-[11px]">Boş</span>
                     )}
                   </div>
                 </div>
@@ -1247,36 +1397,36 @@ export default function DuoAppView({
 
       {/* 5. AYARLAR & PROGRAM YÜKLEME MODALI */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-white/20 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Settings className="w-4 h-4 text-amber-400" />
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl p-5 max-w-sm w-full space-y-4 shadow-2xl text-slate-900">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                <Settings className="w-4 h-4 text-[#0c3f79]" />
                 <span>Program &amp; Oda Ayarları</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setShowSettingsModal(false)}
-                className="p-1 text-slate-400 hover:text-white"
+                className="p-1 text-slate-400 hover:text-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {uploadError && (
-              <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                 <span>{uploadError}</span>
               </div>
             )}
 
             {/* Kendi Programını Güncelle */}
             <div className="space-y-2">
-              <p className="text-xs font-bold text-slate-300">
+              <p className="text-xs font-bold text-slate-700">
                 1. Kendi ({myName}) Programını Güncelle:
               </p>
               <div className="flex gap-2">
-                <label className="flex-1 py-2.5 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center justify-center gap-1.5 cursor-pointer">
+                <label className="flex-1 py-2.5 px-3 rounded-xl bg-[#0c3f79] hover:bg-[#00306a] text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs">
                   <Upload className="w-3.5 h-3.5" />
                   <span>{uploadingFor === myId ? 'Yükleniyor...' : 'PDF / PNG Seç'}</span>
                   <input
@@ -1293,7 +1443,7 @@ export default function DuoAppView({
                 <button
                   type="button"
                   onClick={() => handleImportFromHome(myId)}
-                  className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-bold cursor-pointer"
+                  className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer border border-slate-200"
                   title="Ana sayfadaki programı aktar"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -1302,13 +1452,13 @@ export default function DuoAppView({
             </div>
 
             {/* Partner Programını Güncelle */}
-            <div className="space-y-2 pt-2 border-t border-white/10">
-              <p className="text-xs font-bold text-slate-300">
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <p className="text-xs font-bold text-slate-700">
                 2. {partnerName}&apos;nın Programını Güncelle:
               </p>
               <div className="flex gap-2">
-                <label className="flex-1 py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer border border-white/15">
-                  <Upload className="w-3.5 h-3.5 text-amber-400" />
+                <label className="flex-1 py-2.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200 shadow-2xs">
+                  <Upload className="w-3.5 h-3.5 text-amber-500" />
                   <span>{uploadingFor === partnerId ? 'Yükleniyor...' : `${partnerName} PDF / PNG`}</span>
                   <input
                     type="file"
@@ -1324,7 +1474,7 @@ export default function DuoAppView({
                 <button
                   type="button"
                   onClick={() => handleImportFromHome(partnerId)}
-                  className="px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-200 text-xs font-bold cursor-pointer"
+                  className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer border border-slate-200"
                   title="Ana sayfadaki programı aktar"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -1335,7 +1485,7 @@ export default function DuoAppView({
             <button
               type="button"
               onClick={() => setShowSettingsModal(false)}
-              className="w-full py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold mt-2"
+              className="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold mt-2"
             >
               Kapat
             </button>
