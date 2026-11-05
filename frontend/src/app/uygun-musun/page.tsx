@@ -36,7 +36,6 @@ import {
   Smartphone,
   X,
 } from 'lucide-react';
-import Navbar from '../../components/Navbar';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import {
   CustomStatusOverride,
@@ -898,34 +897,8 @@ export default function UygunMusunLobbyPage() {
         </div>
       )}
 
-      {/* Üst Site Başlığı & Navigasyon */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs">
-        <div className="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#0c3f79] text-white flex items-center justify-center shadow-xs">
-              <Radio className="w-4 h-4 text-amber-400 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-base font-black tracking-tight text-slate-900">
-                  Uygun Musun?
-                </h1>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
-                  Kampüs Lobi
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
-                Arkadaş grubunla canlı ders durumu ve ortak boşluk takibi
-              </p>
-            </div>
-          </div>
-
-          <Navbar activeRoute="uygun-musun" />
-        </div>
-      </header>
-
       {/* ANA İÇERİK */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 pt-5 space-y-5">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 pt-5 space-y-5">
         {/* =====================================================================
             EKRAN 1: LOBİ KARŞILAMA MERKEZİ (HUB)
            ===================================================================== */}

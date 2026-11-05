@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio } from 'lucide-react';
 import WhatsNewModal from './WhatsNewModal';
 
-const WHATS_NEW_STORAGE_KEY = 'ytudostun_whats_new_v2_3_seen';
+const WHATS_NEW_STORAGE_KEY = 'ytudostun_whats_new_v2_4_seen';
 
 export default function Header() {
   const pathname = usePathname();
@@ -42,7 +42,7 @@ export default function Header() {
     } catch {}
   };
 
-  if (pathname === '/stats' || pathname === '/uygun-musun' || pathname.startsWith('/uygun-musun')) return null;
+  if (pathname === '/stats' || pathname.startsWith('/uygun-musun-')) return null;
   const isOrtak = pathname === '/ortak';
   const isSingle = pathname === '/' && !isOrtak;
   const isAgno = pathname === '/agno';
@@ -64,7 +64,7 @@ export default function Header() {
               <div className="flex items-center gap-2">
                 <h1 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-[#0c3f79] tracking-tight transition-colors flex items-center gap-1.5">
                   <span>YTÜ Dostun</span>
-                  <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">v2.3</span>
+                  <span className="text-xs font-mono font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">v2.4</span>
                 </h1>
               </div>
               <p className="text-xs text-slate-500 font-medium">Ders &amp; Not Yönetimi</p>
@@ -97,6 +97,27 @@ export default function Header() {
               >
                 <Users className="w-3.5 h-3.5 text-amber-400" />
                 <span>Ortak Boş Saatler (Karşılaştır)</span>
+              </Link>
+
+              <Link 
+                href="/uygun-musun"
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  isUygunMusun
+                    ? 'bg-[#0c3f79] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Radio className={`w-3.5 h-3.5 ${isUygunMusun ? 'text-amber-400 animate-pulse' : 'text-rose-500'}`} />
+                <span>Uygun Musun?</span>
+                <span
+                  className={`text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full leading-tight ${
+                    isUygunMusun
+                      ? 'bg-amber-400 text-slate-950'
+                      : 'bg-[#0c3f79] text-amber-300'
+                  }`}
+                >
+                  Yeni
+                </span>
               </Link>
 
               <Link 
@@ -133,15 +154,6 @@ export default function Header() {
               >
                 <Compass className={`w-3.5 h-3.5 ${isPlanlama ? 'text-amber-400' : 'text-emerald-600'}`} />
                 <span>Akademik Planlama</span>
-                <span
-                  className={`text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full leading-tight ${
-                    isPlanlama
-                      ? 'bg-amber-400 text-slate-950'
-                      : 'bg-emerald-600 text-white'
-                  }`}
-                >
-                  Yeni
-                </span>
               </Link>
 
             </div>
