@@ -1,9 +1,9 @@
 import React from 'react';
-import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass } from 'lucide-react';
+import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Radio } from 'lucide-react';
 import Link from 'next/link';
 
 interface NavbarProps {
-  activeRoute: 'single' | 'compare' | 'agno' | 'devamsizlik' | 'planlama';
+  activeRoute: 'single' | 'compare' | 'agno' | 'devamsizlik' | 'planlama' | 'uygun-musun';
   onTabChange?: (tab: 'single' | 'compare') => void;
 }
 
@@ -89,8 +89,21 @@ export default function Navbar({ activeRoute, onTabChange }: NavbarProps) {
         >
           <Compass className={`w-3.5 h-3.5 ${activeRoute === 'planlama' ? 'text-amber-400' : 'text-emerald-600'}`} />
           <span>Akademik Planlama</span>
-          <span className={`text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full leading-tight ${activeRoute === 'planlama' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'}`}>
-            Yeni
+        </Link>
+
+        {/* Uygun Musun? (Canlı Arkadaş Lobisi) */}
+        <Link 
+          href="/uygun-musun"
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+            activeRoute === 'uygun-musun'
+              ? 'bg-[#0c3f79] text-white shadow-2xs'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Radio className={`w-3.5 h-3.5 ${activeRoute === 'uygun-musun' ? 'text-amber-400' : 'text-rose-500'}`} />
+          <span>Uygun Musun?</span>
+          <span className={`text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full leading-tight ${activeRoute === 'uygun-musun' ? 'bg-amber-400 text-slate-950' : 'bg-emerald-600 text-white'}`}>
+            Lobi
           </span>
         </Link>
         

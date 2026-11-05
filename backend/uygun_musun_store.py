@@ -10,9 +10,11 @@ import os
 import json
 import time
 import re
+import random
+import secrets
 import sqlite3
 import threading
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 STORE_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uygun_musun.db')
 VAPID_PUBLIC_KEY = "BDnRuh7ebajipe5pRdbsIMAKqf5iEUmThXPOXuYlcXX_5-G0pbOTm4-7axfxz5dJvloVZyNnUHlef0BmU79jMnM"
@@ -43,8 +45,34 @@ def _init_db() -> None:
                 '''
                 CREATE TABLE IF NOT EXISTS rooms (
                     room_code TEXT PRIMARY KEY,
+                    title TEXT,
+                    admin_token TEXT,
+                    created_at INTEGER,
                     data_json TEXT NOT NULL,
                     updated_at INTEGER NOT NULL
+                )
+                '''
+            )
+            # Mevcut veritabanında eksik sütunlar varsa otomatik ekle (Migration)
+            existing_cols = {
+                row[1] for row in conn.execute('PRAGMA table_info(rooms)').fetchall()
+            }
+            if 'title' not in existing_cols:
+                conn.execute('ALTER TABLE rooms ADD COLUMN title TEXT')
+            if 'admin_token' not in existing_cols:
+                conn.execute('ALTER TABLE rooms ADD COLUMN admin_token TEXT')
+            if 'created_at' not in existing_cols:
+                conn.execute('ALTER TABLE rooms ADD COLUMN created_at INTEGER')
+
+            conn.execute(
+                '''
+                CREATE TABLE IF NOT EXISTS room_members (
+                    room_code TEXT NOT NULL,
+                    profile_id TEXT NOT NULL,
+                    device_token TEXT NOT NULL DEFAULT '',
+                    role TEXT DEFAULT 'member',
+                    joined_at INTEGER NOT NULL,
+                    PRIMARY KEY (room_code, profile_id)
                 )
                 '''
             )
@@ -287,28 +315,39 @@ NEVA_SCHEDULE = {
 
 def _default_room_state(room_code: str) -> Dict[str, Any]:
     now_ms = int(time.time() * 1000)
+    if room_code == 'atilla-neva':
+        return {
+            'room_code': room_code,
+            'title': 'Atilla & Neva',
+            'created_at': now_ms,
+            'updated_at': now_ms,
+            'pings': [],
+            'profiles': [
+                {
+                    'id': 'atilla',
+                    'name': 'Atilla',
+                    'color': 'blue',
+                    'avatar': '👨‍💻',
+                    'schedule': ATILLA_SCHEDULE,
+                    'custom_status': None,
+                },
+                {
+                    'id': 'neva',
+                    'name': 'Neva',
+                    'color': 'violet',
+                    'avatar': '👩‍🎓',
+                    'schedule': NEVA_SCHEDULE,
+                    'custom_status': None,
+                },
+            ],
+        }
     return {
         'room_code': room_code,
+        'title': f'Kampüs Lobisi #{room_code.upper()}',
+        'created_at': now_ms,
         'updated_at': now_ms,
         'pings': [],
-        'profiles': [
-            {
-                'id': 'atilla',
-                'name': 'Atilla',
-                'color': 'blue',
-                'avatar': '👨‍💻',
-                'schedule': ATILLA_SCHEDULE,
-                'custom_status': None,
-            },
-            {
-                'id': 'neva',
-                'name': 'Neva',
-                'color': 'violet',
-                'avatar': '👩‍🎓',
-                'schedule': NEVA_SCHEDULE,
-                'custom_status': None,
-            },
-        ],
+        'profiles': [],
     }
 
 
@@ -320,7 +359,7 @@ def _clean_expired_statuses(room: Dict[str, Any]) -> Dict[str, Any]:
             expires_at = cs.get('expires_at')
             if expires_at and isinstance(expires_at, (int, float)) and now_ms > expires_at:
                 profile['custom_status'] = None
-    
+
     # Clean pings older than 4 hours
     pings = room.get('pings', [])
     valid_pings = []
@@ -328,56 +367,308 @@ def _clean_expired_statuses(room: Dict[str, Any]) -> Dict[str, Any]:
     for p in pings:
         if isinstance(p, dict) and p.get('created_at', 0) > four_hours_ago:
             valid_pings.append(p)
-    room['pings'] = valid_pings[-10:]
+    room['pings'] = valid_pings[-15:]
     return room
 
 
-def get_room(room_code: str) -> Dict[str, Any]:
+def _generate_unique_room_code(conn: sqlite3.Connection) -> str:
+    alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+    cur = conn.cursor()
+    for _ in range(30):
+        candidate = ''.join(random.choice(alphabet) for _ in range(6)).lower()
+        cur.execute('SELECT 1 FROM rooms WHERE room_code = ?', (candidate,))
+        if not cur.fetchone():
+            return candidate
+    return f"ytu{random.randint(100, 999)}"
+
+
+def get_room(room_code: str, create_if_missing: bool = True) -> Dict[str, Any]:
     code = _sanitize_room_code(room_code)
     with _DB_LOCK:
         conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
         try:
             cur = conn.cursor()
-            cur.execute('SELECT data_json FROM rooms WHERE room_code = ?', (code,))
+            cur.execute('SELECT data_json, title, created_at FROM rooms WHERE room_code = ?', (code,))
             row = cur.fetchone()
             if not row:
+                if not create_if_missing and code != 'atilla-neva':
+                    raise KeyError('Bu koda ait bir lobi bulunamadı.')
                 default_state = _default_room_state(code)
                 conn.execute(
-                    'INSERT INTO rooms (room_code, data_json, updated_at) VALUES (?, ?, ?)',
-                    (code, json.dumps(default_state, ensure_ascii=False), default_state['updated_at']),
+                    '''
+                    INSERT INTO rooms (room_code, title, created_at, data_json, updated_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    ''',
+                    (
+                        code,
+                        default_state.get('title') or f'Lobi #{code.upper()}',
+                        default_state['updated_at'],
+                        json.dumps(default_state, ensure_ascii=False),
+                        default_state['updated_at'],
+                    ),
                 )
                 conn.commit()
                 return default_state
             room = json.loads(row[0])
+            if row[1] and not room.get('title'):
+                room['title'] = row[1]
+            if not room.get('title'):
+                room['title'] = 'Atilla & Neva' if code == 'atilla-neva' else f'Lobi #{code.upper()}'
+            if row[2] and not room.get('created_at'):
+                room['created_at'] = row[2]
             return _clean_expired_statuses(room)
         finally:
             conn.close()
 
 
-def save_room(room_code: str, room_data: Dict[str, Any]) -> Dict[str, Any]:
+def save_room(room_code: str, room_data: Dict[str, Any], admin_token: Optional[str] = None) -> Dict[str, Any]:
     code = _sanitize_room_code(room_code)
     now_ms = int(time.time() * 1000)
     room_data['room_code'] = code
     room_data['updated_at'] = now_ms
+    if not room_data.get('title'):
+        room_data['title'] = 'Atilla & Neva' if code == 'atilla-neva' else f'Lobi #{code.upper()}'
     room_data = _clean_expired_statuses(room_data)
+    title_str = str(room_data.get('title') or '')[:60]
+    created_ms = int(room_data.get('created_at') or now_ms)
+
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        try:
+            if admin_token:
+                conn.execute(
+                    '''
+                    INSERT INTO rooms (room_code, title, admin_token, created_at, data_json, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(room_code) DO UPDATE SET
+                        title = excluded.title,
+                        data_json = excluded.data_json,
+                        updated_at = excluded.updated_at
+                    ''',
+                    (code, title_str, admin_token, created_ms, json.dumps(room_data, ensure_ascii=False), now_ms),
+                )
+            else:
+                conn.execute(
+                    '''
+                    INSERT INTO rooms (room_code, title, created_at, data_json, updated_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON CONFLICT(room_code) DO UPDATE SET
+                        title = excluded.title,
+                        data_json = excluded.data_json,
+                        updated_at = excluded.updated_at
+                    ''',
+                    (code, title_str, created_ms, json.dumps(room_data, ensure_ascii=False), now_ms),
+                )
+            conn.commit()
+        finally:
+            conn.close()
+    return room_data
+
+
+def _sanitize_schedule(schedule_data: Any) -> Optional[Dict[str, Any]]:
+    if not isinstance(schedule_data, dict):
+        return None
+    cleaned = dict(schedule_data)
+    cleaned.pop('student_id', None)
+    cleaned.pop('tc_no', None)
+    return cleaned
+
+
+def create_room(
+    title: str,
+    creator_profile: Dict[str, Any],
+    device_token: str = ''
+) -> Dict[str, Any]:
+    clean_title = str(title or 'Kampüs Lobisi').strip()[:50] or 'Kampüs Lobisi'
+    now_ms = int(time.time() * 1000)
+    admin_token = secrets.token_hex(12)
+
+    pid = str(creator_profile.get('id') or '').strip()
+    if not pid:
+        pid = f"u_{now_ms}_{secrets.token_hex(2)}"
+
+    schedule_data = _sanitize_schedule(creator_profile.get('schedule'))
+    owner_profile = {
+        'id': pid,
+        'name': str(creator_profile.get('name') or 'Kurucu').strip()[:25] or 'Kurucu',
+        'color': str(creator_profile.get('color') or 'blue')[:20],
+        'avatar': str(creator_profile.get('avatar') or '👨‍💻')[:8],
+        'role': 'owner',
+        'schedule': schedule_data,
+        'custom_status': None,
+    }
+
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        try:
+            code = _generate_unique_room_code(conn)
+            room_data = {
+                'room_code': code,
+                'title': clean_title,
+                'owner_profile_id': pid,
+                'created_at': now_ms,
+                'updated_at': now_ms,
+                'pings': [],
+                'profiles': [owner_profile],
+            }
+            conn.execute(
+                '''
+                INSERT INTO rooms (room_code, title, admin_token, created_at, data_json, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ''',
+                (code, clean_title, admin_token, now_ms, json.dumps(room_data, ensure_ascii=False), now_ms),
+            )
+            conn.execute(
+                '''
+                INSERT OR REPLACE INTO room_members (room_code, profile_id, device_token, role, joined_at)
+                VALUES (?, ?, ?, 'owner', ?)
+                ''',
+                (code, pid, str(device_token or '')[:64], now_ms),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    return {
+        'room_code': code,
+        'title': clean_title,
+        'admin_token': admin_token,
+        'my_profile_id': pid,
+        'room': room_data,
+    }
+
+
+def join_room(
+    room_code: str,
+    profile_payload: Dict[str, Any],
+    device_token: str = ''
+) -> Dict[str, Any]:
+    code = _sanitize_room_code(room_code)
+    # Odanın gerçekten var olduğundan emin ol
+    room = get_room(code, create_if_missing=(code == 'atilla-neva'))
+    profiles = room.get('profiles', [])
+    now_ms = int(time.time() * 1000)
+
+    pid = str(profile_payload.get('id') or '').strip()
+    if not pid:
+        pid = f"u_{now_ms}_{secrets.token_hex(2)}"
+
+    schedule_data = _sanitize_schedule(profile_payload.get('schedule'))
+    existing_idx = next((i for i, p in enumerate(profiles) if p.get('id') == pid), -1)
+
+    if existing_idx >= 0:
+        cur = profiles[existing_idx]
+        if profile_payload.get('name'):
+            cur['name'] = str(profile_payload['name']).strip()[:25]
+        if profile_payload.get('color'):
+            cur['color'] = str(profile_payload['color'])[:20]
+        if profile_payload.get('avatar'):
+            cur['avatar'] = str(profile_payload['avatar'])[:8]
+        if 'schedule' in profile_payload and schedule_data is not None:
+            cur['schedule'] = schedule_data
+        profiles[existing_idx] = cur
+    else:
+        if len(profiles) >= 16:
+            raise ValueError('Bir lobide en fazla 16 üye bulunabilir.')
+        profiles.append({
+            'id': pid,
+            'name': str(profile_payload.get('name') or 'Arkadaş').strip()[:25] or 'Arkadaş',
+            'color': str(profile_payload.get('color') or 'emerald')[:20],
+            'avatar': str(profile_payload.get('avatar') or '🎓')[:8],
+            'role': 'member',
+            'schedule': schedule_data,
+            'custom_status': None,
+        })
+
+    room['profiles'] = profiles
+    saved_room = save_room(code, room)
 
     with _DB_LOCK:
         conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
         try:
             conn.execute(
                 '''
-                INSERT INTO rooms (room_code, data_json, updated_at)
-                VALUES (?, ?, ?)
-                ON CONFLICT(room_code) DO UPDATE SET
-                    data_json = excluded.data_json,
-                    updated_at = excluded.updated_at
+                INSERT OR REPLACE INTO room_members (room_code, profile_id, device_token, role, joined_at)
+                VALUES (?, ?, ?, 'member', ?)
                 ''',
-                (code, json.dumps(room_data, ensure_ascii=False), now_ms),
+                (code, pid, str(device_token or '')[:64], now_ms),
             )
             conn.commit()
         finally:
             conn.close()
-    return room_data
+
+    return {
+        'room_code': code,
+        'title': saved_room.get('title') or f'Lobi #{code.upper()}',
+        'my_profile_id': pid,
+        'room': saved_room,
+    }
+
+
+def update_room_title(room_code: str, new_title: str) -> Dict[str, Any]:
+    code = _sanitize_room_code(room_code)
+    room = get_room(code, create_if_missing=False)
+    clean_title = str(new_title or '').strip()[:50]
+    if not clean_title:
+        raise ValueError('Lobi adı boş olamaz.')
+    room['title'] = clean_title
+    return save_room(code, room)
+
+
+def get_my_rooms_summary(room_codes: List[str]) -> List[Dict[str, Any]]:
+    if not room_codes:
+        return []
+    cleaned_codes = []
+    seen = set()
+    for rc in room_codes[:25]:
+        c = _sanitize_room_code(rc)
+        if c and c not in seen and c != 'atilla-neva':
+            seen.add(c)
+            cleaned_codes.append(c)
+
+    if not cleaned_codes:
+        return []
+
+    placeholders = ','.join('?' for _ in cleaned_codes)
+    out = []
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                f'SELECT room_code, title, data_json, updated_at FROM rooms WHERE room_code IN ({placeholders})',
+                tuple(cleaned_codes),
+            )
+            rows = cur.fetchall()
+            row_map = {r[0]: r for r in rows}
+            for c in cleaned_codes:
+                r = row_map.get(c)
+                if not r:
+                    continue
+                try:
+                    data = json.loads(r[2])
+                except Exception:
+                    data = {}
+                profiles = data.get('profiles', [])
+                title = r[1] or data.get('title') or f'Lobi #{c.upper()}'
+                out.append({
+                    'room_code': c,
+                    'title': title,
+                    'member_count': len(profiles),
+                    'members': [
+                        {
+                            'id': p.get('id'),
+                            'name': p.get('name'),
+                            'avatar': p.get('avatar'),
+                            'color': p.get('color'),
+                        }
+                        for p in profiles[:8]
+                    ],
+                    'updated_at': r[3] or data.get('updated_at') or 0,
+                })
+        finally:
+            conn.close()
+    return out
 
 
 def upsert_profile(room_code: str, profile_payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -387,12 +678,7 @@ def upsert_profile(room_code: str, profile_payload: Dict[str, Any]) -> Dict[str,
     if not pid:
         pid = f"p_{int(time.time() * 1000)}"
 
-    # KVKK: Öğrenci numarası veya TC gibi alanları kesin olarak temizle
-    schedule_data = profile_payload.get('schedule')
-    if isinstance(schedule_data, dict):
-        schedule_data = dict(schedule_data)
-        schedule_data.pop('student_id', None)
-        schedule_data.pop('tc_no', None)
+    schedule_data = _sanitize_schedule(profile_payload.get('schedule'))
 
     existing_idx = next((i for i, p in enumerate(profiles) if p.get('id') == pid), -1)
     if existing_idx >= 0:
@@ -409,13 +695,14 @@ def upsert_profile(room_code: str, profile_payload: Dict[str, Any]) -> Dict[str,
             cur['custom_status'] = profile_payload['custom_status']
         profiles[existing_idx] = cur
     else:
-        if len(profiles) >= 8:
-            raise ValueError('Bir odada en fazla 8 profil bulunabilir.')
+        if len(profiles) >= 16:
+            raise ValueError('Bir lobide en fazla 16 profil bulunabilir.')
         profiles.append({
             'id': pid,
             'name': str(profile_payload.get('name') or 'Arkadaş')[:25],
             'color': str(profile_payload.get('color') or 'emerald')[:20],
             'avatar': str(profile_payload.get('avatar') or '🎓')[:8],
+            'role': str(profile_payload.get('role') or 'member')[:12],
             'schedule': schedule_data,
             'custom_status': profile_payload.get('custom_status'),
         })
@@ -456,12 +743,24 @@ def update_profile_status(
 
 
 def delete_profile(room_code: str, profile_id: str) -> Dict[str, Any]:
-    room = get_room(room_code)
+    code = _sanitize_room_code(room_code)
+    room = get_room(code)
     profiles = room.get('profiles', [])
-    if len(profiles) <= 2:
-        raise ValueError('En az 2 profil kalmalıdır.')
+    min_profiles = 2 if code == 'atilla-neva' else 1
+    if len(profiles) <= min_profiles:
+        raise ValueError(f'Lobide en az {min_profiles} profil kalmalıdır.')
     room['profiles'] = [p for p in profiles if p.get('id') != profile_id]
-    return save_room(room_code, room)
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        try:
+            conn.execute(
+                'DELETE FROM room_members WHERE room_code = ? AND profile_id = ?',
+                (code, profile_id),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    return save_room(code, room)
 
 
 def send_ping(
@@ -473,21 +772,28 @@ def send_ping(
     emoji: str = '☕'
 ) -> Dict[str, Any]:
     room = get_room(room_code)
+    profiles = room.get('profiles', [])
+    sender = next((p for p in profiles if p.get('id') == from_id), None)
+    sender_name = sender.get('name') if sender else from_id
+    sender_avatar = sender.get('avatar') if sender else '👋'
+
     pings = room.get('pings', [])
     now_ms = int(time.time() * 1000)
     ping_id = f"ping_{now_ms}_{from_id}"
     new_ping = {
         'id': ping_id,
         'from_id': from_id,
+        'from_name': sender_name,
+        'from_avatar': sender_avatar,
         'to_id': to_id,
         'type': ping_type,
-        'message': message[:100],
+        'message': message[:120],
         'emoji': emoji[:8],
         'created_at': now_ms,
         'dismissed': False,
     }
     pings.append(new_ping)
-    room['pings'] = pings[-10:]
+    room['pings'] = pings[-15:]
     return save_room(room_code, room)
 
 
@@ -571,6 +877,33 @@ def get_push_subscriptions(room_code: str, profile_id: str) -> list:
             conn.close()
 
 
+def get_room_push_subscriptions(room_code: str, exclude_profile_id: Optional[str] = None) -> list:
+    clean_code = _sanitize_room_code(room_code)
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn.row_factory = sqlite3.Row
+        try:
+            if exclude_profile_id:
+                rows = conn.execute(
+                    '''
+                    SELECT endpoint, p256dh, auth, profile_id FROM push_subscriptions
+                    WHERE room_code = ? AND profile_id != ?
+                    ''',
+                    (clean_code, exclude_profile_id),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    '''
+                    SELECT endpoint, p256dh, auth, profile_id FROM push_subscriptions
+                    WHERE room_code = ?
+                    ''',
+                    (clean_code,),
+                ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+
 def _dispatch_push_worker(subs: list, payload_json: str):
     if not webpush or not os.path.exists(VAPID_PRIVATE_KEY_PATH):
         return
@@ -606,14 +939,20 @@ def send_push_notification_to_profile(
     body: str,
     url: Optional[str] = None
 ) -> None:
-    subs = get_push_subscriptions(room_code, target_profile_id)
+    clean_code = _sanitize_room_code(room_code)
+    subs = get_push_subscriptions(clean_code, target_profile_id)
     if not subs:
         return
 
+    default_url = (
+        f'/uygun-musun-{target_profile_id}'
+        if clean_code == 'atilla-neva'
+        else f'/uygun-musun?join={clean_code.upper()}'
+    )
     payload = {
         'title': title,
         'body': body,
-        'url': url or f'/uygun-musun-{target_profile_id}',
+        'url': url or default_url,
         'icon': '/icon-192x192.png',
         'badge': '/icon-192x192.png',
         'tag': f'uygun-musun-{int(time.time())}',
@@ -621,6 +960,39 @@ def send_push_notification_to_profile(
     payload_json = json.dumps(payload, ensure_ascii=False)
 
     # Arka planda thread olarak gönder ki API isteği beklemesin
+    t = threading.Thread(target=_dispatch_push_worker, args=(subs, payload_json), daemon=True)
+    t.start()
+
+
+def send_push_notification_to_room(
+    room_code: str,
+    exclude_profile_id: str,
+    title: str,
+    body: str,
+    url: Optional[str] = None
+) -> None:
+    clean_code = _sanitize_room_code(room_code)
+    subs = get_room_push_subscriptions(clean_code, exclude_profile_id)
+    if not subs:
+        return
+
+    default_url = (
+        '/uygun-musun-neva'
+        if clean_code == 'atilla-neva' and exclude_profile_id == 'atilla'
+        else '/uygun-musun-atilla'
+        if clean_code == 'atilla-neva'
+        else f'/uygun-musun?join={clean_code.upper()}'
+    )
+    payload = {
+        'title': title,
+        'body': body,
+        'url': url or default_url,
+        'icon': '/icon-192x192.png',
+        'badge': '/icon-192x192.png',
+        'tag': f'uygun-musun-room-{clean_code}-{int(time.time())}',
+    }
+    payload_json = json.dumps(payload, ensure_ascii=False)
+
     t = threading.Thread(target=_dispatch_push_worker, args=(subs, payload_json), daemon=True)
     t.start()
 

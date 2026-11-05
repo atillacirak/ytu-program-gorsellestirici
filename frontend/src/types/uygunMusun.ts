@@ -39,6 +39,7 @@ export interface UygunMusunProfile {
   name: string;
   color: ProfileColorKey;
   avatar: string;
+  role?: 'owner' | 'member';
   schedule: ProfileSchedulePayload | null;
   custom_status: CustomStatusOverride | null;
 }
@@ -46,6 +47,8 @@ export interface UygunMusunProfile {
 export interface DuoPing {
   id: string;
   from_id: string;
+  from_name?: string;
+  from_avatar?: string;
   to_id: string;
   type: string;
   message: string;
@@ -56,9 +59,33 @@ export interface DuoPing {
 
 export interface UygunMusunRoomState {
   room_code: string;
+  title?: string;
+  owner_profile_id?: string;
+  created_at?: number;
   updated_at: number;
   profiles: UygunMusunProfile[];
   pings?: DuoPing[];
+}
+
+export interface SavedLobbyItem {
+  room_code: string;
+  title: string;
+  my_profile_id: string;
+  admin_token?: string;
+  joined_at: number;
+}
+
+export interface LobbySummaryItem {
+  room_code: string;
+  title: string;
+  member_count: number;
+  members: {
+    id: string;
+    name: string;
+    avatar: string;
+    color: ProfileColorKey;
+  }[];
+  updated_at: number;
 }
 
 export type AvailabilityStateType =
@@ -107,4 +134,35 @@ export interface MutualAvailabilitySummary {
   headline: string;
   detail: string;
   todayMutualWindows: MutualFreeWindow[];
+}
+
+export interface GroupOverlapWindow {
+  start_time: string;
+  end_time: string;
+  start_minutes: number;
+  end_minutes: number;
+  duration_minutes: number;
+  is_current: boolean;
+  free_count: number;
+  total_count: number;
+  missing_names: string[];
+}
+
+export interface GroupAvailabilitySummary {
+  totalMembers: number;
+  activeScheduleCount: number;
+  availableCount: number;
+  inClassCount: number;
+  onlineClassCount: number;
+  noScheduleCount: number;
+  allAvailableNow: boolean;
+  sharedFreeMinutesNow: number | null;
+  sharedFreeUntil: string | null;
+  nextFullWindow: GroupOverlapWindow | null;
+  minutesUntilNextFullWindow: number | null;
+  fullOverlapWindows: GroupOverlapWindow[];
+  majorityOverlapWindows: GroupOverlapWindow[];
+  majoritySuggestion: string | null;
+  headline: string;
+  detail: string;
 }

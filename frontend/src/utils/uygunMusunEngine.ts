@@ -7,6 +7,8 @@ import {
   MutualFreeWindow,
   ProfileColorKey,
   CustomStatusOverride,
+  GroupAvailabilitySummary,
+  GroupOverlapWindow,
 } from '../types/uygunMusun';
 
 export const WEEKDAYS_TR = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'] as const;
@@ -685,6 +687,310 @@ export function calculateMutualAvailability(
         )}).`
       : 'Bugün ders saatleri içinde çakışan başka ortak boşluk görünmüyor.',
     todayMutualWindows: windows,
+  };
+}
+
+/**
+ * N-kişilik arkadaş lobisi için ortak boşlukları (Full Overlap & Majority Overlap) ve canlı grup nabzını hesaplar.
+ */
+export function calculateGroupMutualAvailability(
+  profiles: UygunMusunProfile[],
+  dayName: string,
+  currentMinutes: number,
+  nowEpochMs: number = Date.now()
+): GroupAvailabilitySummary {
+  const allStatuses = profiles.map((p) => ({
+    profile: p,
+    status: calculateProfileLiveStatus(p, dayName, currentMinutes, nowEpochMs),
+  }));
+
+  const activeProfiles = profiles.filter((p) => p.schedule && p.schedule.schedule);
+  const activeStatuses = allStatuses.filter((x) => x.profile.schedule && x.profile.schedule.schedule);
+
+  const availableCount = allStatuses.filter(
+    (x) => x.status.isAvailableNow && x.status.state !== 'ONLINE_CLASS' && x.status.state !== 'NO_SCHEDULE'
+  ).length;
+  const onlineClassCount = allStatuses.filter((x) => x.status.state === 'ONLINE_CLASS').length;
+  const inClassCount = allStatuses.filter((x) => x.status.state === 'IN_CLASS').length;
+  const noScheduleCount = allStatuses.filter((x) => x.status.state === 'NO_SCHEDULE').length;
+
+  if (activeProfiles.length < 2) {
+    return {
+      totalMembers: profiles.length,
+      activeScheduleCount: activeProfiles.length,
+      availableCount,
+      inClassCount,
+      onlineClassCount,
+      noScheduleCount,
+      allAvailableNow: activeProfiles.length === 1 && activeStatuses[0].status.isAvailableNow,
+      sharedFreeMinutesNow: null,
+      sharedFreeUntil: null,
+      nextFullWindow: null,
+      minutesUntilNextFullWindow: null,
+      fullOverlapWindows: [],
+      majorityOverlapWindows: [],
+      majoritySuggestion:
+        profiles.length < 2
+          ? 'Lobide ortak boşlukları görmek için davet linkini arkadaşlarınla paylaş!'
+          : 'Ortak boşluk hesabı için en az 2 üyenin ders programını yüklemesi gerekiyor.',
+      headline:
+        profiles.length < 2
+          ? 'Arkadaşlarını Lobiye Davet Et 👋'
+          : 'Ders Programları Bekleniyor 📅',
+      detail:
+        profiles.length < 2
+          ? 'Yukarıdaki "Davet Et / Paylaş" butonunu kullanarak arkadaşlarını lobiye çağırabilirsin.'
+          : 'Üyeler USIS PDF veya PNG ders programlarını eklediğinde tüm grubun ortak boş saatleri otomatik hesaplanır.',
+    };
+  }
+
+  const DAY_START = 8 * 60;
+  const DAY_END = 19 * 60;
+  const STEP = 10;
+  const N = activeProfiles.length;
+
+  const profileBusyMap = activeProfiles.map((p) => {
+    const slots = getDayCourses(p.schedule, dayName);
+    const activeCS = getActiveCustomStatus(p, nowEpochMs);
+    const intervals = slots
+      .map((s) => {
+        if (s.is_online) {
+          return { start: s.start_minutes, end: s.start_minutes };
+        }
+        if (isCourseEarlyDismissed(s, activeCS, dayName)) {
+          const effectiveEnd = Math.min(s.end_minutes, currentMinutes);
+          return { start: s.start_minutes, end: effectiveEnd };
+        }
+        return { start: s.start_minutes, end: s.end_minutes };
+      })
+      .filter((iv) => iv.end > iv.start);
+    return { profile: p, intervals };
+  });
+
+  const getBusyNamesAt = (minuteMark: number): string[] => {
+    const busyNames: string[] = [];
+    for (const item of profileBusyMap) {
+      const isBusy = item.intervals.some((iv) => minuteMark >= iv.start && minuteMark < iv.end);
+      if (isBusy) {
+        busyNames.push(item.profile.name);
+      }
+    }
+    return busyNames;
+  };
+
+  // 1. %100 Tam Kadro Boş Pencereler (Full Overlap)
+  const fullOverlapWindows: GroupOverlapWindow[] = [];
+  let fullStart: number | null = null;
+
+  for (let m = DAY_START; m < DAY_END; m += STEP) {
+    const busyNames = getBusyNamesAt(m);
+    if (busyNames.length === 0) {
+      if (fullStart === null) fullStart = m;
+    } else {
+      if (fullStart !== null) {
+        const dur = m - fullStart;
+        if (dur >= 20) {
+          fullOverlapWindows.push({
+            start_time: minutesToTimeStr(fullStart),
+            end_time: minutesToTimeStr(m),
+            start_minutes: fullStart,
+            end_minutes: m,
+            duration_minutes: dur,
+            is_current: currentMinutes >= fullStart && currentMinutes < m,
+            free_count: N,
+            total_count: N,
+            missing_names: [],
+          });
+        }
+        fullStart = null;
+      }
+    }
+  }
+  if (fullStart !== null) {
+    const dur = DAY_END - fullStart;
+    if (dur >= 20) {
+      fullOverlapWindows.push({
+        start_time: minutesToTimeStr(fullStart),
+        end_time: minutesToTimeStr(DAY_END),
+        start_minutes: fullStart,
+        end_minutes: DAY_END,
+        duration_minutes: dur,
+        is_current: currentMinutes >= fullStart && currentMinutes < DAY_END,
+        free_count: N,
+        total_count: N,
+        missing_names: [],
+      });
+    }
+  }
+
+  // 2. Çoğunluk Boş Pencereler (Majority Overlap: N >= 3 iken tam 1 kişi dersteyse)
+  const majorityOverlapWindows: GroupOverlapWindow[] = [];
+  if (N >= 3) {
+    let majStart: number | null = null;
+    let majMissing: string = '';
+
+    for (let m = DAY_START; m < DAY_END; m += STEP) {
+      const busyNames = getBusyNamesAt(m);
+      if (busyNames.length === 1) {
+        const missingName = busyNames[0];
+        if (majStart === null) {
+          majStart = m;
+          majMissing = missingName;
+        } else if (majMissing !== missingName) {
+          const dur = m - majStart;
+          if (dur >= 30) {
+            majorityOverlapWindows.push({
+              start_time: minutesToTimeStr(majStart),
+              end_time: minutesToTimeStr(m),
+              start_minutes: majStart,
+              end_minutes: m,
+              duration_minutes: dur,
+              is_current: currentMinutes >= majStart && currentMinutes < m,
+              free_count: N - 1,
+              total_count: N,
+              missing_names: [majMissing],
+            });
+          }
+          majStart = m;
+          majMissing = missingName;
+        }
+      } else {
+        if (majStart !== null) {
+          const dur = m - majStart;
+          if (dur >= 30) {
+            majorityOverlapWindows.push({
+              start_time: minutesToTimeStr(majStart),
+              end_time: minutesToTimeStr(m),
+              start_minutes: majStart,
+              end_minutes: m,
+              duration_minutes: dur,
+              is_current: currentMinutes >= majStart && currentMinutes < m,
+              free_count: N - 1,
+              total_count: N,
+              missing_names: [majMissing],
+            });
+          }
+          majStart = null;
+          majMissing = '';
+        }
+      }
+    }
+    if (majStart !== null) {
+      const dur = DAY_END - majStart;
+      if (dur >= 30) {
+        majorityOverlapWindows.push({
+          start_time: minutesToTimeStr(majStart),
+          end_time: minutesToTimeStr(DAY_END),
+          start_minutes: majStart,
+          end_minutes: DAY_END,
+          duration_minutes: dur,
+          is_current: currentMinutes >= majStart && currentMinutes < DAY_END,
+          free_count: N - 1,
+          total_count: N,
+          missing_names: [majMissing],
+        });
+      }
+    }
+  }
+
+  const allAvailableNow = activeStatuses.every((x) => x.status.isAvailableNow);
+  const busyMembersNow = activeStatuses.filter((x) => !x.status.isAvailableNow);
+  const freeMembersNow = activeStatuses.filter((x) => x.status.isAvailableNow);
+
+  // Çoğunluk önerisi metni
+  let majoritySuggestion: string | null = null;
+  if (!allAvailableNow && N >= 3 && busyMembersNow.length === 1) {
+    const busyOne = busyMembersNow[0];
+    majoritySuggestion = `💡 ${N} kişiden ${N - 1}'i şu an müsait! (Sadece ${busyOne.profile.name} ${
+      busyOne.status.busyUntilTime || 'birazdan'
+    }'a kadar derste)`;
+  } else if (!allAvailableNow && N >= 4 && freeMembersNow.length >= 2) {
+    const freeNames = freeMembersNow.map((x) => x.profile.name).join(', ');
+    majoritySuggestion = `💡 Şu an ${freeMembersNow.length} kişi müsait (${freeNames}). Mini buluşma yapılabilir!`;
+  }
+
+  if (allAvailableNow) {
+    const nextClassStarts = activeStatuses
+      .map((x) => x.status.nextClass?.start_minutes)
+      .filter((m): m is number => typeof m === 'number' && m > currentMinutes);
+
+    if (nextClassStarts.length > 0) {
+      const earliestNext = Math.min(...nextClassStarts);
+      const sharedMins = Math.max(1, earliestNext - currentMinutes);
+      const untilStr = minutesToTimeStr(earliestNext);
+      const whoHasClass = activeStatuses.find((x) => x.status.nextClass?.start_minutes === earliestNext);
+
+      return {
+        totalMembers: profiles.length,
+        activeScheduleCount: N,
+        availableCount,
+        inClassCount,
+        onlineClassCount,
+        noScheduleCount,
+        allAvailableNow: true,
+        sharedFreeMinutesNow: sharedMins,
+        sharedFreeUntil: untilStr,
+        nextFullWindow: fullOverlapWindows.find((w) => w.is_current) || null,
+        minutesUntilNextFullWindow: 0,
+        fullOverlapWindows,
+        majorityOverlapWindows,
+        majoritySuggestion: null,
+        headline: `🎉 Tüm Grup Şu An Müsait! (${formatDurationTr(sharedMins)} ortak vakit)`,
+        detail: `Saat ${untilStr}'a kadar gruptaki herkes boş${
+          whoHasClass ? ` (${untilStr}'da ${whoHasClass.profile.name} derse girecek)` : ''
+        }.`,
+      };
+    }
+
+    return {
+      totalMembers: profiles.length,
+      activeScheduleCount: N,
+      availableCount,
+      inClassCount,
+      onlineClassCount,
+      noScheduleCount,
+      allAvailableNow: true,
+      sharedFreeMinutesNow: null,
+      sharedFreeUntil: 'Gün boyu',
+      nextFullWindow: fullOverlapWindows.find((w) => w.is_current) || null,
+      minutesUntilNextFullWindow: 0,
+      fullOverlapWindows,
+      majorityOverlapWindows,
+      majoritySuggestion: null,
+      headline: '🎉 Tüm Grubun Bugünkü Dersleri Bitti!',
+      detail: 'Gruptaki herkes günün geri kalanında tamamen serbest, buluşma zamanı!',
+    };
+  }
+
+  const futureFullWindows = fullOverlapWindows.filter((w) => w.end_minutes > currentMinutes);
+  const nextFullWin = futureFullWindows.length > 0 ? futureFullWindows[0] : null;
+  const minsUntilNextFull = nextFullWin ? Math.max(1, nextFullWin.start_minutes - currentMinutes) : null;
+
+  return {
+    totalMembers: profiles.length,
+    activeScheduleCount: N,
+    availableCount,
+    inClassCount,
+    onlineClassCount,
+    noScheduleCount,
+    allAvailableNow: false,
+    sharedFreeMinutesNow: 0,
+    sharedFreeUntil: null,
+    nextFullWindow: nextFullWin,
+    minutesUntilNextFullWindow: minsUntilNextFull,
+    fullOverlapWindows,
+    majorityOverlapWindows,
+    majoritySuggestion,
+    headline: nextFullWin
+      ? `Tam Kadro Boşluk: ${nextFullWin.start_time} - ${nextFullWin.end_time} (${formatDurationTr(
+          nextFullWin.duration_minutes
+        )})`
+      : `${freeMembersNow.length}/${N} Üye Şu An Müsait`,
+    detail: nextFullWin
+      ? `Gruptaki herkesin ortak boş olduğu bir sonraki vakit ${formatDurationTr(
+          minsUntilNextFull
+        )} sonra başlıyor.`
+      : 'Bugün ders saatleri içinde tüm grubun aynı anda boş olduğu bir pencere kalmadı.',
   };
 }
 
