@@ -1082,14 +1082,55 @@ def upsert_uygun_musun_profile(room_code: str, payload: Dict[str, Any] = Body(..
         raise HTTPException(status_code=500, detail=f'Profil kaydedilemedi: {str(e)}')
 
 
+@app.get('/api/uygun-musun/vapid-public-key')
+def get_uygun_musun_vapid_key():
+    return {'public_key': uygun_musun_store.VAPID_PUBLIC_KEY}
+
+
 @app.post('/api/uygun-musun/room/{room_code}/status')
-def update_uygun_musun_status(room_code: str, payload: Dict[str, Any] = Body(...)):
-    profile_id = str(payload.get('profile_id') or '').strip()
-    if not profile_id:
+def update_uygun_musun_status(
+    room_code: str,
+    payload: Dict[str, Any] = Body(...),
+    profile_id: Optional[str] = None
+):
+    target_profile = str(payload.get('profile_id') or profile_id or '').strip()
+    if not target_profile:
         raise HTTPException(status_code=400, detail='profile_id alanı zorunludur.')
-    custom_status = payload.get('custom_status')
+
+    custom_status = payload.get('custom_status') if 'custom_status' in payload else payload
+    # Eğer payload sadece durum objesiyse ve profile_id query param geldiyse
+    if isinstance(custom_status, dict) and 'profile_id' in custom_status and len(custom_status) == 1:
+        custom_status = None
+
     try:
-        return uygun_musun_store.update_profile_status(room_code, profile_id, custom_status)
+        res = uygun_musun_store.update_profile_status(room_code, target_profile, custom_status)
+
+        # Durum değiştiğinde partnere Push bildirimi gönder
+        if custom_status and isinstance(custom_status, dict):
+            partner_id = 'neva' if target_profile == 'atilla' else 'atilla'
+            sender_name = 'Atilla' if target_profile == 'atilla' else 'Neva' if target_profile == 'neva' else target_profile
+
+            if custom_status.get('early_exit'):
+                uygun_musun_store.send_push_notification_to_profile(
+                    room_code,
+                    partner_id,
+                    f"⚡ {sender_name} dersten erken çıktı!",
+                    custom_status.get('note') or f"{sender_name} şu an müsait! 🎉",
+                    f"/uygun-musun-{partner_id}"
+                )
+            elif custom_status.get('note') or custom_status.get('label'):
+                emoji = custom_status.get('emoji') or '📍'
+                label = custom_status.get('label') or 'Durum'
+                note = custom_status.get('note') or ''
+                uygun_musun_store.send_push_notification_to_profile(
+                    room_code,
+                    partner_id,
+                    f"{emoji} {sender_name}: {label}",
+                    note or f"{sender_name} durumunu güncelledi.",
+                    f"/uygun-musun-{partner_id}"
+                )
+
+        return res
     except KeyError as ke:
         raise HTTPException(status_code=404, detail=str(ke))
     except Exception as e:
@@ -1116,7 +1157,35 @@ def send_uygun_musun_ping(room_code: str, payload: Dict[str, Any] = Body(...)):
     if not from_id or not to_id:
         raise HTTPException(status_code=400, detail='from_id ve to_id zorunludur.')
     try:
-        return uygun_musun_store.send_ping(room_code, from_id, to_id, ping_type, message, emoji)
+        res = uygun_musun_store.send_ping(room_code, from_id, to_id, ping_type, message, emoji)
+
+        # Karşı tarafa anında Kilit Ekranı Push Bildirimi fırlat
+        sender_name = 'Atilla' if from_id == 'atilla' else 'Neva' if from_id == 'neva' else from_id
+        if ping_type == 'poke':
+            push_title = f"👉 {sender_name} seni dürttü!"
+            push_body = message or f"{sender_name}: 'Dersin bitti mi, ne yapıyorsun?'"
+        elif ping_type == 'coffee':
+            push_title = f"☕ {sender_name} ile Kahve Vakti?"
+            push_body = message or f"{sender_name}: 'Orta bahçede bir kahve içelim mi?'"
+        elif ping_type == 'lunch':
+            push_title = f"🍕 {sender_name} ile Yemek?"
+            push_body = message or f"{sender_name}: 'Acıktım, bir şeyler yiyelim mi?'"
+        elif ping_type == 'free':
+            push_title = f"⚡ {sender_name} Müsait!"
+            push_body = message or f"{sender_name} şu an tamamen boşaldı!"
+        else:
+            push_title = f"{emoji} {sender_name}'dan Bildirim"
+            push_body = message or f"{sender_name} sana bildirim bıraktı."
+
+        uygun_musun_store.send_push_notification_to_profile(
+            room_code,
+            to_id,
+            push_title,
+            push_body,
+            f"/uygun-musun-{to_id}"
+        )
+
+        return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Ping gönderilemedi: {str(e)}')
 
@@ -1127,6 +1196,50 @@ def dismiss_uygun_musun_ping(room_code: str, ping_id: str):
         return uygun_musun_store.dismiss_ping(room_code, ping_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Ping kapatılamadı: {str(e)}')
+
+
+@app.post('/api/uygun-musun/room/{room_code}/subscribe')
+def subscribe_push(room_code: str, payload: Dict[str, Any] = Body(...)):
+    profile_id = str(payload.get('profile_id') or '').strip()
+    sub = payload.get('subscription')
+    if not profile_id or not sub or not isinstance(sub, dict):
+        raise HTTPException(status_code=400, detail='profile_id ve subscription zorunludur.')
+    try:
+        return uygun_musun_store.save_push_subscription(room_code, profile_id, sub)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Bildirim aboneliği kaydedilemedi: {str(e)}')
+
+
+@app.post('/api/uygun-musun/room/{room_code}/unsubscribe')
+def unsubscribe_push(room_code: str, payload: Dict[str, Any] = Body(...)):
+    endpoint = str(payload.get('endpoint') or '').strip()
+    if not endpoint:
+        raise HTTPException(status_code=400, detail='endpoint zorunludur.')
+    try:
+        uygun_musun_store.remove_push_subscription(endpoint)
+        return {'success': True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Abonelik silinemedi: {str(e)}')
+
+
+@app.post('/api/uygun-musun/room/{room_code}/test-push')
+def test_push_notification(room_code: str, payload: Dict[str, Any] = Body(...)):
+    profile_id = str(payload.get('profile_id') or '').strip()
+    if not profile_id:
+        raise HTTPException(status_code=400, detail='profile_id zorunludur.')
+    try:
+        sender_name = 'Atilla' if profile_id == 'atilla' else 'Neva'
+        uygun_musun_store.send_push_notification_to_profile(
+            room_code,
+            profile_id,
+            "🔔 Bildirimler Başarıyla Bağlandı!",
+            f"Tebrikler {sender_name}! Artık erken çıkışlar ve dürtmeler kilit ekranına düşecek.",
+            f"/uygun-musun-{profile_id}"
+        )
+        return {'success': True, 'message': 'Test bildirimi gönderildi.'}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Test bildirimi gönderilemedi: {str(e)}')
+
 
 
 

@@ -15,6 +15,16 @@ import threading
 from typing import Dict, Any, Optional
 
 STORE_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uygun_musun.db')
+VAPID_PUBLIC_KEY = "BDnRuh7ebajipe5pRdbsIMAKqf5iEUmThXPOXuYlcXX_5-G0pbOTm4-7axfxz5dJvloVZyNnUHlef0BmU79jMnM"
+VAPID_PRIVATE_KEY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'vapid_private_key.pem')
+VAPID_CLAIMS = {"sub": "mailto:admin@ytudostun.com"}
+
+try:
+    from pywebpush import webpush, WebPushException
+except ImportError:
+    webpush = None
+    WebPushException = Exception
+
 _DB_LOCK = threading.Lock()
 
 
@@ -36,6 +46,25 @@ def _init_db() -> None:
                     data_json TEXT NOT NULL,
                     updated_at INTEGER NOT NULL
                 )
+                '''
+            )
+            conn.execute(
+                '''
+                CREATE TABLE IF NOT EXISTS push_subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    room_code TEXT NOT NULL,
+                    profile_id TEXT NOT NULL,
+                    endpoint TEXT NOT NULL UNIQUE,
+                    p256dh TEXT NOT NULL,
+                    auth TEXT NOT NULL,
+                    created_at INTEGER NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )
+                '''
+            )
+            conn.execute(
+                '''
+                CREATE INDEX IF NOT EXISTS idx_push_subs ON push_subscriptions (room_code, profile_id)
                 '''
             )
             conn.commit()
@@ -470,4 +499,129 @@ def dismiss_ping(room_code: str, ping_id: str) -> Dict[str, Any]:
             p['dismissed'] = True
     room['pings'] = pings
     return save_room(room_code, room)
+
+
+# ---------------------------------------------------------------------------
+# Web Push Bildirimleri (PWA Push API & Kilit Ekranı)
+# ---------------------------------------------------------------------------
+
+def save_push_subscription(room_code: str, profile_id: str, sub: Dict[str, Any]) -> Dict[str, Any]:
+    clean_code = _sanitize_room_code(room_code)
+    endpoint = str(sub.get('endpoint') or '').strip()
+    keys = sub.get('keys') or {}
+    p256dh = str(keys.get('p256dh') or '').strip()
+    auth = str(keys.get('auth') or '').strip()
+
+    if not endpoint or not p256dh or not auth:
+        raise ValueError('Geçersiz push subscription verisi.')
+
+    now_ms = int(time.time() * 1000)
+
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        try:
+            conn.execute(
+                '''
+                INSERT INTO push_subscriptions (room_code, profile_id, endpoint, p256dh, auth, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(endpoint) DO UPDATE SET
+                    room_code = excluded.room_code,
+                    profile_id = excluded.profile_id,
+                    p256dh = excluded.p256dh,
+                    auth = excluded.auth,
+                    updated_at = excluded.updated_at
+                ''',
+                (clean_code, profile_id, endpoint, p256dh, auth, now_ms, now_ms),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    return {'success': True, 'profile_id': profile_id}
+
+
+def remove_push_subscription(endpoint: str) -> None:
+    endpoint_clean = str(endpoint or '').strip()
+    if not endpoint_clean:
+        return
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        try:
+            conn.execute('DELETE FROM push_subscriptions WHERE endpoint = ?', (endpoint_clean,))
+            conn.commit()
+        finally:
+            conn.close()
+
+
+def get_push_subscriptions(room_code: str, profile_id: str) -> list:
+    clean_code = _sanitize_room_code(room_code)
+    with _DB_LOCK:
+        conn = sqlite3.connect(STORE_DB_PATH, timeout=10)
+        conn.row_factory = sqlite3.Row
+        try:
+            rows = conn.execute(
+                '''
+                SELECT endpoint, p256dh, auth FROM push_subscriptions
+                WHERE room_code = ? AND profile_id = ?
+                ''',
+                (clean_code, profile_id),
+            ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+
+def _dispatch_push_worker(subs: list, payload_json: str):
+    if not webpush or not os.path.exists(VAPID_PRIVATE_KEY_PATH):
+        return
+
+    for sub in subs:
+        sub_info = {
+            'endpoint': sub['endpoint'],
+            'keys': {
+                'p256dh': sub['p256dh'],
+                'auth': sub['auth'],
+            },
+        }
+        try:
+            webpush(
+                subscription_info=sub_info,
+                data=payload_json,
+                vapid_private_key=VAPID_PRIVATE_KEY_PATH,
+                vapid_claims=VAPID_CLAIMS,
+                ttl=3600,
+            )
+        except WebPushException as ex:
+            # 404/410 means subscription expired or uninstalled
+            if ex.response is not None and ex.response.status_code in (404, 410):
+                remove_push_subscription(sub['endpoint'])
+        except Exception:
+            pass
+
+
+def send_push_notification_to_profile(
+    room_code: str,
+    target_profile_id: str,
+    title: str,
+    body: str,
+    url: Optional[str] = None
+) -> None:
+    subs = get_push_subscriptions(room_code, target_profile_id)
+    if not subs:
+        return
+
+    payload = {
+        'title': title,
+        'body': body,
+        'url': url or f'/uygun-musun-{target_profile_id}',
+        'icon': '/icon-192x192.png',
+        'badge': '/icon-192x192.png',
+        'tag': f'uygun-musun-{int(time.time())}',
+    }
+    payload_json = json.dumps(payload, ensure_ascii=False)
+
+    # Arka planda thread olarak gönder ki API isteği beklemesin
+    t = threading.Thread(target=_dispatch_push_worker, args=(subs, payload_json), daemon=True)
+    t.start()
+
 

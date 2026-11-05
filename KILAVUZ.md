@@ -323,13 +323,26 @@ Platform 7 ana modülden (6 genel + 1 özel ikili modül) ve bunları destekleye
   - 👩‍🎓 **Neva Paneli:** `https://ytudostun.com/uygun-musun-neva`
   - 👥 **Duo Test / Oda Arayüzü:** `https://ytudostun.com/uygun-musun`
 - **Öne Çıkan Akıllı Özellikler:**
+  - **Kilit Ekranı Web Push Bildirimleri (PWA Push API & VAPID):**
+    - Telefon kilitliyken veya ekran kapalıyken partnere doğrudan sistem bildirimi (Web Push) fırlatılır.
+    - Bir taraf *"⚡ Dersim Erken Bitti / Çıktım"* butonuna bastığında karşı tarafın kilit ekranına `"⚡ Atilla dersten erken çıktı! Atilla şu an müsait! 🎉"` bildirimi düşer.
+    - Bir taraf *"👉 Dürt"* veya *"☕ Kahve"* pingi yolladığında karşı tarafın kilit ekranına `"👉 Atilla seni dürttü!"` bildirimi düşer.
+    - iOS Safari (PWA) ve Android Chrome tam uyumlu; tek dokunuşla bildirim açma ve `"🔔 Test Et"` butonu mevcuttur.
+  - **Canlı Kendi Durum Kartı:** Sayfada partnerin durumunun hemen altında kendi durumunun (hangi derste olduğun, online ders durumu, kalan süre, ilerleme barı veya serbestlik hali) karşı tarafta nasıl göründüğünü gösteren canlı ayna kartı.
   - **Online Ders Desteği:** `is_online: true` olarak işaretlenen dersler (ör. BLM1991, TDB1031) sistem tarafından otomatik olarak **"Online Ders (Müsait)"** olarak değerlendirilir ve ortak zaman çizelgesinde kırmızı yanıp sönen `REC` kamera rozetiyle gösterilir.
-  - **Erken Çıkış / Durum Bildirimi:** `⚡ Dersim Erken Bitti / Çıktım` butonuyla tek dokunuşta haftalık program geçersiz kılınarak partnerine anında müsaitlik durumu bildirilir. Ayrıca kütüphane, kahve molası ve özel durum notları bırakılabilir.
-  - **Anlık Dürtme (Ping):** Tek dokunuşla partnere titreşimli/sesli bildirim ve dikkat çekme rozeti gönderilir.
+  - **Erken Çıkış / Durum Bildirimi:** `⚡ Dersim Erken Bitti / Çıktım` butonuyla tek dokunuşta haftalık program geçersiz kılınarak partnerine anında müsaitlik durumu bildirilir.
   - **Duo Paralel Çizelge:** Günün her saatinde iki kişinin durumunu alt alta senkronize gösteren görsel çizelge matrisi.
 - **Backend Mimarisi:**
-  - `backend/uygun_musun_store.py`: SQLite WAL modunda `uygun_musun.db` veritabanı.
-  - API Uç Noktaları: `/api/uygun-musun/room/{code}`, `/profile`, `/status`, `/ping`, `/dismiss`.
+  - `backend/uygun_musun_store.py`: SQLite WAL modunda `uygun_musun.db` (`rooms` ve `push_subscriptions` tabloları).
+  - VAPID Anahtarları: `backend/vapid_private_key.pem` ve `backend/vapid_public_key.pem`.
+  - Servis İşçisi (Service Worker): `frontend/worker/index.ts` -> `@ducanh2912/next-pwa` ile derlenir (`sw.js`).
+  - API Uç Noktaları:
+    - `GET /api/uygun-musun/vapid-public-key`: VAPID açık anahtarını döner.
+    - `POST /api/uygun-musun/room/{code}/subscribe`: Cihazın push subscription verisini kaydeder.
+    - `POST /api/uygun-musun/room/{code}/unsubscribe`: Cihazın aboneliğini siler.
+    - `POST /api/uygun-musun/room/{code}/test-push`: Cihaza anında test bildirimi gönderir.
+    - `POST /api/uygun-musun/room/{code}/status`: Durum günceller ve partnere push bildirimi fırlatır.
+    - `POST /api/uygun-musun/room/{code}/ping`: Dürtme/çağrı kaydeder ve kilit ekranına push fırlatır.
 
 ---
 

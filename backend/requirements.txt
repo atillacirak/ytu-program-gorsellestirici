@@ -8,3 +8,5 @@ pytesseract
 pillow
 requests
 python-dotenv
+pywebpush
+py-vapid

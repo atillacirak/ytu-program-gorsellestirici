@@ -27,7 +27,9 @@ import {
   Volume2,
   Video,
   User,
-  GraduationCap
+  GraduationCap,
+  Bell,
+  BellRing
 } from 'lucide-react';
 import { useLocalStorageState } from '../../hooks/useLocalStorageState';
 import {
@@ -55,6 +57,12 @@ import {
 } from '../../utils/uygunMusunEngine';
 import { extractMetadataFromPngArrayBuffer } from '../../utils/pngMetadata';
 import { parseScheduleImageWithOcr } from '../../utils/pngOcrParser';
+import {
+  isPushNotificationSupported,
+  getNotificationPermission,
+  subscribeToPush,
+  sendTestPush,
+} from '../../utils/pushManager';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -126,6 +134,48 @@ export default function DuoAppView({
   const [isEarlyExitActive, setIsEarlyExitActive] = useState<boolean>(false);
   const [statusSaveToast, setStatusSaveToast] = useState(false);
   const [pingSentToast, setPingSentToast] = useState<string | null>(null);
+
+  // Push Bildirim Durumu (PWA & Kilit Ekranı)
+  const [pushPermission, setPushPermission] = useState<string>('default');
+  const [isSubscribingPush, setIsSubscribingPush] = useState(false);
+  const [pushToast, setPushToast] = useState<string | null>(null);
+  const [isIosBrowser, setIsIosBrowser] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const perm = getNotificationPermission();
+      setPushPermission(perm);
+
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      const isStandalone =
+        (window.navigator as any).standalone ||
+        window.matchMedia('(display-mode: standalone)').matches;
+      if (isIOS && !isStandalone) {
+        setIsIosBrowser(true);
+      }
+    }
+  }, []);
+
+  const handleEnablePushNotifications = async () => {
+    setIsSubscribingPush(true);
+    const result = await subscribeToPush(roomCode, myId, API_BASE);
+    setIsSubscribingPush(false);
+    if (result.success) {
+      setPushPermission('granted');
+      setPushToast('🎉 Bildirimler açıldı! Erken çıkışlar ve dürtmeler kilit ekranına düşecek.');
+      setTimeout(() => setPushToast(null), 4000);
+    } else {
+      setPushToast(`⚠️ ${result.error || 'Bildirim açılamadı.'}`);
+      setTimeout(() => setPushToast(null), 4000);
+    }
+  };
+
+  const handleTestPushNotification = async () => {
+    setPushToast('🔔 Test bildirimi gönderiliyor...');
+    const result = await sendTestPush(roomCode, myId, API_BASE);
+    setPushToast(result.message || 'Gönderildi!');
+    setTimeout(() => setPushToast(null), 4000);
+  };
 
   // Yükleme durumu
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
@@ -631,6 +681,74 @@ export default function DuoAppView({
           <div className="rounded-xl bg-emerald-600 text-white font-black text-xs px-3.5 py-2.5 flex items-center gap-2 shadow-md animate-in fade-in">
             <Check className="w-4 h-4" />
             <span>{pingSentToast}</span>
+          </div>
+        )}
+
+        {/* PUSH BİLDİRİM TOAST */}
+        {pushToast && (
+          <div className="rounded-xl bg-slate-900 text-white font-extrabold text-xs px-3.5 py-2.5 flex items-center justify-between gap-2 shadow-lg animate-in fade-in">
+            <span>{pushToast}</span>
+            <button
+              type="button"
+              onClick={() => setPushToast(null)}
+              className="text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* PUSH BİLDİRİM BANNER'I (Henüz Açılmadıysa) */}
+        {pushPermission !== 'granted' && pushPermission !== 'unsupported' && (
+          <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200/80 rounded-2xl p-3.5 shadow-xs flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[#0c3f79]/10 text-[#0c3f79] flex items-center justify-center shrink-0">
+                <Bell className="w-5 h-5 animate-pulse text-[#0c3f79]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                  <span>Kilit Ekranı Bildirimleri</span>
+                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded-full">
+                    Canlı
+                  </span>
+                </p>
+                <p className="text-[11px] text-slate-600 leading-tight mt-0.5">
+                  {isIosBrowser
+                    ? 'iPhone: Paylaş (⎋) -> "Ana Ekrana Ekle" yapıp oradan bildirimleri açabilirsin.'
+                    : `${partnerName} erken çıktığında veya dürttüğünde kilit ekranına bildirim düşsün.`}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleEnablePushNotifications}
+              disabled={isSubscribingPush}
+              className="shrink-0 px-3 py-2 rounded-xl bg-[#0c3f79] hover:bg-[#082a52] text-white text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+            >
+              {isSubscribingPush ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <BellRing className="w-3.5 h-3.5" />
+              )}
+              <span>Aç</span>
+            </button>
+          </div>
+        )}
+
+        {/* PUSH BİLDİRİM AKTİF ROZETİ & TEST BUTONU */}
+        {pushPermission === 'granted' && (
+          <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-emerald-50/90 border border-emerald-200/80 text-emerald-900 text-xs shadow-2xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-bold truncate">Kilit Ekranı Bildirimleri Aktif</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleTestPushNotification}
+              className="text-[11px] font-black text-[#0c3f79] hover:text-[#082a52] bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs transition-all cursor-pointer shrink-0"
+            >
+              🔔 Test Et
+            </button>
           </div>
         )}
 
