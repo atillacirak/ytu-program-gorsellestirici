@@ -109,14 +109,23 @@ export default function DeviceSyncModal({
     // 2. Arkadaş Lobileri & Aktif Oda
     let saved_lobbies: any[] = [];
     try {
-      const rawLobbies = localStorage.getItem('ytu_saved_lobbies_v1');
-      if (rawLobbies) saved_lobbies = JSON.parse(rawLobbies);
+      const rawLobbies = localStorage.getItem('ytu_uygun_musun_saved_lobbies_v1') || localStorage.getItem('ytu_saved_lobbies_v1');
+      if (rawLobbies) {
+        const parsed = JSON.parse(rawLobbies);
+        if (Array.isArray(parsed)) saved_lobbies = parsed;
+      }
     } catch {}
 
     let active_room_code: string | null = null;
     try {
-      const rawActive = localStorage.getItem('ytu_active_room_code');
+      const rawActive = localStorage.getItem('ytu_uygun_musun_active_lobby_v1') || localStorage.getItem('ytu_active_room_code');
       if (rawActive) active_room_code = JSON.parse(rawActive);
+    } catch {}
+
+    let duo_profiles: any[] = [];
+    try {
+      const rawDuo = localStorage.getItem('ytu_duo_profiles_v2');
+      if (rawDuo) duo_profiles = JSON.parse(rawDuo);
     } catch {}
 
     // 3. Notlar
@@ -211,6 +220,7 @@ export default function DeviceSyncModal({
       courses_summary,
       saved_lobbies,
       active_room_code,
+      duo_profiles,
       course_notes,
       visualizer_settings,
       agno,
@@ -223,7 +233,11 @@ export default function DeviceSyncModal({
   // Herhangi bir yedeklenebilir veri var mı kontrolü
   const hasAnyBackupData = (payload: any): boolean => {
     const hasSched = Boolean(payload.schedule && Object.keys(payload.schedule).length > 0);
-    const hasLobb = Boolean(payload.saved_lobbies && payload.saved_lobbies.length > 0);
+    const hasLobb = Boolean(
+      (payload.saved_lobbies && payload.saved_lobbies.length > 0) ||
+      payload.active_room_code ||
+      (payload.duo_profiles && payload.duo_profiles.length > 0)
+    );
     const hasNot = Boolean(payload.course_notes && Object.keys(payload.course_notes).length > 0);
     const hasAg = Boolean(
       payload.agno && (
@@ -344,20 +358,28 @@ export default function DeviceSyncModal({
       if (s.font_scale) localStorage.setItem('ytu_schedule_scale', JSON.stringify(s.font_scale));
     }
 
-    // 4. Arkadaş Lobileri
+    // 4. Arkadaş Lobileri & Aktif Oda
     if (payload.saved_lobbies && Array.isArray(payload.saved_lobbies)) {
       try {
-        const existingRaw = localStorage.getItem('ytu_saved_lobbies_v1');
+        const existingRaw = localStorage.getItem('ytu_uygun_musun_saved_lobbies_v1') || localStorage.getItem('ytu_saved_lobbies_v1');
         const existing = existingRaw ? JSON.parse(existingRaw) : [];
         const mergedMap = new Map();
         existing.forEach((l: any) => mergedMap.set(l.room_code, l));
         payload.saved_lobbies.forEach((l: any) => mergedMap.set(l.room_code, l));
-        localStorage.setItem('ytu_saved_lobbies_v1', JSON.stringify(Array.from(mergedMap.values())));
+        const mergedArr = Array.from(mergedMap.values());
+        localStorage.setItem('ytu_uygun_musun_saved_lobbies_v1', JSON.stringify(mergedArr));
+        localStorage.setItem('ytu_saved_lobbies_v1', JSON.stringify(mergedArr));
       } catch {}
     }
     if (payload.active_room_code) {
       try {
+        localStorage.setItem('ytu_uygun_musun_active_lobby_v1', JSON.stringify(payload.active_room_code));
         localStorage.setItem('ytu_active_room_code', JSON.stringify(payload.active_room_code));
+      } catch {}
+    }
+    if (payload.duo_profiles && Array.isArray(payload.duo_profiles)) {
+      try {
+        localStorage.setItem('ytu_duo_profiles_v2', JSON.stringify(payload.duo_profiles));
       } catch {}
     }
 
@@ -677,10 +699,10 @@ export default function DeviceSyncModal({
                   </span>
                 ) : null}
 
-                {localInventory.saved_lobbies && localInventory.saved_lobbies.length > 0 ? (
+                {((localInventory.saved_lobbies && localInventory.saved_lobbies.length > 0) || localInventory.active_room_code) ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-semibold">
                     <Users className="w-3 h-3 text-amber-600" />
-                    <span>{localInventory.saved_lobbies.length} Lobi</span>
+                    <span>{Math.max(localInventory.saved_lobbies?.length || 0, localInventory.active_room_code ? 1 : 0)} Lobi</span>
                   </span>
                 ) : null}
 

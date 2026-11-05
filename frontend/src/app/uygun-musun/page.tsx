@@ -274,12 +274,14 @@ export default function UygunMusunLobbyPage() {
             }
             if (d.payload.saved_lobbies && Array.isArray(d.payload.saved_lobbies)) {
               try {
-                const existingRaw = localStorage.getItem('ytu_saved_lobbies_v1');
+                const existingRaw = localStorage.getItem('ytu_uygun_musun_saved_lobbies_v1') || localStorage.getItem('ytu_saved_lobbies_v1');
                 const existing = existingRaw ? JSON.parse(existingRaw) : [];
                 const mergedMap = new Map();
                 existing.forEach((l: any) => mergedMap.set(l.room_code, l));
                 d.payload.saved_lobbies.forEach((l: any) => mergedMap.set(l.room_code, l));
-                localStorage.setItem('ytu_saved_lobbies_v1', JSON.stringify(Array.from(mergedMap.values())));
+                const mergedArr = Array.from(mergedMap.values());
+                localStorage.setItem('ytu_uygun_musun_saved_lobbies_v1', JSON.stringify(mergedArr));
+                localStorage.setItem('ytu_saved_lobbies_v1', JSON.stringify(mergedArr));
               } catch {}
             }
             showToast(`Cihaz eşlendi! ${d.payload.student_name || 'Program'} başarıyla aktarıldı 🎉`);
