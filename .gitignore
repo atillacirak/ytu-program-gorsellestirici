@@ -14,8 +14,10 @@ __pycache__/
 *$py.class
 *.sqlite3-journal
 
-# Environment variables
-.env*.local
+# Keys & Secrets
+*.pem
+*.key
+
 .env
 
 # OS / Editor
