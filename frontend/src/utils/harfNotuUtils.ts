@@ -941,3 +941,34 @@ export function getRelativeScoreZones(
   }
   return segments;
 }
+
+/**
+ * 0..100 ekseni üzerinde Mutlak (Katalog) eşiklerine göre
+ * FF..AA harf notu dilimlerini hesaplar.
+ */
+export function getAbsoluteScoreZones(
+  catalog: CatalogThresholds
+): GradeBarSegment[] {
+  const cuts: { grade: LetterGrade; minScore: number }[] = [
+    { grade: 'FF', minScore: 0 },
+    { grade: 'FD', minScore: clampScore(catalog.FD) },
+    { grade: 'DD', minScore: clampScore(catalog.DD) },
+    { grade: 'DC', minScore: clampScore(catalog.DC) },
+    { grade: 'CC', minScore: clampScore(catalog.CC) },
+    { grade: 'CB', minScore: clampScore(catalog.CB) },
+    { grade: 'BB', minScore: clampScore(catalog.BB) },
+    { grade: 'BA', minScore: clampScore(catalog.BA) },
+    { grade: 'AA', minScore: clampScore(catalog.AA) }
+  ];
+
+  const segments: GradeBarSegment[] = [];
+  for (let i = 0; i < cuts.length; i++) {
+    const from = cuts[i].minScore;
+    const to = i < cuts.length - 1 ? cuts[i + 1].minScore : 100;
+    const widthPct = Math.max(0, roundTo1(to - from));
+    if (widthPct > 0) {
+      segments.push({ grade: cuts[i].grade, from, to, widthPct });
+    }
+  }
+  return segments;
+}

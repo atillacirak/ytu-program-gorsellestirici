@@ -21,6 +21,7 @@ import {
 import {
   evaluateCourseGrade,
   generateId,
+  getAbsoluteScoreZones,
   getGradeBadgeClasses,
   getRelativeScoreZones,
   pickDefaultTargetItemId,
@@ -68,13 +69,15 @@ export default function ScenarioSimulatorPanel({
   );
 
   const barSegments = useMemo(() => {
-    if (evaluation.weightedClassAvg === null) return [];
-    const sigma =
-      course.stdDev !== null && Number.isFinite(course.stdDev) && course.stdDev > 0
-        ? course.stdDev
-        : 15;
-    return getRelativeScoreZones(evaluation.weightedClassAvg, sigma);
-  }, [evaluation.weightedClassAvg, course.stdDev]);
+    if (evaluation.effectiveMode === 'relative' && evaluation.weightedClassAvg !== null) {
+      const sigma =
+        course.stdDev !== null && Number.isFinite(course.stdDev) && course.stdDev > 0
+          ? course.stdDev
+          : 15;
+      return getRelativeScoreZones(evaluation.weightedClassAvg, sigma);
+    }
+    return getAbsoluteScoreZones(course.catalog);
+  }, [evaluation.effectiveMode, evaluation.weightedClassAvg, course.stdDev, course.catalog]);
 
   const [scenarioName, setScenarioName] = useState('');
 
@@ -252,15 +255,21 @@ export default function ScenarioSimulatorPanel({
             </div>
           </div>
 
-          {/* Çan Konumu Yatay Skalası (Saf Tailwind) */}
-          {evaluation.effectiveMode === 'relative' && classAvgPosPct !== null && (
+          {/* Konum & Harf Notu Skalası (Hem Çan Hem Katalog) */}
+          {(evaluation.hasAnyScore || classAvgPosPct !== null) && (
             <div className="theme-sunken-box p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/80 space-y-2.5">
               <div className="flex items-center justify-between text-xs gap-2">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <TrendingUp className="w-3.5 h-3.5 text-[#0c3f79]" />
-                  <span>Çan Konumun</span>
+                  <span>
+                    {evaluation.effectiveMode === 'relative'
+                      ? 'Çan Konumun'
+                      : 'Katalog Konumun'}
+                  </span>
                 </span>
-                {evaluation.hasAnyScore && evaluation.diffFromClassAvg !== null ? (
+                {evaluation.effectiveMode === 'relative' &&
+                evaluation.hasAnyScore &&
+                evaluation.diffFromClassAvg !== null ? (
                   <span
                     className={`font-mono font-extrabold px-2 py-0.5 rounded-md text-[11px] ${
                       evaluation.diffFromClassAvg >= 0
@@ -274,75 +283,87 @@ export default function ScenarioSimulatorPanel({
                   </span>
                 ) : (
                   <span className="text-[11px] font-medium text-slate-500">
-                    Notunuzu girince çan konumunuz görünür
+                    {evaluation.effectiveMode === 'relative'
+                      ? 'Notunuzu girince çan konumunuz görünür'
+                      : `Ham Not: ${evaluation.hbn.toFixed(1)}`}
                   </span>
                 )}
               </div>
 
-              <div className="relative pt-5 pb-2 px-1.5">
-                <div className="relative h-5 w-full">
-                  <div className="h-full w-full rounded-md overflow-hidden flex border border-slate-300/80">
-                    {barSegments.map((seg) => {
-                      const segBg =
-                        seg.grade === 'AA' || seg.grade === 'BA'
-                          ? 'bg-emerald-200/90 text-emerald-950'
-                          : seg.grade === 'BB' || seg.grade === 'CB'
-                            ? 'bg-sky-200/90 text-sky-950'
-                            : seg.grade === 'CC'
-                              ? 'bg-blue-100 text-blue-950'
-                              : seg.grade === 'DC' || seg.grade === 'DD'
-                                ? 'bg-amber-200/90 text-amber-950'
-                                : 'bg-rose-200/90 text-rose-950';
-                      return (
-                        <div
-                          key={seg.grade}
-                          style={{ width: `${seg.widthPct}%` }}
-                          title={`${seg.grade}: ${seg.from.toFixed(0)}–${seg.to.toFixed(0)} arası`}
-                          className={`h-full flex items-center justify-center text-[8.5px] font-mono font-extrabold border-r border-white/60 last:border-r-0 select-none overflow-hidden ${segBg}`}
-                        >
-                          {seg.widthPct >= 6 ? seg.grade : ''}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Sınıf Ortalaması İşaretçisi */}
-                  <div
-                    className="absolute -top-1 w-0.5 h-7 bg-slate-900 z-10 pointer-events-none"
-                    style={{ left: `${classAvgPosPct}%` }}
-                    title={`Sınıf Ortalaması: ${evaluation.weightedClassAvg?.toFixed(1)}`}
-                  >
-                    <span
-                      className={`absolute -top-4 text-[9px] font-mono font-bold text-slate-700 whitespace-nowrap ${
-                        classAvgPosPct < 12
-                          ? 'left-0'
-                          : classAvgPosPct > 88
-                            ? 'right-0'
-                            : '-translate-x-1/2'
-                      }`}
+              <div className="relative pt-1 pb-1 px-1.5">
+                {/* Üst Harf Notu Etiketleri (Çubuğun hemen üstünde, her dilimin ortasında) */}
+                <div className="flex w-full mb-1">
+                  {barSegments.map((seg) => (
+                    <div
+                      key={`top-lbl-${seg.grade}`}
+                      style={{ width: `${seg.widthPct}%` }}
+                      title={`${seg.grade}: ${Math.round(seg.from)}–${Math.round(seg.to)}`}
+                      className="text-center text-[8.5px] font-mono font-extrabold text-slate-600 leading-none select-none overflow-hidden"
                     >
-                      Ort:{evaluation.weightedClassAvg?.toFixed(0)}
-                    </span>
-                  </div>
+                      {seg.widthPct >= 4.5 ? seg.grade : ''}
+                    </div>
+                  ))}
+                </div>
+
+                <div
+                  className="bell-curve-bar relative h-3 w-full rounded-full border border-slate-300/60"
+                  style={{
+                    background: 'linear-gradient(90deg, #fda4af 0%, #fde68a 50%, #34d399 100%)'
+                  }}
+                >
+                  {/* Harf Notu Sınır Çizgileri */}
+                  {barSegments
+                    .filter((seg) => seg.from > 0 && seg.from < 100)
+                    .map((seg) => (
+                      <div
+                        key={`tick-${seg.grade}`}
+                        className="absolute top-0 bottom-0 w-px bg-white/90 pointer-events-none"
+                        style={{ left: `${seg.from}%` }}
+                        title={`${seg.grade} başlangıcı: ${seg.from.toFixed(0)}`}
+                      />
+                    ))}
+
+                  {/* Sınıf Ortalaması İşaretçisi (Sadece Çan modunda) */}
+                  {evaluation.effectiveMode === 'relative' && classAvgPosPct !== null && (
+                    <div
+                      className="absolute -top-1 w-0.5 h-5 bg-slate-900 z-10 pointer-events-none"
+                      style={{ left: `${classAvgPosPct}%` }}
+                      title={`Sınıf Ortalaması: ${evaluation.weightedClassAvg?.toFixed(1)}`}
+                    >
+                      <span
+                        className={`absolute top-5 text-[9px] font-mono font-bold text-slate-800 whitespace-nowrap ${
+                          classAvgPosPct < 12
+                            ? 'left-0'
+                            : classAvgPosPct > 88
+                              ? 'right-0'
+                              : '-translate-x-1/2'
+                        }`}
+                      >
+                        Ort:{evaluation.weightedClassAvg?.toFixed(0)}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Öğrenci HBN Noktası */}
                   {evaluation.hasAnyScore && (
                     <div
-                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#0c3f79] border-2 border-white shadow-md ring-2 ring-[#e7a240] z-20"
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#0c3f79] border-[1.5px] border-white shadow-sm ring-1 ring-[#e7a240] z-20"
                       style={{ left: `${studentPosPct}%` }}
                       title={`Senin Notun: ${evaluation.hbn.toFixed(1)}`}
                     />
                   )}
                 </div>
-                <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-1">
+                <div className="flex justify-between text-[10px] font-mono text-slate-400 mt-3">
                   <span>0</span>
                   <span>50</span>
                   <span>100</span>
                 </div>
               </div>
 
-              {/* 3'lü Sapma Bandı Kartları (Anlaşılır Dağılım Açıklamalı) */}
-              {evaluation.hasAnyScore && evaluation.bands.length > 0 && (
+              {/* 3'lü Sapma Bandı Kartları (Sadece Çan modunda) */}
+              {evaluation.effectiveMode === 'relative' &&
+                evaluation.hasAnyScore &&
+                evaluation.bands.length > 0 && (
                 <div className="space-y-2 pt-1">
                   <div
                     className={`grid gap-2 ${
@@ -413,25 +434,25 @@ export default function ScenarioSimulatorPanel({
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-                {classAvgSensitivity.samplePoints.slice(0, 5).concat(classAvgSensitivity.samplePoints.slice(5)).map((pt) => {
+              <div className="grid grid-cols-3 gap-2">
+                {classAvgSensitivity.samplePoints.map((pt) => {
                   const isNearCurrent =
                     evaluation.weightedClassAvg !== null &&
                     Math.abs(evaluation.weightedClassAvg - pt.classAvg) <= 2.5;
                   return (
                     <div
                       key={pt.classAvg}
-                      className={`px-2 py-1.5 rounded-lg border text-center flex items-center justify-between gap-1 ${
+                      className={`px-2.5 py-2 rounded-lg border flex items-center justify-between gap-1.5 min-w-0 ${
                         isNearCurrent
                           ? 'theme-band-active bg-white border-[#0c3f79] shadow-2xs'
                           : 'theme-band-card bg-white/80 border-slate-200'
                       }`}
                     >
-                      <span className="text-[10px] font-mono font-semibold text-slate-500">
-                        Ort.{pt.classAvg}
+                      <span className="text-[11px] font-mono font-semibold text-slate-600 truncate">
+                        Ort. {pt.classAvg}
                       </span>
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[10.5px] font-black font-mono border ${getGradeBadgeClasses(
+                        className={`px-2 py-0.5 rounded text-[11px] font-black font-mono border shrink-0 ${getGradeBadgeClasses(
                           pt.grade
                         )}`}
                       >
