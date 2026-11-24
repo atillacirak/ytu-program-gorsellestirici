@@ -303,7 +303,7 @@ header .subnav-tab:hover {
 }
 
 /* Nordic Yellow: Strict 4px flat functional cards, NO gradients, IKEA Blue + Yellow CTAs */
-:root[data-theme="nordic-yellow"] .bg-white:not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher] *) {
+:root[data-theme="nordic-yellow"] :is(.bg-white, .bg-white\/95):not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher] *) {
   background-color: var(--bg-surface) !important;
   border-color: #D2DCEB;
   box-shadow: var(--shadow-card);
@@ -379,7 +379,7 @@ header .subnav-tab:hover {
 }
 
 /* CampusKit: Collegiate 6px cards with maroon accent, subtle shadow-md, Vollkorn headings, maroon focus ring */
-:root[data-theme="campuskit"] .bg-white:not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher] *) {
+:root[data-theme="campuskit"] :is(.bg-white, .bg-white\/95):not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher] *) {
   background-color: var(--bg-surface) !important;
   border-color: #DFCEB4;
   box-shadow: var(--shadow-card);
