@@ -196,24 +196,43 @@ export default function ScenarioSimulatorPanel({
             </div>
 
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                {evaluation.completedAverage !== null
-                  ? 'Girilen Not Ortalaması'
-                  : '4\'lük Katsayı'}
-              </div>
-              <div className="text-xl font-black font-mono text-[#0c3f79] mt-0.5">
-                {evaluation.completedAverage !== null
-                  ? evaluation.completedAverage.toFixed(1)
-                  : evaluation.gpaPoint.toFixed(2)}
-              </div>
-              <div className="text-[10.5px] text-slate-500 mt-0.5">
-                Katsayı:{' '}
-                <strong className="text-slate-700 font-mono">
-                  {evaluation.minGpaPoint === evaluation.maxGpaPoint
-                    ? evaluation.gpaPoint.toFixed(2)
-                    : `${evaluation.minGpaPoint.toFixed(1)}–${evaluation.maxGpaPoint.toFixed(1)}`}
-                </strong>
-              </div>
+              {evaluation.completedAverage !== null &&
+              evaluation.completedWeight < evaluation.totalWeight - 0.01 ? (
+                <>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    Şu Ana Kadarki Ort.
+                  </div>
+                  <div className="text-xl font-black font-mono text-[#0c3f79] mt-0.5">
+                    {evaluation.completedAverage.toFixed(1)}
+                  </div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">
+                    Tahmini Katsayı:{' '}
+                    <strong className="text-slate-700 font-mono">
+                      {evaluation.minGpaPoint === evaluation.maxGpaPoint
+                        ? evaluation.gpaPoint.toFixed(2)
+                        : `${evaluation.minGpaPoint.toFixed(1)}–${evaluation.maxGpaPoint.toFixed(1)}`}
+                    </strong>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    4&apos;lük Katsayı
+                  </div>
+                  <div className="text-xl font-black font-mono text-[#0c3f79] mt-0.5">
+                    {evaluation.hasAnyScore
+                      ? evaluation.minGpaPoint === evaluation.maxGpaPoint
+                        ? evaluation.gpaPoint.toFixed(2)
+                        : `${evaluation.minGpaPoint.toFixed(1)}–${evaluation.maxGpaPoint.toFixed(1)}`
+                      : '0.00'}
+                  </div>
+                  <div className="text-[10.5px] text-slate-500 mt-0.5">
+                    {evaluation.weightedClassAvg !== null
+                      ? `Sınıf Ort: ${evaluation.weightedClassAvg.toFixed(1)}`
+                      : 'AGNO dönem katkısı'}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
