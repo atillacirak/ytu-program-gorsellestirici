@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Calculator, 
   Plus, 
@@ -15,7 +16,8 @@ import {
   Users,
   Target,
   Trophy,
-  ShieldCheck
+  ShieldCheck,
+  Award
 } from 'lucide-react';
 import AnimatedCounter from '../../components/AnimatedCounter';
 import PrivacyModal from '../../components/PrivacyModal';
@@ -51,6 +53,7 @@ interface ScenarioCourse {
 }
 
 export default function GanoCalculator() {
+  const router = useRouter();
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   // Past state (LocalStorage ile kalıcı)
   const [pastCgpa, setPastCgpa] = useLocalStorageState<string>('ytu_agno_past_cgpa', '');
@@ -943,7 +946,7 @@ export default function GanoCalculator() {
                     <th className="px-5 py-3 font-medium w-32">Ders Kodu</th>
                     <th className="px-5 py-3 font-medium">Ders Adı</th>
                     <th className="px-5 py-3 font-medium w-24">Kredi</th>
-                    <th className="px-5 py-3 font-medium w-32">Beklenen Not</th>
+                    <th className="px-5 py-3 font-medium w-40">Beklenen Not</th>
                     <th className="px-5 py-3 font-medium w-16 text-center">Sil</th>
                   </tr>
                 </thead>
@@ -980,18 +983,41 @@ export default function GanoCalculator() {
                         />
                       </td>
                       <td className="px-5 py-3">
-                        <select
-                          value={course.expectedGrade}
-                          onChange={(e) => updateCourse(course.id, 'expectedGrade', e.target.value)}
-                          className={`w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-3 py-2 outline-none transition-all appearance-none cursor-pointer font-medium ${['FF', 'FD', 'DD', 'DC', 'F0'].includes(course.expectedGrade) ? 'text-red-500' : 'text-slate-800'}`}
-                        >
-                          <option value=""></option>
-                          {Object.keys(GRADE_WEIGHTS).filter(g => !['G', 'K', 'İ'].includes(g) || g === course.expectedGrade).map(grade => (
-                            <option key={grade} value={grade}>
-                              {grade} {GRADE_WEIGHTS[grade] === null && '(Katılmaz)'}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            value={course.expectedGrade}
+                            onChange={(e) => updateCourse(course.id, 'expectedGrade', e.target.value)}
+                            className={`w-full bg-slate-50 border border-slate-200 focus:border-blue-500 rounded-lg px-3 py-2 outline-none transition-all appearance-none cursor-pointer font-medium ${['FF', 'FD', 'DD', 'DC', 'F0'].includes(course.expectedGrade) ? 'text-red-500' : 'text-slate-800'}`}
+                          >
+                            <option value=""></option>
+                            {Object.keys(GRADE_WEIGHTS).filter(g => !['G', 'K', 'İ'].includes(g) || g === course.expectedGrade).map(grade => (
+                              <option key={grade} value={grade}>
+                                {grade} {GRADE_WEIGHTS[grade] === null && '(Katılmaz)'}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              try {
+                                localStorage.setItem(
+                                  'ytu_pending_harf_notu_course',
+                                  JSON.stringify({
+                                    code: course.code || '',
+                                    name: course.name || '',
+                                    credits: course.credits ?? ''
+                                  })
+                                );
+                              } catch {}
+                              router.push('/harf-notu');
+                            }}
+                            title="Bu dersin vize/final notlarına göre harf notunu hesapla"
+                            aria-label={`${course.code || course.name || 'Ders'} için harf notu hesapla`}
+                            className="p-2 rounded-lg bg-sky-50 hover:bg-[#0c3f79] text-[#0c3f79] hover:text-white border border-sky-200 transition-colors cursor-pointer shrink-0"
+                          >
+                            <Award size={15} />
+                          </button>
+                        </div>
                       </td>
                       <td className="px-5 py-3 text-center">
                         <button 

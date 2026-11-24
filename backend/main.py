@@ -71,6 +71,14 @@ def increment_planlama_visit_endpoint():
     except Exception as e:
         return {'status': 'error', 'detail': str(e)}
 
+@app.post('/api/stats/harf-notu-visit')
+def increment_harf_notu_visit_endpoint():
+    try:
+        stats_db.increment_stat('total_harf_notu_visits')
+        return {'status': 'success'}
+    except Exception as e:
+        return {'status': 'error', 'detail': str(e)}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

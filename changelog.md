@@ -4,6 +4,18 @@ Bu belgede **YTÜ Dostun** projesine yapılan tüm sürüm güncellemeleri, mima
 
 ---
 
+## [v2.5.1] - 2026-11-25
+
+### ✨ Yeni Özellikler & Geliştirmeler
+- **Ders Harf Notu & Çan (T-Skoru) Simülatörü (`/harf-notu`):**
+  - **Esnek Değerlendirme Kalemi Yapılandırıcı:** Varsayılan olarak `2 Vize + Final (%30 / %30 / %40)` şablonuyla açılır; tek tıkla kalem silme, `+ Vize`, `+ Final`, `+ Bütünleme`, `+ Proje`, `+ Ödev`, `+ Lab`, `+ Quiz`, `+ Katılım`, `+ Özel` ekleme ve hazır şablonlar sunar. Ağırlıklar `%100` dışına çıktığında **Orantılı %100'e Dengele** ve **Kalan %'yi Final'e Ekle** yardımcılarıyla tek tıkla düzeltme sağlar.
+  - **YTÜ Bağıl Değerlendirme (Çan) & Mutlak Katalog Motoru (`harfNotuUtils.ts`):** Girilen sınav sınıf ortalamalarına göre sınıf düzeyini (`Mükemmel`..`Kötü`) belirler, T-skoru (`T = 50 + 10·(HBN − Ort)/σ`) hesaplar. Standart sapma bilinmediğinde `σ = 10 / 15 / 20` için 3'lü bant ve olası harf aralığı (örn. `CB – BB`) üretir; özelleştirilebilir Final (`< 40`) ve HBN (`< 30`) alt barajlarını denetler.
+  - **Hedef Puan Çözücü & What-If Senaryoları:** Girilmemiş Final veya seçili hedef kalem üzerinden `AA`..`DD` için gereken minimum puanı listeler ve tek tıkla test etme imkanı verir. İyimser/Gerçekçi/Kötümser senaryo kaydetme ve yan yana kıyaslama sunar.
+  - **Çoklu Ders & Çift Yönlü Entegrasyon:** Dönem derslerini sekmeler halinde `localStorage` (`ytu_harf_notu_courses_v1`) üzerinde saklar; `/agno` (`ytu_agno_current_courses`) ve `/` (`ytu_visualizer_data`) ile tek tıkla içe/dışa aktarım ve `/api/course-lookup` üzerinden otomatik kredi tamamlama sağlar.
+  - **Platform Entegrasyonu & Analitik:** `Header.tsx`, `UploadScreen.tsx`, `WhatsNewModal.tsx`, `/agno` ders tablosu geçiş butonu ve `/api/stats/harf-notu-visit` Redis sayacı ile `/stats` paneline eklendi.
+
+---
+
 ## [v2.5.0] - 2026-11-06
 
 ### ✨ Yeni Özellikler & Geliştirmeler

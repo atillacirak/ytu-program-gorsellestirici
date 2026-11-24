@@ -22,6 +22,7 @@ FALLBACK_GENERATED_PDF = int(os.environ.get('STATS_BASE_GENERATED_PDF', '783'))
 FALLBACK_GENERATED_PREP = int(os.environ.get('STATS_BASE_GENERATED_PREP', '131'))
 FALLBACK_DEVAMSIZLIK_VISITS = int(os.environ.get('STATS_BASE_DEVAMSIZLIK_VISITS', '0'))
 FALLBACK_PLANLAMA_VISITS = int(os.environ.get('STATS_BASE_PLANLAMA_VISITS', '0'))
+FALLBACK_HARF_NOTU_VISITS = int(os.environ.get('STATS_BASE_HARF_NOTU_VISITS', '0'))
 
 # Persistent HTTP session for TLS Keep-Alive reuse
 _SESSION = requests.Session()
@@ -135,7 +136,8 @@ def get_stats(period='all'):
             'total_generated_pdf': FALLBACK_GENERATED_PDF + pending_incr.get('total_generated_pdf', 0),
             'total_generated_prep': FALLBACK_GENERATED_PREP + pending_incr.get('total_generated_prep', 0),
             'total_devamsizlik_visits': FALLBACK_DEVAMSIZLIK_VISITS + pending_incr.get('total_devamsizlik_visits', 0),
-            'total_planlama_visits': FALLBACK_PLANLAMA_VISITS + pending_incr.get('total_planlama_visits', 0)
+            'total_planlama_visits': FALLBACK_PLANLAMA_VISITS + pending_incr.get('total_planlama_visits', 0),
+            'total_harf_notu_visits': FALLBACK_HARF_NOTU_VISITS + pending_incr.get('total_harf_notu_visits', 0)
         }
 
     now_mono = time.monotonic()
@@ -145,7 +147,8 @@ def get_stats(period='all'):
             base = dict(cached[1])
             for k in (
                 'total_generated', 'total_visits', 'total_gano_visits', 'total_gano_scenarios',
-                'total_generated_pdf', 'total_generated_prep', 'total_devamsizlik_visits', 'total_planlama_visits'
+                'total_generated_pdf', 'total_generated_prep', 'total_devamsizlik_visits',
+                'total_planlama_visits', 'total_harf_notu_visits'
             ):
                 if k in base and k in pending_incr:
                     base[k] += pending_incr[k]
@@ -160,7 +163,7 @@ def get_stats(period='all'):
     try:
         if period == 'all':
             res = _SESSION.get(
-                f"{url}/mget/total_generated/total_visits/total_gano_visits/total_gano_scenarios/total_generated_pdf/total_generated_prep/total_devamsizlik_visits/total_planlama_visits",
+                f"{url}/mget/total_generated/total_visits/total_gano_visits/total_gano_scenarios/total_generated_pdf/total_generated_prep/total_devamsizlik_visits/total_planlama_visits/total_harf_notu_visits",
                 headers=headers,
                 timeout=5
             )
@@ -175,6 +178,7 @@ def get_stats(period='all'):
                 gen_prep = int(result[5]) if (len(result) > 5 and result[5] is not None) else FALLBACK_GENERATED_PREP
                 dev_vis = int(result[6]) if (len(result) > 6 and result[6] is not None) else FALLBACK_DEVAMSIZLIK_VISITS
                 plan_vis = int(result[7]) if (len(result) > 7 and result[7] is not None) else FALLBACK_PLANLAMA_VISITS
+                harf_vis = int(result[8]) if (len(result) > 8 and result[8] is not None) else FALLBACK_HARF_NOTU_VISITS
                 out = {
                     'period': 'all',
                     'total_generated': gen,
@@ -184,7 +188,8 @@ def get_stats(period='all'):
                     'total_generated_pdf': gen_pdf,
                     'total_generated_prep': gen_prep,
                     'total_devamsizlik_visits': dev_vis,
-                    'total_planlama_visits': plan_vis
+                    'total_planlama_visits': plan_vis,
+                    'total_harf_notu_visits': harf_vis
                 }
                 with _READ_CACHE_LOCK:
                     _READ_CACHE[period] = (time.monotonic(), out)
@@ -219,11 +224,14 @@ def get_stats(period='all'):
                 ["ZRANGEBYSCORE", "z:total_visits", str(min_ts), "+inf"],
 
                 ["ZCOUNT", "z:total_planlama_visits", str(min_ts), "+inf"],
-                ["ZCOUNT", "z:total_planlama_visits", str(prev_min_ts), str(min_ts)]
+                ["ZCOUNT", "z:total_planlama_visits", str(prev_min_ts), str(min_ts)],
+
+                ["ZCOUNT", "z:total_harf_notu_visits", str(min_ts), "+inf"],
+                ["ZCOUNT", "z:total_harf_notu_visits", str(prev_min_ts), str(min_ts)]
             ]
             res = _SESSION.post(f"{url}/pipeline", json=pipeline_body, headers=headers, timeout=5)
             data = res.json()
-            if isinstance(data, list) and len(data) >= 15:
+            if isinstance(data, list) and len(data) >= 17:
                 gen = int(data[0].get('result', 0) or 0)
                 vis = int(data[1].get('result', 0) or 0)
                 gano_vis = int(data[2].get('result', 0) or 0)
@@ -244,6 +252,9 @@ def get_stats(period='all'):
 
                 plan_vis = int(data[13].get('result', 0) or 0)
                 prev_plan_vis = int(data[14].get('result', 0) or 0)
+
+                harf_vis = int(data[15].get('result', 0) or 0)
+                prev_harf_vis = int(data[16].get('result', 0) or 0)
                 
                 from datetime import datetime, timezone, timedelta
                 
@@ -308,18 +319,21 @@ def get_stats(period='all'):
                     'total_generated_prep': gen_prep,
                     'total_devamsizlik_visits': dev_vis,
                     'total_planlama_visits': plan_vis,
+                    'total_harf_notu_visits': harf_vis,
                     'prev_total_generated': prev_gen,
                     'prev_total_visits': prev_vis,
                     'prev_total_gano_visits': prev_gano_vis,
                     'prev_total_gano_scenarios': prev_gano_scen,
                     'prev_total_devamsizlik_visits': prev_dev_vis,
                     'prev_total_planlama_visits': prev_plan_vis,
+                    'prev_total_harf_notu_visits': prev_harf_vis,
                     'pct_generated': calc_pct(gen, prev_gen),
                     'pct_visits': calc_pct(vis, prev_vis),
                     'pct_gano_visits': calc_pct(gano_vis, prev_gano_vis),
                     'pct_gano_scenarios': calc_pct(gano_scen, prev_gano_scen),
                     'pct_devamsizlik_visits': calc_pct(dev_vis, prev_dev_vis),
                     'pct_planlama_visits': calc_pct(plan_vis, prev_plan_vis),
+                    'pct_harf_notu_visits': calc_pct(harf_vis, prev_harf_vis),
                     'chart_data': chart_data
                 }
                 with _READ_CACHE_LOCK:
@@ -337,6 +351,7 @@ def get_stats(period='all'):
         'total_generated_pdf': FALLBACK_GENERATED_PDF,
         'total_generated_prep': FALLBACK_GENERATED_PREP,
         'total_devamsizlik_visits': FALLBACK_DEVAMSIZLIK_VISITS,
-        'total_planlama_visits': FALLBACK_PLANLAMA_VISITS
+        'total_planlama_visits': FALLBACK_PLANLAMA_VISITS,
+        'total_harf_notu_visits': FALLBACK_HARF_NOTU_VISITS
     }
 

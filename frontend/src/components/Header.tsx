@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio, Smartphone } from 'lucide-react';
+import { Calendar, Users, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio, Smartphone, Award } from 'lucide-react';
 import WhatsNewModal from './WhatsNewModal';
 import DeviceSyncModal from './DeviceSyncModal';
 
@@ -18,6 +18,7 @@ const TAB_TITLES: Record<string, string> = {
   '/uygun-musun-atilla': 'Uygun Musun',
   '/uygun-musun-neva': 'Uygun Musun',
   '/agno': 'YTÜ AGNO',
+  '/harf-notu': 'Harf Notu',
   '/devamsizlik': 'Devamsızlık',
   '/planlama': 'Planlama',
 };
@@ -130,6 +131,7 @@ export default function Header() {
   const isOrtak = pathname === '/ortak';
   const isSingle = pathname === '/' && !isOrtak;
   const isAgno = pathname === '/agno';
+  const isHarfNotu = pathname === '/harf-notu';
   const isDevamsizlik = pathname === '/devamsizlik';
   const isPlanlama = pathname === '/planlama';
   const isUygunMusun = pathname === '/uygun-musun';
@@ -223,6 +225,27 @@ export default function Header() {
               >
                 <Calculator className={`w-3.5 h-3.5 ${isAgno ? 'text-amber-400' : 'text-blue-500'}`} />
                 <span>AGNO Hesapla</span>
+              </Link>
+
+              <Link 
+                href="/harf-notu"
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                  isHarfNotu
+                    ? 'bg-[#0c3f79] text-white shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Award className={`w-3.5 h-3.5 ${isHarfNotu ? 'text-amber-400' : 'text-sky-600'}`} />
+                <span>Harf Notu</span>
+                <span
+                  className={`text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full leading-tight ${
+                    isHarfNotu
+                      ? 'bg-amber-400 text-slate-950'
+                      : 'bg-sky-600 text-white'
+                  }`}
+                >
+                  Yeni
+                </span>
               </Link>
 
               <Link 

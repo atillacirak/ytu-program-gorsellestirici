@@ -15,7 +15,8 @@ import {
   ShieldAlert,
   Users,
   CalendarDays,
-  Compass
+  Compass,
+  Award
 } from 'lucide-react';
 
 interface FullStats {
@@ -27,12 +28,14 @@ interface FullStats {
   total_generated_prep?: number;
   total_devamsizlik_visits?: number;
   total_planlama_visits?: number;
+  total_harf_notu_visits?: number;
   pct_generated?: number;
   pct_visits?: number;
   pct_gano_visits?: number;
   pct_gano_scenarios?: number;
   pct_devamsizlik_visits?: number;
   pct_planlama_visits?: number;
+  pct_harf_notu_visits?: number;
   chart_data?: { label: string; visits: number }[];
 }
 
@@ -104,12 +107,14 @@ export default function AdminDashboard() {
             total_generated_prep: 47,
             total_devamsizlik_visits: 111,
             total_planlama_visits: 64,
+            total_harf_notu_visits: 48,
             pct_generated: 24.5,
             pct_visits: 18.2,
             pct_gano_visits: 42.0,
             pct_gano_scenarios: 15.8,
             pct_devamsizlik_visits: 28.5,
             pct_planlama_visits: 35.0,
+            pct_harf_notu_visits: 100,
             chart_data: mockChart,
           });
         } else {
@@ -122,12 +127,14 @@ export default function AdminDashboard() {
             total_generated_prep: data.total_generated_prep ?? 0,
             total_devamsizlik_visits: data.total_devamsizlik_visits || 0,
             total_planlama_visits: data.total_planlama_visits || 0,
+            total_harf_notu_visits: data.total_harf_notu_visits || 0,
             pct_generated: data.pct_generated,
             pct_visits: data.pct_visits,
             pct_gano_visits: data.pct_gano_visits,
             pct_gano_scenarios: data.pct_gano_scenarios,
             pct_devamsizlik_visits: data.pct_devamsizlik_visits,
             pct_planlama_visits: data.pct_planlama_visits,
+            pct_harf_notu_visits: data.pct_harf_notu_visits,
             chart_data: data.chart_data,
           });
         }
@@ -150,12 +157,14 @@ export default function AdminDashboard() {
           total_generated_prep: 47,
           total_devamsizlik_visits: 111,
           total_planlama_visits: 64,
+          total_harf_notu_visits: 48,
           pct_generated: 24.5,
           pct_visits: 18.2,
           pct_gano_visits: 42.0,
           pct_gano_scenarios: 15.8,
           pct_devamsizlik_visits: 28.5,
           pct_planlama_visits: 35.0,
+          pct_harf_notu_visits: 100,
           chart_data: mockChart,
         });
       }
@@ -213,7 +222,7 @@ export default function AdminDashboard() {
                 <span className="px-2 py-0.5 rounded bg-[#e7a240]/20 text-[#e7a240] border border-[#e7a240]/30 text-[10px] font-mono font-bold uppercase tracking-wider">
                   Dev Panel
                 </span>
-                <span className="text-xs text-slate-400 font-mono">v2.3 Live Stats</span>
+                <span className="text-xs text-slate-400 font-mono">v2.4 Live Stats</span>
               </div>
               <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-0.5">
                 YTÜ Dostun · Canlı İstatistik Analiz Paneli
@@ -428,6 +437,26 @@ export default function AdminDashboard() {
             <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
               <Compass size={12} className="text-cyan-400" />
               <span>/planlama sayfasını açan kullanıcı sayısı</span>
+            </div>
+          </div>
+
+          {/* 7. Harf Notu & Çan Simülatörü Visits */}
+          <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-3 relative overflow-hidden shadow-lg group hover:border-sky-500/50 transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                Harf Notu Hesaplama
+              </span>
+              <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                <Award size={18} />
+              </div>
+            </div>
+            <div className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">
+              {stats ? (stats.total_harf_notu_visits ?? 0).toLocaleString() : '...'}
+            </div>
+            {renderPct(stats?.pct_harf_notu_visits, period)}
+            <div className="text-[11px] text-slate-400 flex items-center gap-1 pt-1 border-t border-slate-700/50">
+              <Award size={12} className="text-sky-400" />
+              <span>/harf-notu sayfasını açan kullanıcı sayısı</span>
             </div>
           </div>
 

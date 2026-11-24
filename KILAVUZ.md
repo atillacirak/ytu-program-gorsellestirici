@@ -41,6 +41,7 @@ flowchart TD
     UIRoutes -->|"Ortak Boş Saatler"| UI_Ortak["frontend/src/app/ortak/page.tsx + CompareView.tsx"]
     UIRoutes -->|"Devamsızlık Takibi"| UI_Devam["frontend/src/app/devamsizlik/page.tsx"]
     UIRoutes -->|"AGNO Hesaplayıcı"| UI_Agno["frontend/src/app/agno/page.tsx"]
+    UIRoutes -->|"Harf Notu & Çan"| UI_Harf["frontend/src/app/harf-notu/page.tsx + components/harfNotu/"]
     UIRoutes -->|"Akademik Planlama"| UI_Plan["frontend/src/app/planlama/page.tsx + components/planlama/"]
     UIRoutes -->|"İstatistikler & Analitik"| UI_Stats["frontend/src/app/stats/page.tsx"]
 
@@ -148,6 +149,7 @@ c:\Projeler\Ytü Görselleştir\
         │   ├── ortak/page.tsx      # [/ortak] Ortak Boş Saatler Karşılaştırma Sayfası
         │   ├── devamsizlik/page.tsx# [/devamsizlik] Devamsızlık Takibi & Aylık Yoklama Takvimi
         │   ├── agno/page.tsx       # [/agno] AGNO Hesaplayıcı & Dönem Not Senaryoları
+        │   ├── harf-notu/page.tsx  # [/harf-notu] Ders Harf Notu & Çan (T-Skoru) Simülatörü
         │   ├── planlama/page.tsx   # [/planlama] 4 Yıllık Akademik Planlama & Mezuniyet Simülatörü
         │   ├── stats/page.tsx      # [/stats] Upstash Redis Gerçek Zamanlı İstatistik Paneli
         │   ├── uygun-musun/page.tsx        # [/uygun-musun] Duo Canlı Durum ve Eşleşme Odası
@@ -167,6 +169,12 @@ c:\Projeler\Ytü Görselleştir\
         │   ├── DevColorPanel.tsx   # Geliştirici renk paleti yönetim paneli
         │   ├── PrivacyModal.tsx    # KVKK ve Öğrenci Verisi Gizlilik Politikası modalı
         │   ├── AnimatedCounter.tsx # İstatistik sayacı akıcı sayı animatörü
+        │   ├── harfNotu/           # Ders Harf Notu & Çan Simülatörü Bileşenleri
+        │   │   ├── CourseTabsBar.tsx         # Çoklu ders sekmeleri, otomatik ders arama & içe aktarma
+        │   │   ├── AssessmentBuilder.tsx     # Esnek kalem/yüzde yapılandırıcı & ağırlık dengeleyici
+        │   │   ├── GradingSettingsPanel.tsx  # Bağıl (T-Skoru) / Mutlak (Katalog) & baraj ayarları
+        │   │   ├── ScenarioSimulatorPanel.tsx# Çan konumu, hedef puan çözücü & senaryo kıyaslama
+        │   │   └── StickyResultBar.tsx       # Sabit alt sonuç çubuğu & AGNO'ya aktarım
         │   ├── planlama/           # Akademik Planlama Modülüne Özel Bileşenler
         │   │   ├── PlanlamaHero.tsx       # Fakülte/bölüm seçimi, transkript yükleme & özet
         │   │   ├── PlanlamaToolbar.tsx    # Kredi/AKTS sınır butonları, PDF indir, sıfırla
@@ -184,10 +192,12 @@ c:\Projeler\Ytü Görselleştir\
         │   └── useLocalStorageState.ts    # SSR & hydration güvenli reaktif LocalStorage kancası
         ├── types/
         │   ├── index.ts            # Ders programı, zaman dilimi ve parser tipleri
+        │   ├── harfNotu.ts         # Harf notu, bağıl/mutlak değerlendirme ve senaryo tipleri
         │   └── planlama.ts         # Bologna müfredat, kova (bucket) ve kural doğrulama tipleri
         ├── data/
         │   └── prepSchedules.json  # İstemci tarafında tembel yüklenen (lazy) hazırlık verisi
         └── utils/
+            ├── harfNotuUtils.ts    # HBN, YTÜ T-Skoru, ağırlık dengeleme ve hedef puan çözücü
             ├── planlamaUtils.ts    # Ön koşul doğrulama, dönem kuralları ve kredi limit motoru
             ├── planlamaPdfExport.ts# pdfmake ile yüksek kaliteli vektörel A4 plan PDF çıktısı
             ├── pngMetadata.ts      # PNG tEXt chunk içine program JSON gömme ve okuma
@@ -283,7 +293,7 @@ pm2 status
 
 ## ⚙️ 6. Çekirdek Modüller, Veri Akışı & Mimari Özeti
 
-Platform 8 ana modülden (7 genel + 1 özel ikili modül) ve bunları destekleyen ayrık servislerden oluşur:
+Platform 9 ana modülden (8 genel + 1 özel ikili modül) ve bunları destekleyen ayrık servislerden oluşur:
 
 ### 1. Ders Programı Görselleştirici (`/`)
 - **İşlev:** USIS ders programı PDF'i veya OBS'nin güncellenen `std_time_table.aspx` (Detay Yazdır > PDF) çıktısını modern, A4 baskısına ve PNG çıktısına uygun bir haftalık akademik çizelgeye dönüştürür.
@@ -307,7 +317,14 @@ Platform 8 ana modülden (7 genel + 1 özel ikili modül) ve bunları destekleye
 - **Otomatik Kredi Tamamlama:** Ders kodu girildiğinde backend SQLite veritabanından (`/api/course-lookup`) kredileri otomatik çeker.
 - **Planlama Köprüsü:** Transkript yüklendiğinde tek tıkla `/planlama` sayfasına geçiş butonu sunar.
 
-### 5. Akademik Planlama & Mezuniyet Simülatörü (`/planlama`)
+### 5. Ders Harf Notu & Çan Simülatörü (`/harf-notu`)
+- **İşlev:** Öğrencilerin çoklu ders sekmeleri (`ytu_harf_notu_courses_v1`) üzerinde vize, final, proje, ödev, laboratuvar, quiz, katılım ve bütünleme ağırlıklarını esnekçe yapılandırıp kendi notları ile sınıf ortalamalarına göre harf notlarını simüle etmesini sağlar.
+- **Akıllı Motor (`harfNotuUtils.ts`):**
+  - Standart `2 Vize + Final (%30/%30/%40)` başlangıç kalıbı, tek tıkla kalem ekleme/çıkarma ve `%100`'e orantılı ağırlık dengeleme.
+  - **YTÜ Bağıl Değerlendirme (T-Skoru) & Mutlak Katalog:** Sınıf düzeyi tespiti (`Mükemmel`..`Kötü`), standart sapma bilinmediğinde `σ=10/15/20` üzerinden 3'lü bant aralığı (örn. `CB – BB`), özelleştirilebilir Final/Büt (`< 40`) ve HBN (`< 30`) alt baraj kontrolleri.
+  - **Hedef Puan Çözücü & AGNO Köprüsü:** Girilmemiş final/sınav için `AA..DD` gereken puan tablosu ve `/agno` (`ytu_agno_current_courses`) ile `/` (`ytu_visualizer_data`) arasında çift yönlü ders/not senkronizasyonu.
+
+### 6. Akademik Planlama & Mezuniyet Simülatörü (`/planlama`)
 - **İşlev:** 11 Fakülte ve 63 Lisans Programının Bologna müfredatını (`bologna_curricula.json`) 8 yarıyıl + Yaz okulları kovalarına (bucket) dizer.
 - **Kural Motoru:**
   - Zorunlu Güz derslerinin sadece Güz dönemlerine, Bahar derslerinin Bahar dönemlerine konabilmesi.
@@ -315,7 +332,7 @@ Platform 8 ana modülden (7 genel + 1 özel ikili modül) ve bunları destekleye
   - Ön koşul zincir denetimi (`extractPrereqCodes`).
   - Vektörel, metinleri seçilebilir A4 yatay plan PDF çıktısı (`planlamaPdfExport.ts` - `pdfmake`).
 
-### 6. Canlı Analitik & İstatistikler (`/stats`)
+### 7. Canlı Analitik & İstatistikler (`/stats`)
 - **İşlev:** Upstash Redis tabanlı anlık ziyaretçi, program oluşturma ve modül etkileşim sayaçları.
 - **Zaman Pencereleri:** 24 saat, 7 gün, 30 gün ve Tüm Zamanlar bazında yüzdelik değişim trendleri (`+/- %`).
 - **Grafik:** Harici kütüphane bağımlılığı olmadan saf Tailwind CSS ile oluşturulmuş responsive aktivite sütun grafiği.
@@ -386,7 +403,7 @@ graph LR
 2. **Bologna Müfredat Verisi (`backend/data/bologna_curricula.json`):**
    - 11 Fakülte, 63 Bölüm. Her bölümün 8 yarıyıllık zorunlu dersleri, seçmeli ders grupları ve ön koşul şartları. MTime kontrolü ile bellekte önbelleklenir (`_load_curricula`).
 3. **Upstash Redis REST (`stats_db.py`):**
-   - Küresel sayaçlar: `total_visits`, `total_generated`, `total_generated_pdf`, `total_generated_prep`, `total_gano_visits`, `total_gano_scenarios`, `total_devamsizlik_visits`, `total_planlama_visits`.
+   - Küresel sayaçlar: `total_visits`, `total_generated`, `total_generated_pdf`, `total_generated_prep`, `total_gano_visits`, `total_gano_scenarios`, `total_devamsizlik_visits`, `total_planlama_visits`, `total_harf_notu_visits`.
    - Zaman pencereli Sorted Set'ler (ZSET): `z:<field>` -> Timestamp skoru ile 60 günlük pencere tutulur; 60 günden eski olaylar pipeline içinde `ZREMRANGEBYSCORE` ile otomatik silinir.
 
 ---
@@ -416,6 +433,7 @@ graph LR
 | `POST` | `/api/uygun-musun/create-room` | `{ title, creator_profile }` | Çoklu arkadaş lobisi kurar; 6 haneli kod ve admin_token döner. |
 | `POST` | `/api/uygun-musun/join` | `{ room_code, profile }` | Var olan lobiye katılır ve üyeyi odaya kaydeder. |
 | `POST` | `/api/uygun-musun/my-rooms` | `{ room_codes: string[] }` | Kullanıcının kayıtlı lobilerinin canlı üye ve başlık özetlerini döner. |
+| `POST` | `/api/stats/harf-notu-visit` | - | Harf notu hesaplama sayfası ziyaret sayısını artırır. |
 
 ---
 
@@ -438,6 +456,7 @@ STATS_BASE_GENERATED_PDF=783
 STATS_BASE_GENERATED_PREP=131
 STATS_BASE_DEVAMSIZLIK_VISITS=0
 STATS_BASE_PLANLAMA_VISITS=0
+STATS_BASE_HARF_NOTU_VISITS=0
 ```
 
 #### Frontend Ortam Değişkenleri (`frontend/.env.local`):

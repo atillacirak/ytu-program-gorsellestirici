@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import {
   FileText, Upload, RefreshCw, AlertCircle, GraduationCap, Calendar, Building2,
-  Layers, Compass, Calculator, ShieldCheck, Users, Sparkles, ArrowRight
+  Layers, Compass, Calculator, ShieldCheck, Users, Sparkles, ArrowRight, Award
 } from 'lucide-react';
 import AnimatedCounter from './AnimatedCounter';
 
@@ -273,20 +273,46 @@ export default function UploadScreen({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-          {/* Araç 1: Akademik Planlama (YENİ & Öne Çıkan) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Araç 0: Harf Notu & Çan Simülatörü (YENİ) */}
+          <Link
+            href="/harf-notu"
+            className="group relative rounded-xl border-2 border-sky-500/35 bg-gradient-to-br from-sky-50/60 via-white to-blue-50/40 p-4 hover:border-sky-500/65 hover:shadow-sm transition-all flex flex-col justify-between"
+          >
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#0c3f79] text-[#e7a240] flex items-center justify-center shadow-2xs">
+                  <Award className="w-4 h-4" />
+                </div>
+                <span className="text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-sky-600 text-white leading-tight">
+                  Yeni
+                </span>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 group-hover:text-[#0c3f79] transition-colors">
+                  Harf Notu &amp; Çan Hesaplayıcı
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  Vize, final, proje ve lab yüzdelerini özelleştir. Sınıf ortalamalarına göre YTÜ Çan / Katalog harf notunu ve hedef final puanını hesapla.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-[#0c3f79] group-hover:gap-1.5 transition-all">
+              <span>Notunu Simüle Et</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
+          </Link>
+
+          {/* Araç 1: Akademik Planlama */}
           <Link
             href="/planlama"
-            className="group relative rounded-xl border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/30 p-4 hover:border-emerald-500/60 hover:shadow-sm transition-all flex flex-col justify-between"
+            className="group relative rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/30 p-4 hover:border-emerald-500/60 hover:shadow-sm transition-all flex flex-col justify-between"
           >
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-2xs">
                   <Compass className="w-4 h-4" />
                 </div>
-                <span className="text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-emerald-600 text-white leading-tight">
-                  Yeni
-                </span>
               </div>
               <div>
                 <h4 className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
