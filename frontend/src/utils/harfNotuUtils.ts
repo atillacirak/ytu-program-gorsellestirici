@@ -839,3 +839,105 @@ export async function lookupCourseInfo(
 export function normalizeCourseCode(code?: string): string {
   return (code || '').trim().replace(/\s+/g, '').toUpperCase();
 }
+
+export interface ClassAvgScenarioPoint {
+  classAvg: number;
+  grade: LetterGrade;
+  tScore: number;
+}
+
+export interface ClassAvgGradeCutoff {
+  grade: Exclude<LetterGrade, 'FD' | 'FF'>;
+  maxClassAvg: number | null;
+}
+
+/**
+ * Öğrencinin mevcut HBN'i sabitken farklı sınıf ortalamalarına göre (40..80)
+ * hangi harf notunun geleceğini ve her harf notu için maksimum sınıf ortalamasını hesaplar.
+ */
+export function solveGradeByClassAverages(
+  profile: CourseGradeProfile,
+  hbn: number
+): {
+  samplePoints: ClassAvgScenarioPoint[];
+  cutoffs: ClassAvgGradeCutoff[];
+  sigmaUsed: number;
+} {
+  const sigmaUsed =
+    profile.stdDev !== null && Number.isFinite(profile.stdDev) && profile.stdDev > 0
+      ? profile.stdDev
+      : 15;
+
+  const evalAtAvg = (avg: number): { grade: LetterGrade; tScore: number } => {
+    const level = getRelativeClassLevel(avg);
+    const tScore = computeTScore(hbn, avg, sigmaUsed);
+    const grade = evaluateTScoreGrade(tScore, level);
+    return { grade, tScore };
+  };
+
+  const sampleAverages = [40, 45, 50, 55, 60, 65, 70, 75, 80];
+  const samplePoints: ClassAvgScenarioPoint[] = sampleAverages.map((classAvg) => {
+    const res = evalAtAvg(classAvg);
+    return { classAvg, grade: res.grade, tScore: res.tScore };
+  });
+
+  const cutoffs: ClassAvgGradeCutoff[] = PASSING_TARGET_GRADES.map((targetGrade) => {
+    const targetRank = GRADE_RANK[targetGrade];
+    let maxAvg: number | null = null;
+    for (let avg = 0; avg <= 100; avg += 0.5) {
+      const { grade } = evalAtAvg(avg);
+      if (GRADE_RANK[grade] >= targetRank) {
+        maxAvg = avg;
+      }
+    }
+    return { grade: targetGrade, maxClassAvg: maxAvg };
+  });
+
+  return { samplePoints, cutoffs, sigmaUsed };
+}
+
+export interface GradeBarSegment {
+  grade: LetterGrade;
+  from: number;
+  to: number;
+  widthPct: number;
+}
+
+/**
+ * 0..100 ekseni üzerinde bağıl değerlendirme (T-Skoru) eşiklerine göre
+ * FF..AA harf notu dilimlerini (başlangıç, bitiş, genişlik %) hesaplar.
+ */
+export function getRelativeScoreZones(
+  classAvg: number,
+  stdDev = 15
+): GradeBarSegment[] {
+  const safeStd = Math.max(1, stdDev);
+  const level = getRelativeClassLevel(classAvg);
+  const t = level.thresholds;
+
+  const tToScore = (tVal: number) =>
+    clampScore(roundTo1(classAvg + ((tVal - 50) * safeStd) / 10));
+
+  const cuts: { grade: LetterGrade; minScore: number }[] = [
+    { grade: 'FF', minScore: 0 },
+    { grade: 'FD', minScore: tToScore(t.FD) },
+    { grade: 'DD', minScore: tToScore(t.DD) },
+    { grade: 'DC', minScore: tToScore(t.DC) },
+    { grade: 'CC', minScore: tToScore(t.CC) },
+    { grade: 'CB', minScore: tToScore(t.CB) },
+    { grade: 'BB', minScore: tToScore(t.BB) },
+    { grade: 'BA', minScore: tToScore(t.BA) },
+    { grade: 'AA', minScore: tToScore(t.AA) }
+  ];
+
+  const segments: GradeBarSegment[] = [];
+  for (let i = 0; i < cuts.length; i++) {
+    const from = cuts[i].minScore;
+    const to = i < cuts.length - 1 ? cuts[i + 1].minScore : 100;
+    const widthPct = Math.max(0, roundTo1(to - from));
+    if (widthPct > 0) {
+      segments.push({ grade: cuts[i].grade, from, to, widthPct });
+    }
+  }
+  return segments;
+}

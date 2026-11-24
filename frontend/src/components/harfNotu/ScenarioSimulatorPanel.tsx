@@ -22,7 +22,9 @@ import {
   evaluateCourseGrade,
   generateId,
   getGradeBadgeClasses,
+  getRelativeScoreZones,
   pickDefaultTargetItemId,
+  solveGradeByClassAverages,
   solveRequiredScoresForTargetGrades
 } from '../../utils/harfNotuUtils';
 
@@ -59,6 +61,20 @@ export default function ScenarioSimulatorPanel({
     () => solveRequiredScoresForTargetGrades(course, effectiveTargetId ?? undefined),
     [course, effectiveTargetId]
   );
+
+  const classAvgSensitivity = useMemo(
+    () => solveGradeByClassAverages(course, evaluation.hbn),
+    [course, evaluation.hbn]
+  );
+
+  const barSegments = useMemo(() => {
+    if (evaluation.weightedClassAvg === null) return [];
+    const sigma =
+      course.stdDev !== null && Number.isFinite(course.stdDev) && course.stdDev > 0
+        ? course.stdDev
+        : 15;
+    return getRelativeScoreZones(evaluation.weightedClassAvg, sigma);
+  }, [evaluation.weightedClassAvg, course.stdDev]);
 
   const [scenarioName, setScenarioName] = useState('');
 
@@ -183,7 +199,7 @@ export default function ScenarioSimulatorPanel({
         <div className="p-4 space-y-4">
           {/* Özet Metrik Kutuları */}
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="theme-sunken-box p-3 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Ham Başarı Notu
               </div>
@@ -195,7 +211,7 @@ export default function ScenarioSimulatorPanel({
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="theme-sunken-box p-3 rounded-xl bg-slate-50 border border-slate-200">
               {evaluation.completedAverage !== null &&
               evaluation.completedWeight < evaluation.totalWeight - 0.01 ? (
                 <>
@@ -238,7 +254,7 @@ export default function ScenarioSimulatorPanel({
 
           {/* Çan Konumu Yatay Skalası (Saf Tailwind) */}
           {evaluation.effectiveMode === 'relative' && classAvgPosPct !== null && (
-            <div className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/80 space-y-2.5">
+            <div className="theme-sunken-box p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/80 space-y-2.5">
               <div className="flex items-center justify-between text-xs gap-2">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <TrendingUp className="w-3.5 h-3.5 text-[#0c3f79]" />
@@ -254,7 +270,7 @@ export default function ScenarioSimulatorPanel({
                   >
                     {evaluation.diffFromClassAvg >= 0 ? '+' : ''}
                     {evaluation.diffFromClassAvg.toFixed(1)} puan (
-                    {evaluation.exactTScore !== null ? `T≈${evaluation.exactTScore.toFixed(1)}` : ''})
+                    {evaluation.diffFromClassAvg >= 0 ? 'Ort. Üstü' : 'Ort. Altı'})
                   </span>
                 ) : (
                   <span className="text-[11px] font-medium text-slate-500">
@@ -263,16 +279,41 @@ export default function ScenarioSimulatorPanel({
                 )}
               </div>
 
-              <div className="relative pt-4 pb-2 px-1.5">
-                <div className="h-2.5 w-full rounded-full bg-gradient-to-r from-rose-200 via-amber-200 to-emerald-300 relative">
+              <div className="relative pt-5 pb-2 px-1.5">
+                <div className="relative h-5 w-full">
+                  <div className="h-full w-full rounded-md overflow-hidden flex border border-slate-300/80">
+                    {barSegments.map((seg) => {
+                      const segBg =
+                        seg.grade === 'AA' || seg.grade === 'BA'
+                          ? 'bg-emerald-200/90 text-emerald-950'
+                          : seg.grade === 'BB' || seg.grade === 'CB'
+                            ? 'bg-sky-200/90 text-sky-950'
+                            : seg.grade === 'CC'
+                              ? 'bg-blue-100 text-blue-950'
+                              : seg.grade === 'DC' || seg.grade === 'DD'
+                                ? 'bg-amber-200/90 text-amber-950'
+                                : 'bg-rose-200/90 text-rose-950';
+                      return (
+                        <div
+                          key={seg.grade}
+                          style={{ width: `${seg.widthPct}%` }}
+                          title={`${seg.grade}: ${seg.from.toFixed(0)}–${seg.to.toFixed(0)} arası`}
+                          className={`h-full flex items-center justify-center text-[8.5px] font-mono font-extrabold border-r border-white/60 last:border-r-0 select-none overflow-hidden ${segBg}`}
+                        >
+                          {seg.widthPct >= 6 ? seg.grade : ''}
+                        </div>
+                      );
+                    })}
+                  </div>
+
                   {/* Sınıf Ortalaması İşaretçisi */}
                   <div
-                    className="absolute -top-1.5 w-0.5 h-5 bg-slate-700"
+                    className="absolute -top-1 w-0.5 h-7 bg-slate-900 z-10 pointer-events-none"
                     style={{ left: `${classAvgPosPct}%` }}
                     title={`Sınıf Ortalaması: ${evaluation.weightedClassAvg?.toFixed(1)}`}
                   >
                     <span
-                      className={`absolute -top-4 text-[9px] font-mono font-bold text-slate-600 whitespace-nowrap ${
+                      className={`absolute -top-4 text-[9px] font-mono font-bold text-slate-700 whitespace-nowrap ${
                         classAvgPosPct < 12
                           ? 'left-0'
                           : classAvgPosPct > 88
@@ -287,9 +328,9 @@ export default function ScenarioSimulatorPanel({
                   {/* Öğrenci HBN Noktası */}
                   {evaluation.hasAnyScore && (
                     <div
-                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#0c3f79] border-2 border-white shadow-sm ring-2 ring-[#e7a240]"
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-[#0c3f79] border-2 border-white shadow-md ring-2 ring-[#e7a240] z-20"
                       style={{ left: `${studentPosPct}%` }}
-                      title={`Senin HBN: ${evaluation.hbn.toFixed(1)}`}
+                      title={`Senin Notun: ${evaluation.hbn.toFixed(1)}`}
                     />
                   )}
                 </div>
@@ -300,35 +341,121 @@ export default function ScenarioSimulatorPanel({
                 </div>
               </div>
 
-              {/* 3'lü Sapma Bandı Kartları */}
+              {/* 3'lü Sapma Bandı Kartları (Anlaşılır Dağılım Açıklamalı) */}
               {evaluation.hasAnyScore && evaluation.bands.length > 0 && (
-                <div
-                  className={`grid gap-1.5 pt-1 ${
-                    evaluation.bands.length === 3 ? 'grid-cols-3' : 'grid-cols-1'
-                  }`}
-                >
-                  {evaluation.bands.map((band) => (
-                    <div
-                      key={band.stdDev}
-                      className={`p-2 rounded-lg border text-center ${
-                        band.stdDev === 15 || evaluation.bands.length === 1
-                          ? 'bg-white border-[#0c3f79]/40 shadow-2xs'
-                          : 'bg-white/70 border-slate-200'
-                      }`}
-                    >
-                      <div className="text-[10px] font-bold text-slate-500">
-                        σ = {band.stdDev}
-                      </div>
-                      <div className="text-sm font-black font-mono text-slate-900 mt-0.5">
-                        {band.grade}
-                      </div>
-                      <div className="text-[10px] font-mono text-slate-500">
-                        T: {band.tScore.toFixed(1)}
-                      </div>
-                    </div>
-                  ))}
+                <div className="space-y-2 pt-1">
+                  <div
+                    className={`grid gap-2 ${
+                      evaluation.bands.length === 3 ? 'grid-cols-3' : 'grid-cols-1'
+                    }`}
+                  >
+                    {evaluation.bands.map((band) => {
+                      const isCenter = band.stdDev === 15 || evaluation.bands.length === 1;
+                      const shortTitle =
+                        band.stdDev === 10
+                          ? 'Notlar Yakınsa'
+                          : band.stdDev === 15
+                            ? 'Normal Çan'
+                            : band.stdDev === 20
+                              ? 'Notlar Dağınıksa'
+                              : `Özel Sapma (${band.stdDev})`;
+                      const hint =
+                        band.stdDev === 10
+                          ? 'Dar dağılım'
+                          : band.stdDev === 15
+                            ? 'En olası senaryo'
+                            : band.stdDev === 20
+                              ? 'Geniş dağılım'
+                              : 'Girilen sapma';
+                      return (
+                        <div
+                          key={band.stdDev}
+                          title={`Standart Sapma (σ): ${band.stdDev}, T-Skoru: ${band.tScore.toFixed(1)}`}
+                          className={`theme-band-card p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 ${
+                            isCenter
+                              ? 'theme-band-active bg-white border-[#0c3f79]/50 shadow-xs'
+                              : 'bg-white/80 border-slate-200'
+                          }`}
+                        >
+                          <span className="text-[10.5px] font-extrabold text-slate-800 leading-tight">
+                            {shortTitle}
+                          </span>
+                          <span
+                            className={`px-3 py-0.5 rounded-md text-base font-black font-mono border ${getGradeBadgeClasses(
+                              band.grade
+                            )}`}
+                          >
+                            {band.grade}
+                          </span>
+                          <span className="text-[10px] text-slate-500 leading-tight">
+                            {hint}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Bu Notla Sınıf Ortalaması Kaç Olursa Hangi Harf Gelir? */}
+          {evaluation.hasAnyScore && !evaluation.barajViolation.violated && (
+            <div className="theme-sunken-box p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[11px] font-extrabold text-slate-800">
+                  Bu Notla ({evaluation.hbn.toFixed(1)}) Sınıf Ort. Ne Olursa Ne Gelir?
+                </span>
+                <span className="text-[10px] font-medium text-slate-500">
+                  {course.stdDev !== null
+                    ? `Girilen sapma (${classAvgSensitivity.sigmaUsed}) bazlı`
+                    : 'Normal çan dağılımı bazlı'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+                {classAvgSensitivity.samplePoints.slice(0, 5).concat(classAvgSensitivity.samplePoints.slice(5)).map((pt) => {
+                  const isNearCurrent =
+                    evaluation.weightedClassAvg !== null &&
+                    Math.abs(evaluation.weightedClassAvg - pt.classAvg) <= 2.5;
+                  return (
+                    <div
+                      key={pt.classAvg}
+                      className={`px-2 py-1.5 rounded-lg border text-center flex items-center justify-between gap-1 ${
+                        isNearCurrent
+                          ? 'theme-band-active bg-white border-[#0c3f79] shadow-2xs'
+                          : 'theme-band-card bg-white/80 border-slate-200'
+                      }`}
+                    >
+                      <span className="text-[10px] font-mono font-semibold text-slate-500">
+                        Ort.{pt.classAvg}
+                      </span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10.5px] font-black font-mono border ${getGradeBadgeClasses(
+                          pt.grade
+                        )}`}
+                      >
+                        {pt.grade}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="text-[10.5px] text-slate-600 leading-snug">
+                {(() => {
+                  const aa = classAvgSensitivity.cutoffs.find((c) => c.grade === 'AA')?.maxClassAvg;
+                  const ba = classAvgSensitivity.cutoffs.find((c) => c.grade === 'BA')?.maxClassAvg;
+                  const bb = classAvgSensitivity.cutoffs.find((c) => c.grade === 'BB')?.maxClassAvg;
+                  const parts: string[] = [];
+                  if (aa !== null && aa !== undefined) parts.push(`≤ ${aa} ise AA`);
+                  if (ba !== null && ba !== undefined) parts.push(`≤ ${ba} ise BA`);
+                  if (bb !== null && bb !== undefined) parts.push(`≤ ${bb} ise BB`);
+                  return parts.length > 0
+                    ? `Sınıf ortalaması ${parts.join(', ')} tahmin edilir.`
+                    : 'Sınıf ortalaması 40’ın altında dahi olsa üst harf sınırına göre değişir.';
+                })()}
+              </p>
             </div>
           )}
         </div>

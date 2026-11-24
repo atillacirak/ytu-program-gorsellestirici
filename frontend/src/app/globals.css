@@ -363,6 +363,18 @@ header .subnav-tab:hover {
   border-color: #C5D5F7 !important;
   color: #111111 !important;
 }
+:root[data-theme="nordic-yellow"] .theme-sunken-box {
+  background-color: #EDF2FA !important;
+  border-color: #CBD7EB !important;
+}
+:root[data-theme="nordic-yellow"] .theme-band-card {
+  background-color: #FFFFFF !important;
+  border-color: #D2DCEB !important;
+}
+:root[data-theme="nordic-yellow"] .theme-band-active {
+  background-color: #EFF4FF !important;
+  border-color: #003399 !important;
+}
 :root[data-theme="nordic-yellow"] .theme-info-icon,
 :root[data-theme="nordic-yellow"] .theme-info-title {
   color: #003399 !important;
@@ -432,6 +444,18 @@ header .subnav-tab:hover {
   background-color: #FFECCB !important;
   border-color: #D4BD99 !important;
   color: #43321D !important;
+}
+:root[data-theme="campuskit"] .theme-sunken-box {
+  background-color: #F6ECDC !important;
+  border-color: #DFCEB4 !important;
+}
+:root[data-theme="campuskit"] .theme-band-card {
+  background-color: #FFFDF8 !important;
+  border-color: #DFCEB4 !important;
+}
+:root[data-theme="campuskit"] .theme-band-active {
+  background-color: #FFECCB !important;
+  border-color: #7F1D1D !important;
 }
 :root[data-theme="campuskit"] .theme-info-icon,
 :root[data-theme="campuskit"] .theme-info-title {
