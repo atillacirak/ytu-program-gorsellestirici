@@ -324,6 +324,7 @@ export function calculateWeightedScore(items: AssessmentItem[]): {
   earnedContribution: number;
   completedAverage: number | null;
   hbn: number;
+  isProjected: boolean;
   hasAnyScore: boolean;
 } {
   let totalWeight = 0;
@@ -344,7 +345,16 @@ export function calculateWeightedScore(items: AssessmentItem[]): {
 
   const earnedContribution = roundTo2(weightedSum / 100);
   const completedAverage = completedWeight > 0 ? roundTo2(weightedSum / completedWeight) : null;
-  const hbn = totalWeight > 0 ? roundTo2(weightedSum / totalWeight) : 0;
+  const isProjected =
+    hasAnyScore &&
+    totalWeight > 0 &&
+    completedWeight > 0 &&
+    completedWeight < totalWeight - 0.01;
+  const hbn = isProjected
+    ? (completedAverage ?? 0)
+    : totalWeight > 0
+      ? roundTo2(weightedSum / totalWeight)
+      : 0;
 
   return {
     totalWeight: roundTo1(totalWeight),
@@ -352,6 +362,7 @@ export function calculateWeightedScore(items: AssessmentItem[]): {
     earnedContribution,
     completedAverage,
     hbn,
+    isProjected,
     hasAnyScore
   };
 }
@@ -564,6 +575,7 @@ export function evaluateCourseGrade(profile: CourseGradeProfile): EvaluationResu
       earnedContribution: scoreStats.earnedContribution,
       completedAverage: scoreStats.completedAverage,
       hbn: scoreStats.hbn,
+      isProjected: scoreStats.isProjected,
       weightedClassAvg: classAvg,
       classAvgCoverageWeight: avgStats.classAvgCoverageWeight,
       diffFromClassAvg,
@@ -596,6 +608,7 @@ export function evaluateCourseGrade(profile: CourseGradeProfile): EvaluationResu
     earnedContribution: scoreStats.earnedContribution,
     completedAverage: scoreStats.completedAverage,
     hbn: scoreStats.hbn,
+    isProjected: scoreStats.isProjected,
     weightedClassAvg: avgStats.weightedClassAvg,
     classAvgCoverageWeight: avgStats.classAvgCoverageWeight,
     diffFromClassAvg:

@@ -180,10 +180,17 @@ export default function ScenarioSimulatorPanel({
               <h2 className="text-sm font-bold text-slate-900">
                 Anlık Harf Notu Tahmini
               </h2>
-              <p className="text-[11px] text-slate-500">
-                {evaluation.effectiveMode === 'relative'
-                  ? 'YTÜ Bağıl Değerlendirme (T-Skoru) aktif'
-                  : 'Mutlak (Katalog) Değerlendirme aktif'}
+              <p className="text-[11px] text-slate-500 flex items-center gap-1.5 flex-wrap">
+                <span>
+                  {evaluation.effectiveMode === 'relative'
+                    ? 'YTÜ Bağıl Değerlendirme (T-Skoru) aktif'
+                    : 'Mutlak (Katalog) Değerlendirme aktif'}
+                </span>
+                {evaluation.isProjected && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[9.5px]">
+                    Mevcut tempoyla
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -204,13 +211,15 @@ export default function ScenarioSimulatorPanel({
           <div className="grid grid-cols-2 gap-2.5">
             <div className="theme-sunken-box p-3 rounded-xl bg-slate-50 border border-slate-200">
               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                Ham Başarı Notu
+                {evaluation.isProjected ? 'Tahmini HBN (Tempo)' : 'Ham Başarı Notu'}
               </div>
               <div className="text-xl font-black font-mono text-slate-900 mt-0.5">
                 {evaluation.hbn.toFixed(2)}
               </div>
               <div className="text-[10.5px] text-slate-500 mt-0.5">
-                Girilen ağırlık: %{evaluation.completedWeight}
+                {evaluation.isProjected
+                  ? `%${evaluation.completedWeight} ort. · Cepteki: ${evaluation.earnedContribution.toFixed(1)}`
+                  : `Girilen ağırlık: %${evaluation.completedWeight}`}
               </div>
             </div>
 

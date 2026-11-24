@@ -23,8 +23,13 @@ export default function StickyResultBar({
         {/* Sol: Ham Not & Sınıf Ort. */}
         <div className="flex items-center gap-3 sm:gap-5 min-w-0">
           <div className="text-left">
-            <div className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
-              Ham Not (HBN)
+            <div className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5 flex items-center gap-1.5">
+              <span>{evaluation.isProjected ? 'Tahmini HBN' : 'Ham Not (HBN)'}</span>
+              {evaluation.isProjected && (
+                <span className="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold normal-case tracking-normal">
+                  %{evaluation.completedWeight} tempo
+                </span>
+              )}
             </div>
             <div className="text-base sm:text-2xl font-black font-mono text-slate-900 flex items-center gap-1">
               <AnimatedCounter value={evaluation.hbn} decimals={2} />

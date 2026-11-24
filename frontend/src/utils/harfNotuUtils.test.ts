@@ -69,16 +69,26 @@ test('Vize 2 silinip Proje eklendiğinde ağırlık dengeleme ve kalan ekleme ta
   assert.equal(normZero.reduce((a, b) => a + b.weight, 0), 100);
 });
 
-test('Final boş bırakıldığında Final barajı yanlış FF üretmez ve girilen ortalama doğru hesaplanır', () => {
+test('Final boş bırakıldığında Final barajı yanlış FF üretmez ve mevcut tempo projeksiyonu doğru hesaplanır', () => {
   const course = createDefaultCourseProfile();
-  course.items[0].score = 70;
-  course.items[1].score = 80;
-  // Final null
+  course.items[0].score = 80; // %30
+  course.items[1].score = 60; // %30
+  // Final null (%40) -> (80*30 + 60*30) / 60 = 70.00
   const evalRes = evaluateCourseGrade(course);
   assert.equal(evalRes.completedWeight, 60);
-  assert.equal(evalRes.completedAverage, 75);
-  assert.equal(evalRes.hbn, 45);
+  assert.equal(evalRes.completedAverage, 70);
+  assert.equal(evalRes.earnedContribution, 42);
+  assert.equal(evalRes.isProjected, true);
+  assert.equal(evalRes.hbn, 70);
+  assert.equal(evalRes.primaryGrade, 'CC');
   assert.equal(evalRes.barajViolation.violated, false);
+
+  // Final = 50 girildiğinde projeksiyon kapanır: (2400 + 1800 + 2000)/100 = 62.00
+  course.items[2].score = 50;
+  const fullRes = evaluateCourseGrade(course);
+  assert.equal(fullRes.isProjected, false);
+  assert.equal(fullRes.hbn, 62);
+  assert.equal(fullRes.primaryGrade, 'DC');
 });
 
 test('YTÜ Bağıl Değerlendirme (T-Skoru), sınıf düzeyleri ve 3lü standart sapma bandı', () => {

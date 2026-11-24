@@ -79,7 +79,8 @@ export interface EvaluationResult {
   completedWeight: number;
   earnedContribution: number; // Girilen notların %100 ölçeğindeki toplam katkısı
   completedAverage: number | null; // Sadece girilen kalemler üzerinden ortalama (0-100)
-  hbn: number; // Ham Başarı Notu (0-100)
+  hbn: number; // Ham Başarı Notu (kısmi girişte mevcut tempo projeksiyonu)
+  isProjected: boolean; // Tüm kalemler girilmediği için mevcut ortalamayla projekte edildi mi
   weightedClassAvg: number | null; // Ağırlıklı sınıf ortalaması
   classAvgCoverageWeight: number; // Sınıf ortalaması girilmiş kalemlerin toplam ağırlığı
   diffFromClassAvg: number | null; // HBN - weightedClassAvg
