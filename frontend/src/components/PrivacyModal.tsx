@@ -17,7 +17,8 @@ export default function PrivacyModal({ isOpen, onClose }: PrivacyModalProps) {
       onClick={onClose}
     >
       <div 
-        className="bg-white w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 overflow-hidden relative space-y-0"
+        data-modal="true"
+        className="bg-white w-full max-w-lg rounded-2xl shadow-xl border-0 ring-1 ring-black/10 overflow-hidden relative space-y-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}

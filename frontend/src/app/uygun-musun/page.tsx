@@ -71,6 +71,7 @@ import StatusCheckInSheet from '../../components/uygun-musun/StatusCheckInSheet'
 import DailyParallelTimeline from '../../components/uygun-musun/DailyParallelTimeline';
 import LobbyShareModal from '../../components/uygun-musun/LobbyShareModal';
 import DeviceSyncModal from '../../components/DeviceSyncModal';
+import CompareView from '../../components/CompareView';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
@@ -1090,6 +1091,7 @@ export default function UygunMusunLobbyPage() {
   const currentRoomTitle =
     roomState?.title || activeSavedEntry?.title || `Lobi #${activeRoomCode.toUpperCase()}`;
   const myLiveStatus = myProfile ? liveStatuses[myProfile.id] : null;
+  const [uygunSection, setUygunSection] = useState<'lobby' | 'compare'>('lobby');
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col pb-24 md:pb-12">
@@ -1112,6 +1114,47 @@ export default function UygunMusunLobbyPage() {
 
       {/* ANA İÇERİK */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 pt-5 space-y-5">
+        {/* Mod Seçici: Canlı Lobi vs Ortak Boş Saatler */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-2 shadow-2xs">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setUygunSection('lobby')}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                uygunSection === 'lobby'
+                  ? 'bg-[#0c3f79] text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5" />
+              <span>Canlı Arkadaş Lobisi</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUygunSection('compare')}
+              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                uygunSection === 'compare'
+                  ? 'bg-[#0c3f79] text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Ortak Boş Saatler (Karşılaştır)</span>
+            </button>
+          </div>
+          <span className="text-[11px] text-slate-500 font-medium px-2 hidden sm:inline">
+            {uygunSection === 'lobby'
+              ? 'Anlık müsaitlik takibi ve grup nabzı'
+              : 'Birden fazla PDF/PNG programı yükleyip ortak boş saatleri bul'}
+          </span>
+        </div>
+
+        {uygunSection === 'compare' ? (
+          <div className="animate-in fade-in duration-200">
+            <CompareView />
+          </div>
+        ) : (
+        <>
         {/* =====================================================================
             EKRAN 1: LOBİ KARŞILAMA MERKEZİ (HUB)
            ===================================================================== */}
@@ -2805,6 +2848,8 @@ export default function UygunMusunLobbyPage() {
               </div>
             )}
           </div>
+        )}
+        </>
         )}
       </main>
 

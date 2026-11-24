@@ -1,35 +1,465 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: light !important;
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  /* Tema renkleri — DevColorPanel ile dinamik olarak değiştirilir */
-  --navy: #0c3f79;
-  --navy-dark: #00306a;
-  --gold: #e7a240;
-  --gold-dark: #d38e2c;
+  color-scheme: light;
+  --background: #F5F5F5;
+  --foreground: #111111;
+  --navy: #003399;
+  --navy-dark: #002B80;
+  --gold: #FFDA1A;
+  --gold-dark: #E6C300;
 }
 
-html {
-  color-scheme: light !important;
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+/* ─── 1. NORDIC YELLOW (Scandinavian Functional Blue & Yellow, 4px Flat Grid) ─── */
+:root,
+:root[data-theme="nordic-yellow"] {
+  color-scheme: light;
+  --bg-page: #EBF0F8;
+  --bg-surface: #F8FAFE;
+  --bg-sunken: #E4ECF7;
+
+  --bg-header: #003399;
+  --bg-subnav: #003399;
+  --header-text: #FFFFFF;
+  --header-muted: rgba(255, 255, 255, 0.82);
+  --header-border: rgba(255, 255, 255, 0.16);
+  --header-pill-bg: rgba(255, 255, 255, 0.14);
+  --header-logo-bg: #FFDA1A;
+  --header-logo-fg: #111111;
+
+  --text-primary: #111111;
+  --text-secondary: #484848;
+  --text-muted: #767676;
+
+  --border-default: #DCE3EF;
+  --border-strong: #C2CDE0;
+
+  --accent-primary: #003399;
+  --accent-primary-hover: #002B80;
+  --accent-primary-text: #FFFFFF;
+  --accent-secondary: #FFDA1A;
+  --accent-secondary-text: #111111;
+  --accent-tint: #EFF4FF;
+
+  --font-display: var(--font-noto-sans), system-ui, sans-serif;
+  --font-body: var(--font-noto-sans), system-ui, sans-serif;
+  --font-mono-theme: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --radius-card: 4px;
+  --radius-btn: 4px;
+  --radius-input: 4px;
+  --radius-chip: 4px;
+  --radius-modal: 12px;
+
+  --shadow-card: 0 1px 3px rgba(17, 17, 17, 0.06);
+  --shadow-elevated: 0 4px 12px rgba(17, 17, 17, 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+/* ─── 2. CAMPUSKIT (Collegiate Maroon, Warm Cream & Bronze #7d5f33, Vollkorn + DM Sans) ─── */
+:root[data-theme="campuskit"] {
+  color-scheme: light;
+  --bg-page: #F5EBD9;
+  --bg-surface: #FFFBF3;
+  --bg-sunken: #EFE0C6;
+
+  --bg-header: #FAF0DF;
+  --bg-subnav: #FAF0DF;
+  --header-text: #2C1E12;
+  --header-muted: #7D5F33;
+  --header-border: #E8D7BC;
+  --header-pill-bg: #FFECCB;
+  --header-logo-bg: #7F1D1D;
+  --header-logo-fg: #FFECCB;
+
+  --text-primary: #1F160E;
+  --text-secondary: #4A3924;
+  --text-muted: #7D5F33;
+
+  --border-default: #E6D8C3;
+  --border-strong: #D3BE9E;
+
+  --accent-primary: #7F1D1D;
+  --accent-primary-hover: #5B1212;
+  --accent-primary-text: #FFFFFF;
+  --accent-secondary: #CA8A04;
+  --accent-secondary-text: #FFFFFF;
+  --accent-tint: #FEF2F2;
+
+  --font-display: var(--font-vollkorn), Georgia, serif;
+  --font-body: var(--font-dm-sans), system-ui, sans-serif;
+  --font-mono-theme: var(--font-source-code-pro), ui-monospace, monospace;
+
+  --radius-card: 6px;
+  --radius-btn: 6px;
+  --radius-input: 6px;
+  --radius-chip: 9999px;
+  --radius-modal: 8px;
+
+  --shadow-card: 2px 2px 4px rgba(125, 95, 51, 0.08);
+  --shadow-elevated: 4px 4px 12px rgba(125, 95, 51, 0.12);
+}
+
+/* ─── 3. YTÜ KLASİK (Original Navy & Gold) ─── */
+:root[data-theme="classic"] {
+  color-scheme: light;
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-sunken: #f1f5f9;
+
+  --bg-header: #ffffff;
+  --bg-subnav: #ffffff;
+  --header-text: #0f172a;
+  --header-muted: #64748b;
+  --header-border: #e2e8f0;
+  --header-pill-bg: #f1f5f9;
+  --header-logo-bg: #0c3f79;
+  --header-logo-fg: #e7a240;
+
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --border-default: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  --accent-primary: #0c3f79;
+  --accent-primary-hover: #00306a;
+  --accent-primary-text: #ffffff;
+  --accent-secondary: #e7a240;
+  --accent-secondary-text: #ffffff;
+  --accent-tint: #eff6ff;
+
+  --font-display: var(--font-inter), system-ui, sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+  --font-mono-theme: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --radius-card: 16px;
+  --radius-btn: 10px;
+  --radius-input: 10px;
+  --radius-chip: 9999px;
+  --radius-modal: 16px;
+
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-elevated: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+html, body {
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-body);
 }
 
 body {
-  color-scheme: light !important;
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+}
+
+@theme inline {
+  --color-background: var(--bg-page);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono-theme);
+}
+
+/* ─── Global Typography (Only Nordic Yellow & CampusKit; Classic & A4 Schedule untouched!) ─── */
+:root[data-theme="nordic-yellow"] :is(h1, h2, h3, h4):not(.a4-print-target *),
+:root[data-theme="campuskit"] :is(h1, h2, h3, h4):not(.a4-print-target *) {
+  font-family: var(--font-display);
+}
+
+:root[data-theme="nordic-yellow"] .font-mono:not(.a4-print-target *),
+:root[data-theme="campuskit"] .font-mono:not(.a4-print-target *) {
+  font-family: var(--font-mono-theme) !important;
+}
+
+/* ─── Header 2-Tier Component Styling ─── */
+:root[data-theme="nordic-yellow"] header .header-util-btn {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+}
+:root[data-theme="nordic-yellow"] header .header-util-btn:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+:root[data-theme="nordic-yellow"] header .header-cta-btn {
+  background-color: #FFDA1A;
+  color: #111111;
+  border: 1px solid #FFDA1A;
+  border-radius: 4px;
+}
+:root[data-theme="nordic-yellow"] header .header-cta-btn:hover {
+  background-color: #f0cc00;
+}
+
+:root[data-theme="campuskit"] header .header-util-btn {
+  background-color: #FFFFFF;
+  color: #7F1D1D;
+  border: 1px solid #7F1D1D;
+  border-radius: 6px;
+}
+:root[data-theme="campuskit"] header .header-util-btn:hover {
+  background-color: #FEF2F2;
+}
+:root[data-theme="campuskit"] header .header-cta-btn {
+  background-color: #7F1D1D;
+  color: #FFFFFF;
+  border: 1px solid #7F1D1D;
+  border-radius: 6px;
+}
+:root[data-theme="campuskit"] header .header-cta-btn:hover {
+  background-color: #5B1212;
+}
+
+/* Secondary Nav Tabs */
+header .subnav-tab {
+  color: var(--header-muted);
+  border-bottom: 3px solid transparent;
+}
+header .subnav-tab:hover {
+  color: var(--header-text);
+}
+:root[data-theme="nordic-yellow"] header .subnav-tab-active {
+  color: #FFDA1A;
+  border-bottom: 3px solid #FFDA1A;
+}
+:root[data-theme="nordic-yellow"] header .nav-new-badge {
+  background-color: #FFDA1A;
+  color: #111111;
+  border-radius: 2px;
+}
+
+:root[data-theme="campuskit"] header .subnav-tab-active {
+  color: #7F1D1D;
+  background-color: #FFECCB;
+  border-bottom: 2px solid #7F1D1D;
+}
+:root[data-theme="campuskit"] header .nav-new-badge {
+  background-color: #7D5F33;
+  color: #FFECCB;
+  border-radius: 9999px;
+}
+
+:root[data-theme="classic"] header .header-util-btn {
+  background-color: #f1f5f9;
+  color: #0c3f79;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+:root[data-theme="classic"] header .header-util-btn:hover {
+  background-color: #e2e8f0;
+}
+:root[data-theme="classic"] header .header-cta-btn {
+  background-color: #fef3c7;
+  color: #78350f;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+}
+:root[data-theme="classic"] header .header-cta-btn:hover {
+  background-color: #fde68a;
+}
+:root[data-theme="classic"] header .subnav-tab {
+  color: #475569;
+  border-bottom: none;
+  border-radius: 8px;
+  height: 32px;
+  margin: 6px 0;
+}
+:root[data-theme="classic"] header .subnav-tab:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+:root[data-theme="classic"] header .subnav-tab-active {
+  color: #ffffff !important;
+  background-color: #0c3f79 !important;
+  border-bottom: none !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+:root[data-theme="classic"] header .nav-new-badge {
+  background-color: #0c3f79;
+  color: #fde68a;
+  border-radius: 9999px;
+}
+:root[data-theme="classic"] header .subnav-tab-active .nav-new-badge {
+  background-color: #facc15;
+  color: #0f172a;
+}
+
+/* ─── Deep Component & Surface Design Language Rules (Only Nordic Yellow & CampusKit) ─── */
+:root[data-theme="nordic-yellow"] :is(.min-h-screen.bg-slate-50, .min-h-screen.bg-\[\#f8fafc\]),
+:root[data-theme="campuskit"] :is(.min-h-screen.bg-slate-50, .min-h-screen.bg-\[\#f8fafc\]) {
+  background-color: var(--bg-page) !important;
+  color: var(--text-primary);
+}
+
+/* Radius & Elevation across Cards, Buttons, Inputs, Chips (Nordic & CampusKit only) */
+:root[data-theme="nordic-yellow"] :is(.rounded-2xl, .rounded-xl):not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher]):not([data-theme-switcher] *):not(.rounded-full),
+:root[data-theme="campuskit"] :is(.rounded-2xl, .rounded-xl):not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher]):not([data-theme-switcher] *):not(.rounded-full) {
+  border-radius: var(--radius-card);
+}
+
+:root[data-theme="nordic-yellow"] :is(button, a.rounded-lg, a.rounded-xl, input, select):not(.a4-print-target *):not([data-theme-switcher] *):not(.rounded-full),
+:root[data-theme="campuskit"] :is(button, a.rounded-lg, a.rounded-xl, input, select):not(.a4-print-target *):not([data-theme-switcher] *):not(.rounded-full) {
+  border-radius: var(--radius-btn);
+}
+
+/* Nordic Yellow: Strict 4px flat functional cards, NO gradients, IKEA Blue + Yellow CTAs */
+:root[data-theme="nordic-yellow"] .bg-white:not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher] *) {
+  background-color: var(--bg-surface) !important;
+  border-color: #D2DCEB;
+  box-shadow: var(--shadow-card);
+}
+:root[data-theme="nordic-yellow"] :is(.bg-white.rounded-2xl, .bg-white.rounded-xl):not(.a4-print-target):not([data-theme-switcher] *):not([data-modal]) {
+  border-top: 3px solid #003399;
+}
+:root[data-theme="nordic-yellow"] :is(.bg-gradient-to-br, .bg-gradient-to-r, .bg-gradient-to-b):not(.a4-print-target *):not([data-theme-switcher] *) {
+  background-image: none !important;
+}
+:root[data-theme="nordic-yellow"] [class*="from-[#0c3f79]"]:not(.a4-print-target *):not([data-theme-switcher] *) {
+  background-color: #003399 !important;
+  background-image: none !important;
+  border-color: #002B80 !important;
+}
+:root[data-theme="nordic-yellow"] .bg-\[\#0c3f79\]\/5:not(.a4-print-target *) {
+  background-color: rgba(0, 51, 153, 0.05) !important;
+}
+:root[data-theme="nordic-yellow"] .bg-\[\#0c3f79\]\/\[0\.03\]:not(.a4-print-target *) {
+  background-color: rgba(0, 51, 153, 0.03) !important;
+}
+:root[data-theme="nordic-yellow"] .bg-\[\#0c3f79\]\/10:not(.a4-print-target *) {
+  background-color: rgba(0, 51, 153, 0.09) !important;
+}
+:root[data-theme="nordic-yellow"] :is(.bg-\[\#e7a240\], .hover\:bg-\[\#e7a240\], [class*="from-[#e7a240]"]):not(.a4-print-target *) {
+  background-color: #FFDA1A !important;
+  color: #111111 !important;
+}
+:root[data-theme="nordic-yellow"] .bg-\[\#e7a240\]\/15:not(.a4-print-target *) {
+  background-color: rgba(255, 218, 26, 0.22) !important;
+  border-color: rgba(230, 195, 0, 0.45) !important;
+  color: #111111 !important;
+}
+:root[data-theme="nordic-yellow"] :is(.bg-\[\#0c3f79\], .bg-indigo-600):not(.a4-print-target *) {
+  background-color: #003399 !important;
+  color: #FFFFFF !important;
+}
+:root[data-theme="nordic-yellow"] :is(.hover\:bg-\[\#00306a\], .hover\:bg-indigo-700):hover:not(.a4-print-target *) {
+  background-color: #002B80 !important;
+}
+:root[data-theme="nordic-yellow"] :is(.text-\[\#0c3f79\], .text-indigo-700, .text-indigo-600):not(.a4-print-target *) {
+  color: #003399 !important;
+}
+:root[data-theme="nordic-yellow"] [style*="#e7a240"] {
+  background: #FFDA1A !important;
+  color: #111111 !important;
+}
+:root[data-theme="nordic-yellow"] [style*="#e7a240"] * {
+  color: #111111 !important;
+}
+:root[data-theme="nordic-yellow"] :is(input, select, textarea):focus:not(.a4-print-target *):not([data-theme-switcher] *) {
+  border-color: #003399 !important;
+  box-shadow: 0 0 0 1px #003399 !important;
+}
+:root[data-theme="nordic-yellow"] .theme-info-banner {
+  background-color: #EFF4FF !important;
+  border-color: #C5D5F7 !important;
+  color: #111111 !important;
+}
+:root[data-theme="nordic-yellow"] .theme-info-icon,
+:root[data-theme="nordic-yellow"] .theme-info-title {
+  color: #003399 !important;
+}
+:root[data-theme="nordic-yellow"] [class*="from-[#0c3f79]"] .bg-emerald-500\/20 {
+  background-color: rgba(10, 138, 0, 0.42) !important;
+  border-color: #4ade80 !important;
+}
+:root[data-theme="nordic-yellow"] :is(.text-emerald-600, .text-emerald-700, .text-emerald-800):not(.a4-print-target *) {
+  color: #0A8A00 !important;
+}
+:root[data-theme="nordic-yellow"] :is(.text-rose-600, .text-rose-700, .text-red-600, .text-red-500):not(.a4-print-target *) {
+  color: #CC0008 !important;
+}
+
+/* CampusKit: Collegiate 6px cards with maroon accent, subtle shadow-md, Vollkorn headings, maroon focus ring */
+:root[data-theme="campuskit"] .bg-white:not(.a4-print-target):not(.a4-print-target *):not([data-theme-switcher] *) {
+  background-color: var(--bg-surface) !important;
+  border-color: #DFCEB4;
+  box-shadow: var(--shadow-card);
+}
+:root[data-theme="campuskit"] :is(.bg-white.rounded-2xl, .bg-white.rounded-xl):not(.a4-print-target):not([data-theme-switcher] *):not([data-modal]) {
+  border-top: 3px solid #7F1D1D;
+}
+:root[data-theme="campuskit"] [class*="from-[#0c3f79]"]:not(.a4-print-target *):not([data-theme-switcher] *) {
+  background-image: linear-gradient(135deg, #7F1D1D 0%, #5B1212 100%) !important;
+  background-color: #7F1D1D !important;
+  border-color: #5B1212 !important;
+}
+:root[data-theme="campuskit"] .bg-\[\#0c3f79\]\/5:not(.a4-print-target *) {
+  background-color: rgba(127, 29, 29, 0.04) !important;
+}
+:root[data-theme="campuskit"] .bg-\[\#0c3f79\]\/\[0\.03\]:not(.a4-print-target *) {
+  background-color: rgba(127, 29, 29, 0.03) !important;
+}
+:root[data-theme="campuskit"] .bg-\[\#0c3f79\]\/10:not(.a4-print-target *) {
+  background-color: rgba(127, 29, 29, 0.09) !important;
+}
+:root[data-theme="campuskit"] :is(.bg-\[\#e7a240\], [class*="from-[#e7a240]"]):not(.a4-print-target *) {
+  background-color: #CA8A04 !important;
+  color: #FFFFFF !important;
+}
+:root[data-theme="campuskit"] .bg-\[\#e7a240\]\/15:not(.a4-print-target *) {
+  background-color: #FFECCB !important;
+  border-color: #D4BD99 !important;
+  color: #664B26 !important;
+}
+:root[data-theme="campuskit"] :is(.bg-\[\#0c3f79\], .bg-indigo-600):not(.a4-print-target *) {
+  background-color: #7F1D1D !important;
+  color: #FFFFFF !important;
+}
+:root[data-theme="campuskit"] :is(.hover\:bg-\[\#00306a\], .hover\:bg-indigo-700):hover:not(.a4-print-target *) {
+  background-color: #5B1212 !important;
+}
+:root[data-theme="campuskit"] :is(.text-\[\#0c3f79\], .text-indigo-700, .text-indigo-600):not(.a4-print-target *) {
+  color: #7F1D1D !important;
+}
+:root[data-theme="campuskit"] [style*="#e7a240"] {
+  background: linear-gradient(135deg, #CA8A04 0%, #A16207 100%) !important;
+  color: #FFFFFF !important;
+}
+:root[data-theme="campuskit"] :is(input, select, textarea):focus:not(.a4-print-target *):not([data-theme-switcher] *) {
+  border-color: #7F1D1D !important;
+  box-shadow: 0 0 0 3px rgba(127, 29, 29, 0.22) !important;
+}
+:root[data-theme="campuskit"] .theme-info-banner {
+  background-color: #FFECCB !important;
+  border-color: #D4BD99 !important;
+  color: #43321D !important;
+}
+:root[data-theme="campuskit"] .theme-info-icon,
+:root[data-theme="campuskit"] .theme-info-title {
+  color: #7F1D1D !important;
+}
+:root[data-theme="campuskit"] [class*="from-[#0c3f79]"] .bg-emerald-500\/20 {
+  background-color: #14532D !important;
+  border-color: #4ADE80 !important;
+}
+:root[data-theme="campuskit"] [class*="from-[#0c3f79]"] :is(.bg-rose-500\/20, .bg-red-500\/20) {
+  background-color: #991B1B !important;
+  border-color: #FCA5A5 !important;
+}
+:root[data-theme="campuskit"] [class*="from-[#0c3f79]"] :is(.text-blue-200, .text-blue-100\/80, .text-blue-100\/90) {
+  color: rgba(255, 236, 203, 0.9) !important;
+}
+:root[data-theme="campuskit"] :is(.text-emerald-600, .text-emerald-700, .text-emerald-800):not(.a4-print-target *) {
+  color: #16A34A !important;
+}
+:root[data-theme="campuskit"] :is(.text-rose-600, .text-rose-700, .text-red-600, .text-red-500):not(.a4-print-target *) {
+  color: #DC2626 !important;
+}
+
+/* Keep A4 Print & ScheduleTable export paper crisp light and preserve its own fonts */
+.a4-print-target {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  color-scheme: light;
 }
 
 /* Institutional Clean Scrollbars */
@@ -39,22 +469,21 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--bg-sunken);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border-strong);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--text-muted);
 }
 
-/* Firefox Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: var(--border-strong) var(--bg-sunken);
 }
 
 /* A4 Print Styles */
@@ -106,7 +535,7 @@ body {
   }
 }
 
-/* Document Typography Modes - Force applies font-family to ALL child elements */
+/* Document Typography Modes - Untouched for Ders Programı */
 .doc-font-inter, .doc-font-inter * {
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif !important;
 }
@@ -122,5 +551,3 @@ body {
 .doc-font-mono, .doc-font-mono * {
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace !important;
 }
-
-

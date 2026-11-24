@@ -1,12 +1,48 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Lora, Outfit } from "next/font/google";
+import {
+  DM_Sans,
+  Inter,
+  JetBrains_Mono,
+  Lora,
+  Noto_Sans,
+  Outfit,
+  Source_Code_Pro,
+  Vollkorn,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import DevColorPanel from "../components/DevColorPanel";
 import Header from "../components/Header";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const notoSans = Noto_Sans({
+  variable: "--font-noto-sans",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const vollkorn = Vollkorn({
+  variable: "--font-vollkorn",
+  weight: ["500", "600", "700"],
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
+const sourceCodePro = Source_Code_Pro({
+  variable: "--font-source-code-pro",
+  weight: ["400", "500", "600"],
   subsets: ["latin", "latin-ext"],
   display: "swap",
 });
@@ -80,20 +116,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeInitScript = `(function(){try{var t=localStorage.getItem('ytudostun_theme_v1');var ok=t==='nordic-yellow'||t==='campuskit'||t==='classic';document.documentElement.setAttribute('data-theme',ok?t:'campuskit');}catch(e){document.documentElement.setAttribute('data-theme','campuskit');}})();`;
+
   return (
     <html
       lang="tr"
-      style={{ colorScheme: "light" }}
-      className={`${inter.variable} ${lora.variable} ${outfit.variable} ${jetbrainsMono.variable} font-sans h-full antialiased bg-[#f8fafc] text-slate-900`}
+      data-theme="campuskit"
+      suppressHydrationWarning
+      className={`${inter.variable} ${notoSans.variable} ${dmSans.variable} ${vollkorn.variable} ${sourceCodePro.variable} ${lora.variable} ${outfit.variable} ${jetbrainsMono.variable} font-sans h-full antialiased`}
     >
-      <body
-        className="min-h-full flex flex-col bg-[#f8fafc] text-slate-900 font-sans"
-        style={{ colorScheme: "light" }}
-      >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="min-h-full flex flex-col font-sans">
         <Header />
         {children}
         <Analytics />
-        <DevColorPanel />
       </body>
     </html>
   );

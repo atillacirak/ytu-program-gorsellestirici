@@ -4,13 +4,11 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Sparkles,
-  Compass,
-  ShieldCheck,
-  Calculator,
   ArrowRight,
   X,
   Radio,
-  Award
+  Award,
+  Palette
 } from 'lucide-react';
 
 interface WhatsNewModalProps {
@@ -34,7 +32,8 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]"
+        data-modal="true"
+        className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border-0 ring-1 ring-black/10 overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Banner */}
@@ -43,16 +42,17 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/30 text-amber-300 text-[10px] font-extrabold tracking-wide uppercase">
                 <Sparkles className="w-3 h-3" />
-                <span>YTÜ Dostun v2.4 Güncellemesi</span>
+                <span>YTÜ Dostun v2.5 Güncellemesi</span>
               </div>
               <h2 className="text-base sm:text-lg font-extrabold tracking-tight">
-                Yeni Özellikleri Keşfedin 🚀
+                Yeni Özellikleri Keşfedin
               </h2>
               <p className="text-[11px] sm:text-xs text-blue-100/90 leading-relaxed">
-                Ders programına ek olarak tüm akademik sürecinizi yönetebileceğiniz yeni araçlar eklendi.
+                Yenilenen arayüz temaları, harf notu simülatörü ve canlı arkadaş lobisi yayında.
               </p>
             </div>
             <button
+              type="button"
               onClick={onClose}
               className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer shrink-0"
               title="Kapat"
@@ -62,9 +62,31 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
           </div>
         </div>
 
-        {/* Feature Cards Container - Fits naturally without scrolling */}
+        {/* Feature Cards Container */}
         <div className="p-3.5 sm:p-4 space-y-2.5 overflow-y-auto overscroll-contain">
-          {/* Feature 0: Ders Harf Notu & Çan Simülatörü */}
+          {/* Feature 1: Yeni Temalar */}
+          <div className="rounded-xl border border-amber-500/40 bg-amber-50/45 p-3 transition-colors">
+            <div className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#0c3f79] text-[#e7a240] flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
+                <Palette className="w-4 h-4" />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                    Yeni Tasarım Temaları (CampusKit, Nordic &amp; Klasik)
+                  </h3>
+                  <span className="text-[8.5px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 leading-tight">
+                    Yeni
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-snug">
+                  Sağ üst menüdeki <strong>Cihaz Eşle</strong> butonunun hemen solundaki <strong>Tema</strong> seçicisinden (<strong>Campus</strong>, <strong>Nordic</strong>, <strong>Klasik</strong>) tek tıkla görünümü değiştirebilirsin.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 2: Ders Harf Notu & Çan Simülatörü */}
           <div className="group rounded-xl border border-sky-500/40 bg-sky-50/50 p-3 hover:border-sky-500/70 transition-colors">
             <div className="flex items-start justify-between gap-2.5">
               <div className="flex items-start gap-2.5 min-w-0">
@@ -98,7 +120,7 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
             </div>
           </div>
 
-          {/* Feature 1: Uygun Musun? — Canlı Arkadaş Lobisi */}
+          {/* Feature 3: Uygun Musun? */}
           <div className="group rounded-xl border border-blue-500/40 bg-blue-50/40 p-3 hover:border-blue-600/70 transition-colors">
             <div className="flex items-start justify-between gap-2.5">
               <div className="flex items-start gap-2.5 min-w-0">
@@ -115,7 +137,7 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 leading-snug">
-                    Arkadaş grubunla lobi kur, davet linki veya QR kodla paylaş; <strong>şu an kimin derste, kimin boşta olduğunu</strong> ve tüm grubun ortak boş saatlerini canlı takip et.
+                    Arkadaş grubunla lobi kur, <strong>şu an kimin derste/boşta olduğunu</strong> ve <strong>Ortak Boş Saatler</strong> sekmesinden herkesin boş olduğu saatleri anlık takip et.
                   </p>
                 </div>
               </div>
@@ -131,108 +153,6 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
               </button>
             </div>
           </div>
-
-          {/* Feature 2: Akademik Planlama */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 hover:border-slate-300 transition-colors">
-            <div className="flex items-start justify-between gap-2.5">
-              <div className="flex items-start gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                  <Compass className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5 min-w-0">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                    Akademik Planlama &amp; Mezuniyet Simülatörü
-                  </h3>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    Bölüm müfredatını, Bologna ön koşullarını ve seçmeli ders havuzlarını gör. Yaz okuluyla <strong>3 veya 3.5 yılda erken mezuniyeti</strong> simüle et.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleNavigate('/planlama')}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold shrink-0 self-center transition-colors cursor-pointer"
-              >
-                Planla
-              </button>
-            </div>
-          </div>
-
-          {/* Feature 1: Akademik Planlama */}
-          <div className="group rounded-xl border border-emerald-500/30 bg-emerald-50/35 p-3 hover:border-emerald-500/60 transition-colors">
-            <div className="flex items-start justify-between gap-2.5">
-              <div className="flex items-start gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                  <Compass className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5 min-w-0">
-                  <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
-                    Akademik Planlama &amp; Mezuniyet Simülatörü
-                  </h3>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    Bölüm müfredatını, Bologna ön koşullarını ve seçmeli ders havuzlarını gör. Yaz okuluyla <strong>3 veya 3.5 yılda erken mezuniyeti</strong> simüle et ve PDF indir.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleNavigate('/planlama')}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold shrink-0 self-center transition-colors cursor-pointer"
-              >
-                Planla
-              </button>
-            </div>
-          </div>
-
-          {/* Feature 2: AGNO Hesaplama */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 hover:border-slate-300 transition-colors">
-            <div className="flex items-start justify-between gap-2.5">
-              <div className="flex items-start gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                  <Calculator className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5 min-w-0">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                    AGNO &amp; Hedef Simülatörü
-                  </h3>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    Transkriptini yükleyerek notlarını aktar; dönem sonu ortalamanı ve hedefin için gereken YANO&apos;yu hesapla.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleNavigate('/agno')}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold shrink-0 self-center transition-colors cursor-pointer"
-              >
-                Hesapla
-              </button>
-            </div>
-          </div>
-
-          {/* Feature 3: Devamsızlık Takibi */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 hover:border-slate-300 transition-colors">
-            <div className="flex items-start justify-between gap-2.5">
-              <div className="flex items-start gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-2xs mt-0.5">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5 min-w-0">
-                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                    Haftalık Devamsızlık Takibi
-                  </h3>
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    Ders programını tek tıkla aktar, 14 haftalık çizelgede kaç ders hakkının kaldığını anlık takip et.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleNavigate('/devamsizlik')}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-bold shrink-0 self-center transition-colors cursor-pointer"
-              >
-                Göz At
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
@@ -241,6 +161,7 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
             Üst menüdeki <strong>&ldquo;Yenilikler&rdquo;</strong> butonundan tekrar açabilirsiniz.
           </span>
           <button
+            type="button"
             onClick={onClose}
             className="px-3.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition-colors cursor-pointer shrink-0"
           >

@@ -550,10 +550,10 @@ export default function AbsencePage() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-20 relative">
       <main className="max-w-4xl mx-auto px-4 py-8">
         
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex gap-2 mb-5 text-blue-900 shadow-sm items-start">
-          <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+        <div className="theme-info-banner bg-blue-50 border border-blue-100 rounded-xl p-3 flex gap-2 mb-5 text-blue-900 shadow-sm items-start">
+          <ShieldCheck className="theme-info-icon w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
           <div className="text-xs">
-            <p className="font-bold text-blue-800 mb-0.5">Verileriniz Güvende!</p>
+            <p className="theme-info-title font-bold text-blue-800 mb-0.5">Verileriniz Güvende!</p>
             <p className="opacity-90 leading-tight">
               Verileriniz sadece bu cihazda (localStorage) tutulur. Sayfayı kapatsanız dahi kaldığınız yerden devam edebilirsiniz.
             </p>
