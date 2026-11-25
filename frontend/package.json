@@ -11,11 +11,10 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@vercel/analytics": "^2.0.1",
-    "axios": "^1.20.0",
     "caniuse-lite": "^1.0.30001810",
     "html-to-image": "^1.11.13",
     "lucide-react": "^1.43.0",
-    "next": "16.3.4",
+    "next": "16.4.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tesseract.js": "^7.0.0"
@@ -26,8 +25,19 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.4.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@ducanh2912/next-pwa": {
+      "workbox-build": {
+        ".": "7.4.1",
+        "glob": "14.0.6"
+      },
+      "workbox-core": "7.4.1",
+      "workbox-webpack-plugin": "7.4.1",
+      "workbox-window": "7.4.1"
+    }
   }
 }
