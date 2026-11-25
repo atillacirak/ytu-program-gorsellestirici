@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Sparkles,
@@ -19,22 +19,54 @@ interface WhatsNewModalProps {
 export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
   const router = useRouter();
 
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (isOpen && dialog && !dialog.open) dialog.showModal();
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  const handleNavigate = (path: string) => {
+  const close = () => {
+    dialogRef.current?.close();
     onClose();
+  };
+
+  const handleNavigate = (path: string) => {
+    close();
     router.push(path);
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/65 p-3 sm:p-4 animate-fade-in"
-      onClick={onClose}
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="whats-new-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        close();
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const buttons = event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)');
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) close();
+      }}
+      className="m-auto w-[calc(100%_-_1.5rem)] max-w-lg overflow-visible rounded-2xl bg-transparent backdrop:bg-slate-900/65"
     >
       <div
         data-modal="true"
-        className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border-0 ring-1 ring-black/10 overflow-hidden flex flex-col max-h-[90vh]"
-        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl shadow-2xl ring-1 ring-black/10 overflow-hidden flex flex-col max-h-[90dvh]"
       >
         {/* Top Banner */}
         <div className="bg-gradient-to-r from-[#0c3f79] via-[#124d91] to-[#0f172a] text-white p-4 sm:p-4.5 relative shrink-0">
@@ -44,7 +76,7 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
                 <Sparkles className="w-3 h-3" />
                 <span>YTÜ Dostun v2.5 Güncellemesi</span>
               </div>
-              <h2 className="text-base sm:text-lg font-extrabold tracking-tight">
+              <h2 id="whats-new-title" className="text-base sm:text-lg font-extrabold tracking-tight">
                 Yeni Özellikleri Keşfedin
               </h2>
               <p className="text-[11px] sm:text-xs text-blue-100/90 leading-relaxed">
@@ -53,9 +85,10 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={close}
               className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors cursor-pointer shrink-0"
-              title="Kapat"
+              aria-label="Kapat"
+              autoFocus
             >
               <X className="w-4 h-4" />
             </button>
@@ -157,18 +190,18 @@ export default function WhatsNewModal({ isOpen, onClose }: WhatsNewModalProps) {
 
         {/* Footer */}
         <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-2 shrink-0">
-          <span className="text-[10.5px] text-slate-500 font-medium truncate">
+          <span className="text-[10.5px] text-slate-500 font-medium">
             Üst menüdeki <strong>&ldquo;Yenilikler&rdquo;</strong> butonundan tekrar açabilirsiniz.
           </span>
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             className="px-3.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition-colors cursor-pointer shrink-0"
           >
             Anladım
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

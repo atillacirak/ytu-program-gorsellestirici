@@ -1,68 +1,73 @@
 import type { Metadata, Viewport } from "next";
-import {
-  DM_Sans,
-  Inter,
-  JetBrains_Mono,
-  Lora,
-  Noto_Sans,
-  Outfit,
-  Source_Code_Pro,
-  Vollkorn,
-} from "next/font/google";
+import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import Header from "../components/Header";
 import "./globals.css";
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/inter.woff2",
   variable: "--font-inter",
-  subsets: ["latin", "latin-ext"],
+  weight: "100 900",
   display: "swap",
+  preload: false,
 });
 
-const notoSans = Noto_Sans({
+const notoSans = localFont({
+  src: "./fonts/notosans.woff2",
   variable: "--font-noto-sans",
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin", "latin-ext"],
+  weight: "400 700",
   display: "swap",
+  preload: false,
 });
 
-const dmSans = DM_Sans({
+const dmSans = localFont({
+  src: "./fonts/dmsans.woff2",
   variable: "--font-dm-sans",
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin", "latin-ext"],
+  weight: "400 700",
   display: "swap",
 });
 
-const vollkorn = Vollkorn({
+const vollkorn = localFont({
+  src: "./fonts/vollkorn.woff2",
   variable: "--font-vollkorn",
-  weight: ["500", "600", "700"],
-  subsets: ["latin", "latin-ext"],
+  weight: "500 700",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
 });
 
-const sourceCodePro = Source_Code_Pro({
+const sourceCodePro = localFont({
+  src: "./fonts/sourcecodepro.woff2",
   variable: "--font-source-code-pro",
-  weight: ["400", "500", "600"],
-  subsets: ["latin", "latin-ext"],
+  weight: "400 600",
   display: "swap",
+  adjustFontFallback: false,
+  preload: false,
 });
 
-const lora = Lora({
+const lora = localFont({
+  src: "./fonts/lora.woff2",
   variable: "--font-lora",
-  subsets: ["latin", "latin-ext"],
+  weight: "400 700",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
+  preload: false,
 });
 
-const outfit = Outfit({
+const outfit = localFont({
+  src: "./fonts/outfit.woff2",
   variable: "--font-outfit",
-  subsets: ["latin", "latin-ext"],
+  weight: "100 900",
   display: "swap",
+  preload: false,
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrainsmono.woff2",
   variable: "--font-jetbrains-mono",
-  subsets: ["latin", "latin-ext"],
+  weight: "100 800",
   display: "swap",
+  adjustFontFallback: false,
+  preload: false,
 });
 
 export const viewport: Viewport = {

@@ -7,6 +7,7 @@ import {
   Layers,
   ShieldCheck,
   ChevronRight,
+  ChevronDown,
   SlidersHorizontal,
   Lock,
   Unlock,
@@ -59,12 +60,15 @@ export const PlanlamaHero = React.memo(function PlanlamaHero({
   onToggleCreditLimit,
   onResetPlan
 }: PlanlamaHeroProps) {
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+  const programName = currentFacultyPrograms.find((program) => program.id === selectedProgramId)?.name;
+
   return (
     <div className="bg-gradient-to-b from-[#0c3f79] to-[#092d58] text-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
+      <div className="max-w-7xl mx-auto px-4 py-4 space-y-3 md:py-6 md:space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold">
+            <div className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold">
               <Compass className="w-3.5 h-3.5" />
               <span>YTÜ Bologna Müfredat & Mezuniyet Simülatörü</span>
             </div>
@@ -79,12 +83,13 @@ export const PlanlamaHero = React.memo(function PlanlamaHero({
           </div>
 
           {/* Faculty & Department Selectors */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full lg:w-auto lg:min-w-[500px]">
-            <div className="bg-white/10 border border-white/15 rounded-xl p-2.5">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-blue-200 mb-1">
+          <div className="grid min-w-0 w-full grid-cols-1 gap-2.5 sm:grid-cols-2 lg:w-auto lg:min-w-[500px]">
+            <div className="min-w-0 bg-white/10 border border-white/15 rounded-xl p-2.5">
+              <label htmlFor="plan-faculty" className="block text-[10px] font-bold uppercase tracking-wider text-blue-200 mb-1">
                 1. Fakülte Seçin
               </label>
               <select
+                id="plan-faculty"
                 value={selectedFaculty}
                 onChange={(e) => onFacultyChange(e.target.value)}
                 disabled={loadingPrograms}
@@ -98,11 +103,12 @@ export const PlanlamaHero = React.memo(function PlanlamaHero({
               </select>
             </div>
 
-            <div className="bg-white/10 border border-white/15 rounded-xl p-2.5">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">
+            <div className="min-w-0 bg-white/10 border border-white/15 rounded-xl p-2.5">
+              <label htmlFor="plan-program" className="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">
                 2. Bölüm / Program Seçin
               </label>
               <select
+                id="plan-program"
                 value={selectedProgramId}
                 onChange={(e) => onProgramChange(e.target.value)}
                 disabled={loadingPrograms || loadingCurriculum}
@@ -114,15 +120,42 @@ export const PlanlamaHero = React.memo(function PlanlamaHero({
                   </option>
                 ))}
               </select>
+              {programName && <p className="mt-1.5 text-xs leading-snug text-blue-100 wrap-break-word lg:hidden">{programName}</p>}
             </div>
           </div>
         </div>
 
+        <dl className="grid grid-cols-3 gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 md:hidden">
+          <div>
+            <dt className="text-xs text-blue-100">Mezuniyet</dt>
+            <dd className="font-bold">{summary.gradYears} yıl</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-blue-100">AKTS</dt>
+            <dd className="font-bold">{summary.totalPlacedEcts}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-blue-100">Kredi</dt>
+            <dd className="font-bold">{summary.totalPlacedCredits}</dd>
+          </div>
+        </dl>
+
+        <button
+          type="button"
+          aria-expanded={detailsOpen}
+          aria-controls="plan-summary-details"
+          onClick={() => setDetailsOpen(!detailsOpen)}
+          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/15 px-3 text-left text-sm font-semibold focus-visible:outline-2 md:hidden"
+        >
+          Muafiyet ve planlama kuralları
+          <ChevronDown aria-hidden="true" className={`size-4 shrink-0 ${detailsOpen ? 'rotate-180' : ''}`} />
+        </button>
+
         {/* Live Graduation Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+        <div id="plan-summary-details" className={`${detailsOpen ? 'grid' : 'hidden'} gap-3 md:grid md:grid-cols-2 lg:grid-cols-4`}>
           {/* 1. Graduation Duration */}
           <div
-            className={`rounded-xl p-3.5 border transition-all ${
+            className={`hidden rounded-xl p-3.5 border transition-all md:block ${
               summary.isEarlyGraduation
                 ? 'bg-emerald-500/20 border-emerald-400/50 shadow-sm'
                 : 'bg-white/10 border-white/15'
@@ -151,7 +184,7 @@ export const PlanlamaHero = React.memo(function PlanlamaHero({
           </div>
 
           {/* 2. Total Planned ECTS / Credits */}
-          <div className="rounded-xl p-3.5 bg-white/10 border border-white/15">
+          <div className="hidden rounded-xl p-3.5 bg-white/10 border border-white/15 md:block">
             <div className="flex items-center justify-between text-xs text-blue-200 font-medium">
               <span>Planlanan Toplam Yük</span>
               <Layers className="w-4 h-4 text-blue-300" />

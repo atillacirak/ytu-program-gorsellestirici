@@ -13,7 +13,9 @@ interface ScheduleToolbarProps {
   handleTransferToAbsence: () => void;
   handleTransferToAgno: () => void;
   handleExportVisualizerPNG: () => void;
-  handleVisualizerPdfUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleVisualizerPdfUpload: (file: File) => void;
+  visualizerPdfUploading: boolean;
+  visualizerError: string | null;
   setVisualizerData: (val: any) => void;
   setOriginalVisualizerData: (val: any) => void;
   visualizerViewMode: 'table' | 'cards' | 'summary';
@@ -43,6 +45,8 @@ export default function ScheduleToolbar({
   handleTransferToAgno,
   handleExportVisualizerPNG,
   handleVisualizerPdfUpload,
+  visualizerPdfUploading,
+  visualizerError,
   setVisualizerData,
   setOriginalVisualizerData,
   visualizerViewMode,
@@ -122,15 +126,24 @@ export default function ScheduleToolbar({
             <span>PNG Kaydet</span>
           </button>
 
-          <label className="flex items-center space-x-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 transition-all cursor-pointer shadow-2xs">
-            <Upload className="w-3.5 h-3.5 text-slate-500" />
-            <span>Yeni Belge</span>
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={handleVisualizerPdfUpload}
-              className="hidden"
-            />
+          <input
+            id="replace-schedule-pdf"
+            type="file"
+            accept=".pdf,application/pdf"
+            disabled={visualizerPdfUploading}
+            className="sr-only peer"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = '';
+              if (file) handleVisualizerPdfUpload(file);
+            }}
+          />
+          <label
+            htmlFor="replace-schedule-pdf"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-disabled:opacity-60"
+          >
+            <Upload aria-hidden="true" className="size-3.5" />
+            Yeni Belge
           </label>
 
           <button
@@ -143,6 +156,11 @@ export default function ScheduleToolbar({
           </button>
         </div>
       </div>
+
+      <p role="status" className={visualizerPdfUploading ? 'text-sm text-slate-700' : 'sr-only'}>
+        {visualizerPdfUploading ? 'Belge analiz ediliyor…' : ''}
+      </p>
+      {visualizerError && <p role="alert" className="text-sm text-rose-700">{visualizerError}</p>}
 
       {/* Satır 2: Görünüm Seçenekleri ve Filtreler */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">

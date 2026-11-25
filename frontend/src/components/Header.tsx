@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Calendar, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio, Smartphone, Award, Palette } from 'lucide-react';
+import { Calendar, Calculator, ShieldCheck, GraduationCap, Compass, Sparkles, Radio, Smartphone, Award, Palette, MoreHorizontal } from 'lucide-react';
 import WhatsNewModal from './WhatsNewModal';
 import DeviceSyncModal from './DeviceSyncModal';
 import { useLocalStorageState } from '../hooks/useLocalStorageState';
@@ -36,6 +36,10 @@ export default function Header() {
   const router = useRouter();
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
   const [hasUnseenNews, setHasUnseenNews] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const dialogTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [isDeviceSyncOpen, setIsDeviceSyncOpen] = useState(false);
   const [storedTheme, setStoredTheme, isThemeMounted] = useLocalStorageState<ThemeId>(
     THEME_STORAGE_KEY,
@@ -123,26 +127,54 @@ export default function Header() {
 
   useEffect(() => {
     try {
-      const seen = localStorage.getItem(WHATS_NEW_STORAGE_KEY);
-      if (!seen) {
-        setHasUnseenNews(true);
-        const timer = setTimeout(() => {
-          setIsWhatsNewOpen(true);
-        }, 500);
-        return () => clearTimeout(timer);
-      }
+      setHasUnseenNews(!localStorage.getItem(WHATS_NEW_STORAGE_KEY));
     } catch {}
   }, []);
 
-  const handleCloseWhatsNew = () => {
-    setIsWhatsNewOpen(false);
-    setHasUnseenNews(false);
-    try {
-      localStorage.setItem(WHATS_NEW_STORAGE_KEY, 'true');
-    } catch {}
+  useEffect(() => {
+    if (!isMoreOpen) return;
+    const closeMore = () => {
+      setIsMoreOpen(false);
+      moreButtonRef.current?.focus();
+    };
+    const onOutsideClick = (event: MouseEvent) => {
+      if (event.target instanceof Node && !moreRef.current?.contains(event.target)) closeMore();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMore();
+      }
+    };
+    const desktop = window.matchMedia('(min-width: 768px)');
+    const onResize = () => {
+      if (desktop.matches) setIsMoreOpen(false);
+    };
+    document.addEventListener('click', onOutsideClick);
+    document.addEventListener('keydown', onKeyDown);
+    desktop.addEventListener('change', onResize);
+    return () => {
+      document.removeEventListener('click', onOutsideClick);
+      document.removeEventListener('keydown', onKeyDown);
+      desktop.removeEventListener('change', onResize);
+    };
+  }, [isMoreOpen]);
+
+  const openHeaderDialog = (trigger: HTMLButtonElement) => {
+    dialogTriggerRef.current = isMoreOpen ? moreButtonRef.current : trigger;
+    setIsMoreOpen(false);
   };
 
-  const handleOpenWhatsNew = () => {
+  const restoreDialogFocus = () => {
+    const trigger = dialogTriggerRef.current;
+    if (trigger?.getClientRects().length) trigger.focus();
+    else if (moreButtonRef.current?.getClientRects().length) moreButtonRef.current.focus();
+    else document.getElementById('header-news-button')?.focus();
+    dialogTriggerRef.current = null;
+  };
+
+  const handleOpenWhatsNew = (event: React.MouseEvent<HTMLButtonElement>) => {
+    openHeaderDialog(event.currentTarget);
     setIsWhatsNewOpen(true);
     setHasUnseenNews(false);
     try {
@@ -211,85 +243,107 @@ export default function Header() {
             </Link>
 
             {/* Üst Sağ Aksiyonlar: Minimal Tema Seçici + Cihaz Eşle & Yenilikler */}
-            <div className="flex items-center gap-2 shrink-0">
-              <div
-                role="group"
-                aria-label="Tema seçimi"
-                title="Site temasını değiştir"
-                className="flex items-center gap-1 px-1.5 py-1 rounded border"
-                style={{
-                  backgroundColor: 'var(--header-pill-bg)',
-                  borderColor: 'var(--header-border)'
-                }}
+            <div ref={moreRef} className="relative shrink-0">
+              <button
+                ref={moreButtonRef}
+                type="button"
+                aria-expanded={isMoreOpen}
+                aria-controls="header-tools"
+                onClick={() => setIsMoreOpen(!isMoreOpen)}
+                className="header-util-btn flex md:hidden min-h-11 items-center gap-1.5 px-3 text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                <span
-                  className="flex items-center gap-1 text-[10px] font-bold pr-1 border-r"
+                <MoreHorizontal aria-hidden="true" className="size-4" />
+                Diğer
+                {hasUnseenNews && <span className="size-2 rounded-full bg-emerald-500" aria-label="Okunmamış yenilikler" />}
+              </button>
+              <div
+                id="header-tools"
+                className={`${isMoreOpen ? 'flex' : 'hidden'} absolute right-0 top-full z-10 mt-1 w-64 max-w-[calc(100vw-2rem)] flex-col gap-2 rounded-lg border p-2 shadow-lg md:static md:mt-0 md:flex md:w-auto md:max-w-none md:flex-row md:items-center md:border-0 md:p-0 md:shadow-none`}
+                style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--header-border)' }}
+              >
+                <div
+                  role="group"
+                  aria-label="Tema seçimi"
+                  title="Site temasını değiştir"
+                  className="flex items-center gap-1 px-1.5 py-1 rounded border"
                   style={{
-                    color: 'var(--header-muted)',
+                    backgroundColor: 'var(--header-pill-bg)',
                     borderColor: 'var(--header-border)'
                   }}
                 >
-                  <Palette className="w-3 h-3" />
-                  <span className="hidden md:inline">Tema</span>
-                </span>
-                {THEMES.map((t) => {
-                  const selected = t.id === activeTheme;
-                  const shortLabel =
-                    t.id === 'nordic-yellow'
-                      ? 'Nordic'
-                      : t.id === 'campuskit'
-                        ? 'Campus'
-                        : 'Klasik';
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => handleThemeSwitch(t.id)}
-                      title={`${t.name} temasına geç`}
-                      aria-label={`${t.name} teması`}
-                      aria-pressed={selected}
-                      className={`h-5 px-1.5 rounded flex items-center gap-1 text-[10px] font-bold transition-all cursor-pointer ${
-                        selected
-                          ? 'ring-2 ring-amber-400 shadow-2xs'
-                          : 'opacity-75 hover:opacity-100'
-                      }`}
-                      style={{
-                        backgroundColor: t.swatches[0],
-                        color: '#FFFFFF'
-                      }}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: t.swatches[1] }}
-                      />
-                      <span className="hidden lg:inline">{shortLabel}</span>
-                    </button>
-                  );
-                })}
+                  <span
+                    className="flex items-center gap-1 text-[10px] font-bold pr-1 border-r"
+                    style={{
+                      color: 'var(--header-muted)',
+                      borderColor: 'var(--header-border)'
+                    }}
+                  >
+                    <Palette className="w-3 h-3" />
+                    <span>Tema</span>
+                  </span>
+                  {THEMES.map((t) => {
+                    const selected = t.id === activeTheme;
+                    const shortLabel =
+                      t.id === 'nordic-yellow'
+                        ? 'Nordic'
+                        : t.id === 'campuskit'
+                          ? 'Campus'
+                          : 'Klasik';
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handleThemeSwitch(t.id)}
+                        title={`${t.name} temasına geç`}
+                        aria-label={`${t.name} teması`}
+                        aria-pressed={selected}
+                        className={`h-9 md:h-5 px-1.5 rounded flex items-center gap-1 text-[10px] font-bold transition-all cursor-pointer ${
+                          selected
+                            ? 'ring-2 ring-amber-400 shadow-2xs'
+                            : 'opacity-75 hover:opacity-100'
+                        }`}
+                        style={{
+                          backgroundColor: t.swatches[0],
+                          color: '#FFFFFF'
+                        }}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: t.swatches[1] }}
+                        />
+                        <span className="md:hidden lg:inline">{shortLabel}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    openHeaderDialog(event.currentTarget);
+                    setIsDeviceSyncOpen(true);
+                  }}
+                  className="header-util-btn px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                  title="Bilgisayar ve telefon arasında programı eşle"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>Cihaz Eşle</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="header-news-button"
+                  onClick={handleOpenWhatsNew}
+                  className="header-cta-btn relative px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                  title="Siteye eklenen yeni özellikleri gör"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Yenilikler</span>
+                  {hasUnseenNews && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 motion-safe:animate-pulse" />
+                  )}
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setIsDeviceSyncOpen(true)}
-                className="header-util-btn px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                title="Bilgisayar ve telefon arasında programı eşle"
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span>Cihaz Eşle</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleOpenWhatsNew}
-                className="header-cta-btn relative px-2.5 sm:px-3 py-1.5 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
-                title="Siteye eklenen yeni özellikleri gör"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Yenilikler</span>
-                {hasUnseenNews && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                )}
-              </button>
             </div>
           </div>
         </div>
@@ -379,8 +433,8 @@ export default function Header() {
         </nav>
       </header>
 
-      <WhatsNewModal isOpen={isWhatsNewOpen} onClose={handleCloseWhatsNew} />
-      <DeviceSyncModal isOpen={isDeviceSyncOpen} onClose={() => setIsDeviceSyncOpen(false)} />
+      <WhatsNewModal isOpen={isWhatsNewOpen} onClose={() => { setIsWhatsNewOpen(false); restoreDialogFocus(); }} />
+      <DeviceSyncModal isOpen={isDeviceSyncOpen} onClose={() => { setIsDeviceSyncOpen(false); restoreDialogFocus(); }} />
     </>
   );
 }

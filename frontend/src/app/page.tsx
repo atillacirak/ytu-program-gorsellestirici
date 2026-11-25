@@ -388,9 +388,16 @@ export default function Home() {
     setEditingCourse(null);
   };
 
-  const handleVisualizerPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadInProgress = useRef(false);
+
+  const handleVisualizerPdfUpload = async (file: File) => {
+    if (uploadInProgress.current) return;
+    if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') {
+      setVisualizerError('Lütfen geçerli bir OBS veya USIS ders programı PDF’i seçin.');
+      return;
+    }
+
+    uploadInProgress.current = true;
 
     setVisualizerPdfUploading(true);
     setVisualizerError(null);
@@ -406,7 +413,7 @@ export default function Home() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.detail || 'PDF ayrıştırılamadı. Lütfen geçerli bir Öğrenci Ders Programı (Report.pdf) yükleyin.');
+        throw new Error(errData.detail || 'PDF ayrıştırılamadı. Lütfen geçerli bir OBS veya USIS ders programı PDF’i yükleyin.');
       }
 
       const data = await res.json();
@@ -422,7 +429,7 @@ export default function Home() {
       setVisualizerError(err.message || 'PDF yüklenirken bir hata oluştu.');
     } finally {
       setVisualizerPdfUploading(false);
-      e.target.value = '';
+      uploadInProgress.current = false;
     }
   };
   const handleExportVisualizerPNG = async () => {
@@ -634,6 +641,8 @@ export default function Home() {
                   handleTransferToAgno={handleTransferToAgno}
                   handleExportVisualizerPNG={handleExportVisualizerPNG}
                   handleVisualizerPdfUpload={handleVisualizerPdfUpload}
+                  visualizerPdfUploading={visualizerPdfUploading}
+                  visualizerError={visualizerError}
                   setVisualizerData={setVisualizerData}
                   setOriginalVisualizerData={setOriginalVisualizerData}
                   visualizerViewMode={visualizerViewMode}

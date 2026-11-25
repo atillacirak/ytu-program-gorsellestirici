@@ -42,6 +42,7 @@ export default function CourseTabsBar({
   onImportFromSchedule,
   onImportFromAgno
 }: CourseTabsBarProps) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importFeedback, setImportFeedback] = useState<string | null>(null);
   const [isLookingUp, setIsLookingUp] = useState(false);
@@ -229,7 +230,20 @@ export default function CourseTabsBar({
       )}
 
       {/* Aktif Ders Meta Bilgileri (Kod / Ad / Kredi / Sil) */}
-      <div className="p-3.5 sm:p-4 bg-slate-50/70 flex flex-col lg:flex-row lg:items-end justify-between gap-3">
+      <button
+        type="button"
+        aria-controls="grade-course-details"
+        aria-expanded={detailsOpen}
+        onClick={() => setDetailsOpen(!detailsOpen)}
+        className="flex min-h-11 w-full items-center justify-between gap-2 bg-slate-50/70 px-3.5 text-left text-sm font-semibold text-slate-700 focus-visible:outline-2 focus-visible:-outline-offset-2 md:hidden"
+      >
+        Ders bilgileri
+        <ChevronDown aria-hidden="true" className={`size-4 ${detailsOpen ? 'rotate-180' : ''}`} />
+      </button>
+      <div
+        id="grade-course-details"
+        className={`${detailsOpen ? 'flex' : 'hidden'} flex-col justify-between gap-3 bg-slate-50/70 p-3.5 sm:p-4 md:flex lg:flex-row lg:items-end`}
+      >
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 flex-1">
           <div className="sm:col-span-3 space-y-1">
             <label
